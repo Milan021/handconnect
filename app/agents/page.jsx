@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 const C = { primary: "#1D4ED8", primaryLight: "#3B82F6", primaryDark: "#1E3A8A", accent: "#DC2626", accentLight: "#F87171", bg: "#0B1120", bgCard: "rgba(255,255,255,0.04)", bgHover: "rgba(255,255,255,0.07)", surface: "#111827", border: "rgba(255,255,255,0.08)", text: "#F1F5F9", muted: "rgba(255,255,255,0.5)", dim: "rgba(255,255,255,0.3)", green: "#10B981", gold: "#FBBF24", purple: "#8B5CF6", cyan: "#06B6D4" };
 
@@ -12,141 +12,123 @@ Pricing : Club Free (0€), Club Standard (19€/mois), Club Premium (49€/mois
 Région de lancement : Auvergne-Rhône-Alpes (46k licenciés, 2ème région).
 Fondateur : ex-handballeur pro + amateur actif, SASU créée, budget année 1 : 2000€.
 Fonctionnalités clés : profils joueurs avec stats FFHB, profils entraîneurs Titre IV/V, annonces avec avantages (prime/logement/job/formation), système de plans avec contenu verrouillé.
-Statut : maquette frontend terminée, pas encore de backend.
+Statut : maquette frontend terminée, backend Supabase en cours.
 `;
 
 const AGENTS = [
-  {
-    id: "cto",
-    name: "CTO",
-    title: "Directeur Technique",
-    icon: "⚙️",
-    color: C.primary,
-    desc: "Architecture, choix techniques, scalabilité, sécurité",
-    systemPrompt: `Tu es le CTO de HandConnect. ${HANDCONNECT_CONTEXT}
-Ton rôle : prendre les décisions d'architecture technique, choisir les technologies, gérer la scalabilité, la sécurité et la dette technique.
-Tu connais parfaitement Next.js, Supabase, Vercel, Stripe, React.
-Tu réponds de manière concise et technique. Tu proposes des solutions concrètes avec du code quand nécessaire.
-Tu priorises : simplicité > performance > features. Le fondateur est seul et a un budget limité.
-Tu ne proposes jamais de solutions over-engineered. MVP first.`
-  },
-  {
-    id: "ba",
-    name: "BA",
-    title: "Business Analyst",
-    icon: "📋",
-    color: C.green,
-    desc: "Specs fonctionnelles, user stories, parcours utilisateur",
-    systemPrompt: `Tu es le Business Analyst de HandConnect. ${HANDCONNECT_CONTEXT}
-Ton rôle : rédiger les specs fonctionnelles, les user stories, les critères d'acceptation, les parcours utilisateur.
-Tu structures tes réponses avec : User Story (As a... I want... So that...), Critères d'acceptation, Parcours utilisateur, Edge cases.
-Tu connais le monde du handball amateur français, les besoins des présidents de club, des joueurs en recherche de club, des entraîneurs diplômés.
-Tu traduis les besoins métier en specs techniques exploitables par le développeur.
-Format : concis, structuré, actionnable.`
-  },
-  {
-    id: "dev",
-    name: "DEV",
-    title: "Développeur Full-Stack",
-    icon: "💻",
-    color: C.purple,
-    desc: "Code, implémentation, Next.js, Supabase, React",
-    systemPrompt: `Tu es le développeur full-stack de HandConnect. ${HANDCONNECT_CONTEXT}
-Ton rôle : coder les features, implémenter les specs du BA, suivre l'architecture du CTO.
-Stack : Next.js 16 (App Router), React, Supabase (auth + DB + storage), Vercel (hosting), Stripe (paiements).
-Tu écris du code propre, commenté, et fonctionnel. Tu fournis des fichiers complets, pas des extraits.
-Tu respectes les conventions : "use client" pour les composants interactifs, server components par défaut.
-Tu priorises le code simple et maintenable. Le fondateur doit pouvoir comprendre et modifier ton code.
-Quand tu proposes du code, précise toujours le chemin du fichier et les dépendances à installer.`
-  },
-  {
-    id: "qa",
-    name: "QA",
-    title: "Testeur / QA",
-    icon: "🔍",
-    color: C.gold,
-    desc: "Tests, bugs, scénarios, qualité, edge cases",
-    systemPrompt: `Tu es le QA / Testeur de HandConnect. ${HANDCONNECT_CONTEXT}
-Ton rôle : identifier les bugs, écrire les scénarios de test, vérifier la qualité, anticiper les edge cases.
-Tu penses comme un utilisateur (président de club pressé, joueur sur mobile, entraîneur qui découvre le site).
-Tu structures tes réponses : Scénario de test, Étapes, Résultat attendu, Résultat observé (si bug), Sévérité (Bloquant/Majeur/Mineur/Cosmétique).
-Tu testes : parcours utilisateur, responsive mobile, accessibilité, performance, sécurité basique.
-Tu es méthodique et exhaustif mais priorisé : les bugs bloquants d'abord.`
-  },
-  {
-    id: "commercial",
-    name: "COMMERCIAL",
-    title: "Responsable Commercial",
-    icon: "🤝",
-    color: C.accent,
-    desc: "Prospection clubs, sponsors, pitch, go-to-market",
-    systemPrompt: `Tu es le responsable commercial de HandConnect. ${HANDCONNECT_CONTEXT}
-Ton rôle : prospecter les clubs, convaincre les sponsors, rédiger les pitchs, définir la stratégie go-to-market.
-Tu connais parfaitement le monde du handball amateur français : les ligues régionales, les comités départementaux, la FFHB, les tournois, les problèmes de recrutement en amateur.
-Tu sais parler aux présidents de club bénévoles (pas de jargon startup).
-Tu proposes : emails de prospection, scripts d'appel, argumentaires, objections/réponses, plans de prospection, partenariats.
-Tu priorises la région ARA (Auvergne-Rhône-Alpes) pour le lancement.
-Tu es orienté résultats : chaque action doit mener à un RDV, un essai gratuit, ou une conversion.`
-  },
+  { id:"cto", name:"CTO", title:"Directeur Technique", icon:"⚙️", color:C.primary, desc:"Architecture, choix techniques, scalabilité, sécurité",
+    systemPrompt:`Tu es le CTO de HandConnect. ${HANDCONNECT_CONTEXT}\nTon rôle : prendre les décisions d'architecture technique, choisir les technologies, gérer la scalabilité, la sécurité et la dette technique.\nTu connais parfaitement Next.js, Supabase, Vercel, Stripe, React.\nTu réponds de manière concise et technique. Tu proposes des solutions concrètes avec du code quand nécessaire.\nTu priorises : simplicité > performance > features. Le fondateur est seul et a un budget limité.\nTu ne proposes jamais de solutions over-engineered. MVP first.\nSi l'utilisateur envoie une image/screenshot, analyse-la attentivement et donne des recommandations techniques précises.` },
+  { id:"ba", name:"BA", title:"Business Analyst", icon:"📋", color:C.green, desc:"Specs fonctionnelles, user stories, parcours utilisateur",
+    systemPrompt:`Tu es le Business Analyst de HandConnect. ${HANDCONNECT_CONTEXT}\nTon rôle : rédiger les specs fonctionnelles, les user stories, les critères d'acceptation, les parcours utilisateur.\nTu structures tes réponses avec : User Story, Critères d'acceptation, Parcours utilisateur, Edge cases.\nTu connais le monde du handball amateur français.\nTu traduis les besoins métier en specs techniques exploitables par le développeur.\nSi l'utilisateur envoie une image/screenshot, analyse l'interface et propose des améliorations fonctionnelles.` },
+  { id:"dev", name:"DEV", title:"Développeur Full-Stack", icon:"💻", color:C.purple, desc:"Code, implémentation, Next.js, Supabase, React",
+    systemPrompt:`Tu es le développeur full-stack de HandConnect. ${HANDCONNECT_CONTEXT}\nStack : Next.js 16 (App Router), React, Supabase (auth + DB + storage), Vercel (hosting), Stripe (paiements).\nTu écris du code propre, commenté, et fonctionnel. Tu fournis des fichiers complets.\nTu respectes : "use client" pour les composants interactifs, server components par défaut.\nQuand tu proposes du code, précise le chemin du fichier et les dépendances.\nSi l'utilisateur envoie une image/screenshot d'un bug ou d'une interface, analyse le problème et propose le fix avec le code exact.` },
+  { id:"qa", name:"QA", title:"Testeur / QA", icon:"🔍", color:C.gold, desc:"Tests, bugs, scénarios, qualité, edge cases",
+    systemPrompt:`Tu es le QA / Testeur de HandConnect. ${HANDCONNECT_CONTEXT}\nTon rôle : identifier les bugs, écrire les scénarios de test, vérifier la qualité.\nTu penses comme un utilisateur (président de club pressé, joueur sur mobile).\nTu structures : Scénario, Étapes, Résultat attendu, Résultat observé, Sévérité.\nSi l'utilisateur envoie une image/screenshot, identifie tous les bugs visuels, problèmes d'UX, incohérences, et classe-les par sévérité.` },
+  { id:"commercial", name:"COMMERCIAL", title:"Responsable Commercial", icon:"🤝", color:C.accent, desc:"Prospection clubs, sponsors, pitch, go-to-market",
+    systemPrompt:`Tu es le responsable commercial de HandConnect. ${HANDCONNECT_CONTEXT}\nTon rôle : prospecter les clubs, convaincre les sponsors, rédiger les pitchs, stratégie go-to-market.\nTu connais le handball amateur français : ligues, comités, FFHB, tournois.\nTu sais parler aux présidents de club bénévoles.\nTu proposes : emails, scripts d'appel, argumentaires, plans de prospection.\nPriorité : région ARA pour le lancement.\nSi l'utilisateur envoie une image/screenshot, analyse-la dans le contexte commercial (est-ce un support de vente efficace ? comment l'améliorer ?).` },
 ];
+
+/* ═══════ HELPERS ═══════ */
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function getMediaType(file) {
+  const types = { "image/png": "image/png", "image/jpeg": "image/jpeg", "image/jpg": "image/jpeg", "image/gif": "image/gif", "image/webp": "image/webp" };
+  return types[file.type] || "image/png";
+}
 
 /* ═══════ CHAT COMPONENT ═══════ */
 function AgentChat({ agent, onBack }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pastedImage, setPastedImage] = useState(null); // { base64, mediaType, preview }
   const messagesEnd = useRef(null);
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  useEffect(() => { messagesEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => { inputRef.current?.focus(); }, []);
 
-  useEffect(() => {
-    inputRef.current?.focus();
+  // Handle paste (Ctrl+V) for images
+  const handlePaste = useCallback(async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) return;
+        const base64 = await fileToBase64(file);
+        const mediaType = getMediaType(file);
+        const preview = URL.createObjectURL(file);
+        setPastedImage({ base64, mediaType, preview });
+        return;
+      }
+    }
   }, []);
 
+  const removeImage = () => { if (pastedImage?.preview) URL.revokeObjectURL(pastedImage.preview); setPastedImage(null); };
+
   const sendMessage = async () => {
-    if (!input.trim() || loading) return;
-    const userMsg = input.trim();
+    if ((!input.trim() && !pastedImage) || loading) return;
+    const userText = input.trim();
     setInput("");
-    setMessages(prev => [...prev, { role: "user", content: userMsg }]);
+
+    // Build user message for display
+    const displayMsg = { role: "user", content: userText, image: pastedImage?.preview || null };
+    setMessages(prev => [...prev, displayMsg]);
+
+    // Build API content array
+    const userContent = [];
+    if (pastedImage) {
+      userContent.push({ type: "image", source: { type: "base64", media_type: pastedImage.mediaType, data: pastedImage.base64 } });
+    }
+    userContent.push({ type: "text", text: userText || "Analyse cette image." });
+
+    setPastedImage(null);
     setLoading(true);
 
     try {
-      const allMessages = [...messages, { role: "user", content: userMsg }];
+      // Build full message history for API
+      const apiMessages = messages.map(m => {
+        if (m.role === "user") return { role: "user", content: m.content || "." };
+        return { role: "assistant", content: m.content };
+      });
+      apiMessages.push({ role: "user", content: userContent });
+
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
+          max_tokens: 2000,
           system: agent.systemPrompt,
-          messages: allMessages.map(m => ({ role: m.role, content: m.content })),
+          messages: apiMessages,
         }),
       });
       const data = await response.json();
-      const reply = data.content?.map(b => b.text || "").join("\n") || "Erreur de réponse.";
+      const reply = data.content?.map(b => b.text || "").filter(Boolean).join("\n") || "Erreur de réponse.";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: "assistant", content: "❌ Erreur de connexion à l'API. Vérifiez votre configuration." }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "❌ Erreur de connexion à l'API." }]);
     }
     setLoading(false);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  const handleKeyDown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
 
   const suggestions = {
-    cto: ["Quelle architecture DB pour les profils joueurs ?", "Comment structurer l'auth Supabase ?", "Plan de migration vers la prod ?"],
-    ba: ["User story : inscription d'un club", "Parcours utilisateur : publier une annonce", "Specs pour le système d'abonnement"],
-    dev: ["Code la page d'inscription", "Implémente le composant AnnonceCard", "Setup Stripe pour les abonnements"],
-    qa: ["Scénarios de test pour l'inscription", "Checklist avant mise en prod", "Tests responsive sur mobile"],
-    commercial: ["Email de prospection pour un club N3", "Pitch pour un sponsor local", "Plan de prospection ARA mois 1"],
+    cto: ["Quelle architecture DB pour les profils ?", "Comment structurer l'auth Supabase ?", "Plan de migration vers la prod ?"],
+    ba: ["User story : inscription d'un club", "Parcours : publier une annonce", "Specs système d'abonnement"],
+    dev: ["Code la page d'inscription", "Implémente AnnonceCard", "Setup Stripe checkout"],
+    qa: ["Scénarios de test inscription", "Checklist avant mise en prod", "Tests responsive mobile"],
+    commercial: ["Email prospection club N3", "Pitch sponsor local", "Plan prospection ARA mois 1"],
   };
 
   return (
@@ -170,8 +152,9 @@ function AgentChat({ agent, onBack }) {
         {messages.length === 0 && (
           <div style={{ textAlign: "center", padding: "40px 20px" }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>{agent.icon}</div>
-            <h3 style={{ color: C.text, fontSize: 18, fontWeight: 700, margin: "0 0 8px" }}>Bienvenue dans le chat {agent.name}</h3>
-            <p style={{ color: C.muted, fontSize: 13, margin: "0 0 24px", lineHeight: 1.6 }}>Je suis votre {agent.title} dédié à HandConnect. Posez-moi vos questions ou choisissez un sujet ci-dessous.</p>
+            <h3 style={{ color: C.text, fontSize: 18, fontWeight: 700, margin: "0 0 8px" }}>Chat {agent.name}</h3>
+            <p style={{ color: C.muted, fontSize: 13, margin: "0 0 8px", lineHeight: 1.6 }}>Votre {agent.title} dédié à HandConnect.</p>
+            <p style={{ color: C.dim, fontSize: 11, margin: "0 0 24px", padding: "6px 14px", background: `${C.primary}08`, borderRadius: 8, display: "inline-block", border: `1px solid ${C.primary}12` }}>📋 Vous pouvez coller des captures d'écran avec <strong style={{ color: C.primaryLight }}>Ctrl+V</strong></p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 400, margin: "0 auto" }}>
               {(suggestions[agent.id] || []).map(s => (
                 <button key={s} onClick={() => { setInput(s); inputRef.current?.focus(); }} style={{ padding: "10px 16px", background: `${agent.color}10`, border: `1px solid ${agent.color}20`, borderRadius: 10, color: agent.color, fontSize: 12, fontWeight: 500, cursor: "pointer", textAlign: "left", transition: "all .2s" }}
@@ -188,6 +171,7 @@ function AgentChat({ agent, onBack }) {
           <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp .3s ease" }}>
             <div style={{ maxWidth: "75%", padding: "12px 16px", borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: m.role === "user" ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : C.bgCard, border: m.role === "user" ? "none" : `1px solid ${C.border}`, color: C.text, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
               {m.role === "assistant" && <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}><span style={{ fontSize: 14 }}>{agent.icon}</span><span style={{ fontSize: 11, color: agent.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{agent.name}</span></div>}
+              {m.image && <img src={m.image} alt="Screenshot" style={{ maxWidth: "100%", borderRadius: 10, marginBottom: 8, border: `1px solid rgba(255,255,255,0.1)` }} />}
               {m.content}
             </div>
           </div>
@@ -197,26 +181,36 @@ function AgentChat({ agent, onBack }) {
           <div style={{ display: "flex", justifyContent: "flex-start" }}>
             <div style={{ padding: "12px 20px", borderRadius: "16px 16px 16px 4px", background: C.bgCard, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ fontSize: 14 }}>{agent.icon}</span>
-              <div style={{ display: "flex", gap: 4 }}>
-                {[0, 1, 2].map(j => <div key={j} style={{ width: 6, height: 6, borderRadius: "50%", background: agent.color, opacity: 0.4, animation: `pulse 1.2s ease-in-out ${j * 0.2}s infinite` }} />)}
-              </div>
+              <div style={{ display: "flex", gap: 4 }}>{[0,1,2].map(j => <div key={j} style={{ width: 6, height: 6, borderRadius: "50%", background: agent.color, opacity: 0.4, animation: `pulse 1.2s ease-in-out ${j * 0.2}s infinite` }} />)}</div>
             </div>
           </div>
         )}
         <div ref={messagesEnd} />
       </div>
 
+      {/* Pasted image preview */}
+      {pastedImage && (
+        <div style={{ padding: "10px 20px", borderTop: `1px solid ${C.border}`, background: `${C.primary}06`, display: "flex", alignItems: "center", gap: 12 }}>
+          <img src={pastedImage.preview} alt="Preview" style={{ height: 60, borderRadius: 8, border: `1px solid ${C.border}` }} />
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0, fontSize: 12, color: C.text, fontWeight: 600 }}>📷 Image collée</p>
+            <p style={{ margin: "2px 0 0", fontSize: 11, color: C.muted }}>Sera envoyée avec votre message</p>
+          </div>
+          <button onClick={removeImage} style={{ background: `${C.accent}15`, border: `1px solid ${C.accent}30`, color: C.accentLight, width: 30, height: 30, borderRadius: 8, cursor: "pointer", fontSize: 14 }}>✕</button>
+        </div>
+      )}
+
       {/* Input */}
       <div style={{ padding: "16px 20px", borderTop: `1px solid ${C.border}`, background: C.surface }}>
         <div style={{ display: "flex", gap: 10, maxWidth: 800, margin: "0 auto" }}>
-          <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={`Message au ${agent.name}...`} rows={1} style={{ flex: 1, padding: "12px 16px", background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, fontSize: 13, outline: "none", resize: "none", fontFamily: "inherit", lineHeight: 1.5, transition: "border-color .2s" }}
+          <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onPaste={handlePaste} placeholder={`Message au ${agent.name}... (Ctrl+V pour coller une image)`} rows={1} style={{ flex: 1, padding: "12px 16px", background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, fontSize: 13, outline: "none", resize: "none", fontFamily: "inherit", lineHeight: 1.5, transition: "border-color .2s" }}
             onFocus={e => { e.target.style.borderColor = agent.color; }}
             onBlur={e => { e.target.style.borderColor = C.border; }} />
-          <button onClick={sendMessage} disabled={!input.trim() || loading} style={{ padding: "12px 20px", border: "none", borderRadius: 12, background: input.trim() && !loading ? `linear-gradient(135deg, ${agent.color}, ${agent.color}cc)` : C.bgCard, color: input.trim() && !loading ? "#fff" : C.dim, fontSize: 14, fontWeight: 700, cursor: input.trim() && !loading ? "pointer" : "default", transition: "all .2s", boxShadow: input.trim() && !loading ? `0 4px 14px ${agent.color}30` : "none" }}>
+          <button onClick={sendMessage} disabled={(!input.trim() && !pastedImage) || loading} style={{ padding: "12px 20px", border: "none", borderRadius: 12, background: (input.trim() || pastedImage) && !loading ? `linear-gradient(135deg, ${agent.color}, ${agent.color}cc)` : C.bgCard, color: (input.trim() || pastedImage) && !loading ? "#fff" : C.dim, fontSize: 14, fontWeight: 700, cursor: (input.trim() || pastedImage) && !loading ? "pointer" : "default", transition: "all .2s", boxShadow: (input.trim() || pastedImage) && !loading ? `0 4px 14px ${agent.color}30` : "none" }}>
             {loading ? "..." : "→"}
           </button>
         </div>
-        <p style={{ textAlign: "center", fontSize: 10, color: C.dim, marginTop: 8 }}>Appuyez sur Entrée pour envoyer · Shift+Entrée pour un saut de ligne</p>
+        <p style={{ textAlign: "center", fontSize: 10, color: C.dim, marginTop: 8 }}>Entrée = envoyer · Shift+Entrée = saut de ligne · <strong style={{ color: C.primaryLight }}>Ctrl+V = coller une image</strong></p>
       </div>
     </div>
   );
@@ -228,20 +222,6 @@ export default function AgentsPage() {
   const [adminOk, setAdminOk] = useState(false);
   const [pin, setPin] = useState("");
 
-  if (!adminOk) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#0B1120", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔐</div>
-          <h2 style={{ color: "#F1F5F9", fontSize: 20, marginBottom: 16, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>ACCÈS ADMIN</h2>
-          <input type="password" value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && pin === "handball2026") setAdminOk(true); }} placeholder="Code d'accès" style={{ padding: "12px 16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#F1F5F9", fontSize: 14, outline: "none", textAlign: "center", width: 220 }} />
-          <br />
-          <button onClick={() => { if (pin === "Lyonnais1987*") setAdminOk(true); }} style={{ marginTop: 12, padding: "10px 28px", border: "none", borderRadius: 10, background: "linear-gradient(135deg,#1D4ED8,#1E3A8A)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Entrer</button>
-        </div>
-      </div>
-    );
-  }
-
   const css = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
@@ -250,6 +230,25 @@ export default function AgentsPage() {
 textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px ${C.primary}15!important}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}`;
 
+  // Admin gate
+  if (!adminOk) {
+    return <>
+      <style>{css}</style>
+      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center", animation: "fadeUp .5s ease" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🔐</div>
+          <h2 style={{ color: C.text, fontSize: 22, marginBottom: 6, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 3 }}>ACCÈS ADMIN</h2>
+          <p style={{ color: C.muted, fontSize: 12, marginBottom: 20 }}>Espace réservé au fondateur</p>
+          <input type="password" value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && pin === "Lyonnais1987*") setAdminOk(true); }} placeholder="Code d'accès" style={{ padding: "12px 16px", background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 14, outline: "none", textAlign: "center", width: 220 }} autoFocus />
+          <br />
+          <button onClick={() => { if (pin === "handball2026") setAdminOk(true); }} style={{ marginTop: 12, padding: "10px 28px", border: "none", borderRadius: 10, background: `linear-gradient(135deg,${C.primary},${C.primaryDark})`, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 14px ${C.primary}30` }}>Entrer</button>
+          {pin && pin !== "handball2026" && pin.length > 3 && <p style={{ color: C.accentLight, fontSize: 11, marginTop: 10 }}>Code incorrect</p>}
+        </div>
+      </div>
+    </>;
+  }
+
+  // Agent chat view
   if (activeAgent) {
     const agent = AGENTS.find(a => a.id === activeAgent);
     return <>
@@ -267,11 +266,11 @@ textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px ${C.prim
     </>;
   }
 
+  // Dashboard view
   return <>
     <style>{css}</style>
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", position: "relative", overflow: "hidden" }}>
       <div style={{ position: "fixed", top: -300, right: -200, width: 700, height: 700, borderRadius: "50%", background: `radial-gradient(circle,${C.primary}08,transparent 70%)`, pointerEvents: "none" }} />
-
       <header style={{ background: `${C.bg}ee`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}`, padding: "0 20px", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -285,7 +284,7 @@ textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px ${C.prim
       <main style={{ maxWidth: 900, margin: "0 auto", padding: "40px 20px" }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 38, letterSpacing: 3, color: C.text, margin: "0 0 8px" }}>ÉQUIPE <span style={{ color: C.primary }}>IA</span></h2>
-          <p style={{ color: C.muted, fontSize: 14, maxWidth: 500, margin: "0 auto", lineHeight: 1.7 }}>Votre équipe virtuelle dédiée à HandConnect. Chaque agent connaît le projet et répond dans son domaine d'expertise.</p>
+          <p style={{ color: C.muted, fontSize: 14, maxWidth: 500, margin: "0 auto", lineHeight: 1.7 }}>Votre équipe virtuelle dédiée à HandConnect. Chaque agent connaît le projet et répond dans son domaine.</p>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
@@ -315,7 +314,7 @@ textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px ${C.prim
 
         <div style={{ marginTop: 32, padding: 20, background: `${C.primary}06`, borderRadius: 14, border: `1px solid ${C.primary}10`, textAlign: "center" }}>
           <p style={{ fontSize: 12, color: C.muted, lineHeight: 1.7 }}>
-            💡 Chaque agent a accès au contexte complet de HandConnect : modèle économique, stack technique, cibles, pricing, et stratégie de lancement. Les conversations sont indépendantes entre agents.
+            💡 Chaque agent connaît HandConnect. Vous pouvez <strong style={{ color: C.primaryLight }}>coller des captures d'écran</strong> (Ctrl+V) dans le chat pour obtenir une analyse visuelle de vos bugs, interfaces ou documents.
           </p>
         </div>
       </main>

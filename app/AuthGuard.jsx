@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { usePathname } from "next/navigation";
 
-const PUBLIC_PATHS = ["/login", "/register"];
+const PUBLIC_PATHS = ["/", "/login", "/register"];
 
 export default function AuthGuard({ children }) {
   const [status, setStatus] = useState("loading");

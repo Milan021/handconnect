@@ -225,6 +225,22 @@ function AgentChat({ agent, onBack }) {
 /* ═══════ MAIN PAGE ═══════ */
 export default function AgentsPage() {
   const [activeAgent, setActiveAgent] = useState(null);
+  const [adminOk, setAdminOk] = useState(false);
+  const [pin, setPin] = useState("");
+
+  if (!adminOk) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0B1120", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🔐</div>
+          <h2 style={{ color: "#F1F5F9", fontSize: 20, marginBottom: 16, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>ACCÈS ADMIN</h2>
+          <input type="password" value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && pin === "handball2026") setAdminOk(true); }} placeholder="Code d'accès" style={{ padding: "12px 16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#F1F5F9", fontSize: 14, outline: "none", textAlign: "center", width: 220 }} />
+          <br />
+          <button onClick={() => { if (pin === "Lyonnais1987*") setAdminOk(true); }} style={{ marginTop: 12, padding: "10px 28px", border: "none", borderRadius: 10, background: "linear-gradient(135deg,#1D4ED8,#1E3A8A)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Entrer</button>
+        </div>
+      </div>
+    );
+  }
 
   const css = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}

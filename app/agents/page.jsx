@@ -3,11 +3,6 @@ import { useState, useEffect, useCallback } from "react";
 
 const FONT_LINK = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap";
 
-// ─── ADMIN CREDENTIALS ──────────────────────────────────────────────────────
-// ⚠️ Change ces identifiants avant de déployer en production !
-const ADMIN_EMAIL = "admin@handconnect.fr";
-const ADMIN_PASSWORD = "HandConnect2026!";
-
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
 const initialAgents = {
@@ -233,152 +228,44 @@ const priorityConfig = {
   low: { label: "Basse", color: "#6B7280", icon: "⚪" },
 };
 
-// ─── LOGIN SCREEN ────────────────────────────────────────────────────────────
-
-function AdminLogin({ onLogin }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    setTimeout(() => {
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        sessionStorage.setItem("hc_admin_auth", JSON.stringify({ email, ts: Date.now() }));
-        onLogin(true);
-      } else {
-        setError("Email ou mot de passe incorrect");
-        setLoading(false);
-      }
-    }, 800);
-  };
-
-  return (
-    <div style={{
-      minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center",
-      justifyContent: "center", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden",
-    }}>
-      <link href={FONT_LINK} rel="stylesheet" />
-      <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,107,53,0.08) 0%, transparent 70%)", top: -150, right: -100, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", bottom: -100, left: -100, pointerEvents: "none" }} />
-
-      <div style={{
-        width: 380, padding: 40, background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24,
-        backdropFilter: "blur(20px)", position: "relative", zIndex: 1,
-      }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: "linear-gradient(135deg, #FF6B35, #C13C00)",
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            fontSize: 28, boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: 16,
-          }}>🤾</div>
-          <h1 style={{ fontSize: 32, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>
-            HAND<span style={{ color: "#FF6B35" }}>CONNECT</span>
-          </h1>
-          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: 2, fontWeight: 600, margin: 0 }}>ESPACE ADMINISTRATEUR</p>
-        </div>
-
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{
-            width: 44, height: 44, borderRadius: 12,
-            background: "rgba(255,107,53,0.08)", border: "1px solid rgba(255,107,53,0.15)",
-            display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 20,
-          }}>🔒</div>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 10, lineHeight: 1.5 }}>
-            Accès réservé aux administrateurs.<br />Connectez-vous pour continuer.
-          </p>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div>
-            <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>EMAIL</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@handconnect.fr"
-              style={{
-                width: "100%", padding: "12px 14px", borderRadius: 12,
-                border: error ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none",
-                fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box",
-              }} />
-          </div>
-
-          <div>
-            <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>MOT DE PASSE</label>
-            <div style={{ position: "relative" }}>
-              <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••••"
-                onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(e); }}
-                style={{
-                  width: "100%", padding: "12px 44px 12px 14px", borderRadius: 12,
-                  border: error ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                  background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none",
-                  fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box",
-                }} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)}
-                style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 14, padding: 0 }}>
-                {showPassword ? "🙈" : "👁️"}
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div style={{
-              padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)",
-              border: "1px solid rgba(239,68,68,0.2)", color: "#EF4444", fontSize: 12, fontWeight: 500,
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              <span>⚠️</span> {error}
-            </div>
-          )}
-
-          <button onClick={handleSubmit} disabled={loading || !email || !password}
-            style={{
-              padding: "14px 20px", borderRadius: 12, border: "none",
-              background: loading || !email || !password ? "rgba(255,107,53,0.2)" : "linear-gradient(135deg, #FF6B35, #C13C00)",
-              color: loading || !email || !password ? "rgba(255,255,255,0.3)" : "#fff",
-              fontSize: 13, fontWeight: 700, cursor: loading || !email || !password ? "not-allowed" : "pointer",
-              fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.3s",
-              boxShadow: loading || !email || !password ? "none" : "0 4px 20px rgba(255,107,53,0.3)", marginTop: 4,
-            }}>
-            {loading ? "Connexion en cours..." : "SE CONNECTER"}
-          </button>
-        </div>
-
-        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.15)", marginTop: 24, marginBottom: 0 }}>
-          Hand Connect © {new Date().getFullYear()} — Accès sécurisé
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─── AGENT CARD ──────────────────────────────────────────────────────────────
+// ─── COMPONENTS ──────────────────────────────────────────────────────────────
 
 function AgentCard({ agent, poleColor, onStatusChange, expanded, onToggle }) {
   const st = statusConfig[agent.status];
   const pr = priorityConfig[agent.priority];
   const [taskChecks, setTaskChecks] = useState(() => agent.tasks.map(() => false));
+
   const completedTasks = taskChecks.filter(Boolean).length;
   const progress = Math.round((completedTasks / agent.tasks.length) * 100);
 
   return (
-    <div onClick={onToggle} style={{
-      background: "rgba(255,255,255,0.03)",
-      border: `1px solid ${expanded ? poleColor + "44" : "rgba(255,255,255,0.06)"}`,
-      borderRadius: 16, overflow: "hidden", transition: "all 0.3s ease", cursor: "pointer",
-    }}>
+    <div
+      style={{
+        background: "rgba(255,255,255,0.03)",
+        border: `1px solid ${expanded ? poleColor + "44" : "rgba(255,255,255,0.06)"}`,
+        borderRadius: 16,
+        overflow: "hidden",
+        transition: "all 0.3s ease",
+        cursor: "pointer",
+      }}
+      onClick={onToggle}
+    >
+      {/* Header */}
       <div style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{
-          width: 42, height: 42, borderRadius: 12,
-          background: `linear-gradient(135deg, ${poleColor}22, ${poleColor}08)`,
-          border: `1px solid ${poleColor}33`,
-          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0,
-        }}>
+        <div
+          style={{
+            width: 42,
+            height: 42,
+            borderRadius: 12,
+            background: `linear-gradient(135deg, ${poleColor}22, ${poleColor}08)`,
+            border: `1px solid ${poleColor}33`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 18,
+            flexShrink: 0,
+          }}
+        >
           {agent.role.includes("CTO") ? "🏗️" : agent.role.includes("Mobile") ? "📱" : agent.role.includes("Backend") ? "⚙️" : agent.role.includes("Frontend") || agent.role.includes("Dashboard") ? "🖥️" : agent.role.includes("QA") || agent.role.includes("Test") ? "🔍" : agent.role.includes("Data") ? "📊" : agent.role.includes("Email") || agent.role.includes("Growth") ? "✉️" : agent.role.includes("Business") || agent.role.includes("Phoning") ? "📞" : agent.role.includes("Partner") ? "🤝" : agent.role.includes("Product") ? "📋" : "🤖"}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -390,10 +277,18 @@ function AgentCard({ agent, poleColor, onStatusChange, expanded, onToggle }) {
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3, fontFamily: "'DM Sans', sans-serif" }}>{agent.role}</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Progress ring */}
           <div style={{ position: "relative", width: 36, height: 36 }}>
             <svg width="36" height="36" style={{ transform: "rotate(-90deg)" }}>
               <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
-              <circle cx="18" cy="18" r="14" fill="none" stroke={poleColor} strokeWidth="3" strokeDasharray={`${(progress / 100) * 88} 88`} strokeLinecap="round" style={{ transition: "stroke-dasharray 0.5s ease" }} />
+              <circle
+                cx="18" cy="18" r="14" fill="none"
+                stroke={poleColor}
+                strokeWidth="3"
+                strokeDasharray={`${(progress / 100) * 88} 88`}
+                strokeLinecap="round"
+                style={{ transition: "stroke-dasharray 0.5s ease" }}
+              />
             </svg>
             <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.6)" }}>{progress}%</span>
           </div>
@@ -401,47 +296,99 @@ function AgentCard({ agent, poleColor, onStatusChange, expanded, onToggle }) {
         </div>
       </div>
 
+      {/* Expanded content */}
       {expanded && (
-        <div style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(255,255,255,0.04)" }} onClick={(e) => e.stopPropagation()}>
+        <div
+          style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(255,255,255,0.04)" }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, margin: "14px 0", fontFamily: "'DM Sans', sans-serif" }}>
             <strong style={{ color: "rgba(255,255,255,0.7)" }}>Mission :</strong> {agent.mission}
           </p>
+
+          {/* Status selector */}
           <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
             {Object.entries(statusConfig).map(([key, cfg]) => (
-              <button key={key} onClick={() => onStatusChange(agent.id, key)} style={{
-                padding: "4px 12px", borderRadius: 8,
-                border: agent.status === key ? `1px solid ${cfg.color}` : "1px solid rgba(255,255,255,0.08)",
-                background: agent.status === key ? cfg.bg : "transparent",
-                color: agent.status === key ? cfg.color : "rgba(255,255,255,0.4)",
-                fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-              }}>{cfg.label}</button>
+              <button
+                key={key}
+                onClick={() => onStatusChange(agent.id, key)}
+                style={{
+                  padding: "4px 12px",
+                  borderRadius: 8,
+                  border: agent.status === key ? `1px solid ${cfg.color}` : "1px solid rgba(255,255,255,0.08)",
+                  background: agent.status === key ? cfg.bg : "transparent",
+                  color: agent.status === key ? cfg.color : "rgba(255,255,255,0.4)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "'DM Sans', sans-serif",
+                  transition: "all 0.2s",
+                }}
+              >
+                {cfg.label}
+              </button>
             ))}
           </div>
+
+          {/* Tasks */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {agent.tasks.map((task, i) => (
-              <label key={i} style={{
-                display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 12px", borderRadius: 10,
-                background: taskChecks[i] ? "rgba(16,185,129,0.06)" : "rgba(255,255,255,0.02)",
-                border: `1px solid ${taskChecks[i] ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.04)"}`,
-                cursor: "pointer",
-              }}>
-                <input type="checkbox" checked={taskChecks[i]} onChange={() => {
-                  const next = [...taskChecks]; next[i] = !next[i]; setTaskChecks(next);
-                }} style={{ accentColor: poleColor, marginTop: 2, flexShrink: 0 }} />
+              <label
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  background: taskChecks[i] ? "rgba(16,185,129,0.06)" : "rgba(255,255,255,0.02)",
+                  border: `1px solid ${taskChecks[i] ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.04)"}`,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={taskChecks[i]}
+                  onChange={() => {
+                    const next = [...taskChecks];
+                    next[i] = !next[i];
+                    setTaskChecks(next);
+                  }}
+                  style={{ accentColor: poleColor, marginTop: 2, flexShrink: 0 }}
+                />
                 <span style={{
-                  fontSize: 12, color: taskChecks[i] ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.65)",
-                  textDecoration: taskChecks[i] ? "line-through" : "none", lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif",
-                }}>{task}</span>
+                  fontSize: 12,
+                  color: taskChecks[i] ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.65)",
+                  textDecoration: taskChecks[i] ? "line-through" : "none",
+                  lineHeight: 1.5,
+                  fontFamily: "'DM Sans', sans-serif",
+                  transition: "all 0.2s",
+                }}>
+                  {task}
+                </span>
               </label>
             ))}
           </div>
+
+          {/* KPIs */}
           <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
             {agent.kpis.map((kpi, i) => (
-              <span key={i} style={{
-                fontSize: 10, padding: "4px 10px", borderRadius: 8,
-                background: `${poleColor}11`, border: `1px solid ${poleColor}22`,
-                color: poleColor, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
-              }}>📈 {kpi}</span>
+              <span
+                key={i}
+                style={{
+                  fontSize: 10,
+                  padding: "4px 10px",
+                  borderRadius: 8,
+                  background: `${poleColor}11`,
+                  border: `1px solid ${poleColor}22`,
+                  color: poleColor,
+                  fontWeight: 600,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                📈 {kpi}
+              </span>
             ))}
           </div>
         </div>
@@ -450,36 +397,55 @@ function AgentCard({ agent, poleColor, onStatusChange, expanded, onToggle }) {
   );
 }
 
-// ─── POLE SECTION ────────────────────────────────────────────────────────────
-
-function PoleSection({ pole, agents, onStatusChange, expandedId, setExpandedId }) {
+function PoleSection({ poleKey, pole, agents, onStatusChange, expandedId, setExpandedId }) {
   const totalTasks = agents.reduce((s, a) => s + a.tasks.length, 0);
   const activeAgents = agents.filter((a) => a.status === "active").length;
 
   return (
     <div style={{ marginBottom: 32 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-        <div style={{ width: 4, height: 40, borderRadius: 4, background: `linear-gradient(180deg, ${pole.color}, ${pole.color}44)` }} />
+        <div
+          style={{
+            width: 4,
+            height: 40,
+            borderRadius: 4,
+            background: `linear-gradient(180deg, ${pole.color}, ${pole.color}44)`,
+          }}
+        />
         <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, color: "#fff", margin: 0, lineHeight: 1.2 }}>{pole.label}</h2>
-          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "4px 0 0", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5 }}>{pole.description}</p>
+          <h2 style={{ fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, color: "#fff", margin: 0, lineHeight: 1.2 }}>
+            {pole.label}
+          </h2>
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "4px 0 0", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5 }}>
+            {pole.description}
+          </p>
         </div>
         <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
-          {[
-            { val: agents.length, lbl: "agents", col: pole.color },
-            { val: activeAgents, lbl: "actifs", col: "#10B981" },
-            { val: totalTasks, lbl: "tâches", col: "rgba(255,255,255,0.6)" },
-          ].map((s, i) => (
-            <div key={i} style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: s.col, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{s.val}</div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif" }}>{s.lbl}</div>
-            </div>
-          ))}
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: pole.color, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{agents.length}</div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif" }}>agents</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#10B981", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{activeAgents}</div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif" }}>actifs</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "rgba(255,255,255,0.6)", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{totalTasks}</div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif" }}>tâches</div>
+          </div>
         </div>
       </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {agents.map((agent) => (
-          <AgentCard key={agent.id} agent={agent} poleColor={pole.color} onStatusChange={onStatusChange} expanded={expandedId === agent.id} onToggle={() => setExpandedId(expandedId === agent.id ? null : agent.id)} />
+          <AgentCard
+            key={agent.id}
+            agent={agent}
+            poleColor={pole.color}
+            onStatusChange={onStatusChange}
+            expanded={expandedId === agent.id}
+            onToggle={() => setExpandedId(expandedId === agent.id ? null : agent.id)}
+          />
         ))}
       </div>
     </div>
@@ -489,55 +455,25 @@ function PoleSection({ pole, agents, onStatusChange, expandedId, setExpandedId }
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function HandConnectAgents() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
   const [data, setData] = useState(initialAgents);
   const [activeTab, setActiveTab] = useState("all");
   const [expandedId, setExpandedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    const session = sessionStorage.getItem("hc_admin_auth");
-    if (session) {
-      try {
-        const parsed = JSON.parse(session);
-        if (Date.now() - parsed.ts < 4 * 60 * 60 * 1000) {
-          setIsAuthenticated(true);
-        } else {
-          sessionStorage.removeItem("hc_admin_auth");
-        }
-      } catch { sessionStorage.removeItem("hc_admin_auth"); }
-    }
-    setCheckingSession(false);
-  }, []);
-
-  const handleLogout = () => {
-    sessionStorage.removeItem("hc_admin_auth");
-    setIsAuthenticated(false);
-  };
-
   const handleStatusChange = useCallback((agentId, newStatus) => {
     setData((prev) => {
       const next = { ...prev };
       for (const key of Object.keys(next)) {
-        next[key] = { ...next[key], agents: next[key].agents.map((a) => a.id === agentId ? { ...a, status: newStatus } : a) };
+        next[key] = {
+          ...next[key],
+          agents: next[key].agents.map((a) =>
+            a.id === agentId ? { ...a, status: newStatus } : a
+          ),
+        };
       }
       return next;
     });
   }, []);
-
-  if (checkingSession) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <link href={FONT_LINK} rel="stylesheet" />
-        <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Chargement...</div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <AdminLogin onLogin={setIsAuthenticated} />;
-  }
 
   const tabs = [
     { key: "all", label: "Vue globale", icon: "🌐" },
@@ -547,7 +483,10 @@ export default function HandConnectAgents() {
     { key: "commercial", label: "Commercial", icon: "📞" },
   ];
 
-  const filteredPoles = activeTab === "all" ? Object.entries(data) : Object.entries(data).filter(([key]) => key === activeTab);
+  const filteredPoles = activeTab === "all"
+    ? Object.entries(data)
+    : Object.entries(data).filter(([key]) => key === activeTab);
+
   const allAgents = Object.values(data).flatMap((p) => p.agents);
   const totalAgents = allAgents.length;
   const activeAgents = allAgents.filter((a) => a.status === "active").length;
@@ -557,34 +496,50 @@ export default function HandConnectAgents() {
   return (
     <div style={{ minHeight: "100vh", background: "#0A0E1A", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
       <link href={FONT_LINK} rel="stylesheet" />
+
+      {/* Ambient background */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
         <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,107,53,0.06) 0%, transparent 70%)", top: -200, right: -100 }} />
         <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%)", bottom: -100, left: -150 }} />
       </div>
 
       <div style={{ position: "relative", zIndex: 1 }}>
+        {/* HEADER */}
         <header style={{ background: "rgba(10,14,26,0.9)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 24px", position: "sticky", top: 0, zIndex: 100 }}>
           <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg, #FF6B35, #C13C00)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 4px 16px rgba(255,107,53,0.3)" }}>🤾</div>
               <div>
-                <h1 style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1, margin: 0 }}>HAND<span style={{ color: "#FF6B35" }}>CONNECT</span></h1>
+                <h1 style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1, margin: 0 }}>
+                  HAND<span style={{ color: "#FF6B35" }}>CONNECT</span>
+                </h1>
                 <span style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", letterSpacing: 2, fontWeight: 600 }}>GESTION DES SOUS-AGENTS</span>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <input type="text" placeholder="Rechercher un agent..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 12, outline: "none", width: 180, fontFamily: "'DM Sans', sans-serif" }} />
-              <button onClick={handleLogout} style={{
-                padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.2)",
-                background: "rgba(239,68,68,0.08)", color: "#EF4444", fontSize: 11, fontWeight: 600,
-                cursor: "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 6,
-              }}>🚪 Déconnexion</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <input
+                type="text"
+                placeholder="Rechercher un agent..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "rgba(255,255,255,0.04)",
+                  color: "#fff",
+                  fontSize: 12,
+                  outline: "none",
+                  width: 180,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              />
             </div>
           </div>
         </header>
 
         <main style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
+          {/* STATS */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
             {[
               { label: "Total Agents", value: totalAgents, color: "#FF6B35", icon: "🤖" },
@@ -592,7 +547,16 @@ export default function HandConnectAgents() {
               { label: "Critiques", value: criticalAgents, color: "#EF4444", icon: "🔴" },
               { label: "Total Tâches", value: totalTasks, color: "#3B82F6", icon: "📋" },
             ].map((stat, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "16px 18px", textAlign: "center" }}>
+              <div
+                key={i}
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 14,
+                  padding: "16px 18px",
+                  textAlign: "center",
+                }}
+              >
                 <div style={{ fontSize: 20, marginBottom: 6 }}>{stat.icon}</div>
                 <div style={{ fontSize: 28, fontWeight: 800, color: stat.color, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{stat.value}</div>
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 600, letterSpacing: 0.5 }}>{stat.label}</div>
@@ -600,31 +564,64 @@ export default function HandConnectAgents() {
             ))}
           </div>
 
+          {/* TABS */}
           <div style={{ display: "flex", gap: 6, marginBottom: 24, flexWrap: "wrap" }}>
             {tabs.map((t) => (
-              <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
-                padding: "8px 16px", borderRadius: 10,
-                border: activeTab === t.key ? "1px solid rgba(255,107,53,0.3)" : "1px solid rgba(255,255,255,0.06)",
-                background: activeTab === t.key ? "rgba(255,107,53,0.1)" : "rgba(255,255,255,0.02)",
-                color: activeTab === t.key ? "#FF6B35" : "rgba(255,255,255,0.5)",
-                fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                display: "flex", alignItems: "center", gap: 6,
-              }}>{t.icon} {t.label}</button>
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 10,
+                  border: activeTab === t.key ? "1px solid rgba(255,107,53,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                  background: activeTab === t.key ? "rgba(255,107,53,0.1)" : "rgba(255,255,255,0.02)",
+                  color: activeTab === t.key ? "#FF6B35" : "rgba(255,255,255,0.5)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "'DM Sans', sans-serif",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                {t.icon} {t.label}
+              </button>
             ))}
           </div>
 
+          {/* POLES */}
           {filteredPoles.map(([key, pole]) => {
             let agents = pole.agents;
             if (searchTerm) {
               const q = searchTerm.toLowerCase();
-              agents = agents.filter((a) => a.name.toLowerCase().includes(q) || a.role.toLowerCase().includes(q) || a.mission.toLowerCase().includes(q));
+              agents = agents.filter(
+                (a) =>
+                  a.name.toLowerCase().includes(q) ||
+                  a.role.toLowerCase().includes(q) ||
+                  a.mission.toLowerCase().includes(q)
+              );
             }
             if (agents.length === 0 && searchTerm) return null;
-            return <PoleSection key={key} pole={pole} agents={agents} onStatusChange={handleStatusChange} expandedId={expandedId} setExpandedId={setExpandedId} />;
+            return (
+              <PoleSection
+                key={key}
+                poleKey={key}
+                pole={pole}
+                agents={agents}
+                onStatusChange={handleStatusChange}
+                expandedId={expandedId}
+                setExpandedId={setExpandedId}
+              />
+            );
           })}
 
+          {/* WORKFLOW */}
           <div style={{ marginTop: 12, padding: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16 }}>
-            <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, fontSize: 18, color: "#FF6B35", margin: "0 0 14px" }}>🔄 WORKFLOW — PIPELINE D'ACQUISITION CLUBS</h3>
+            <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, fontSize: 18, color: "#FF6B35", margin: "0 0 14px" }}>
+              🔄 WORKFLOW — PIPELINE D'ACQUISITION CLUBS
+            </h3>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               {[
                 { step: "1", label: "Scraping FFHB", color: "#F59E0B" },
@@ -636,16 +633,25 @@ export default function HandConnectAgents() {
               ].map((s, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{
-                    padding: "8px 14px", borderRadius: 10, background: `${s.color}15`,
-                    border: `1px solid ${s.color}33`, color: s.color, fontSize: 11, fontWeight: 600,
-                    fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
-                  }}><span style={{ opacity: 0.5, marginRight: 4 }}>#{s.step}</span> {s.label}</div>
+                    padding: "8px 14px",
+                    borderRadius: 10,
+                    background: `${s.color}15`,
+                    border: `1px solid ${s.color}33`,
+                    color: s.color,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: "'DM Sans', sans-serif",
+                    whiteSpace: "nowrap",
+                  }}>
+                    <span style={{ opacity: 0.5, marginRight: 4 }}>#{s.step}</span> {s.label}
+                  </div>
                   {i < 5 && <span style={{ color: "rgba(255,255,255,0.15)", fontSize: 14 }}>→</span>}
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Footer */}
           <div style={{ textAlign: "center", padding: "32px 0 16px", fontSize: 10, color: "rgba(255,255,255,0.15)", fontFamily: "'DM Sans', sans-serif" }}>
             HAND CONNECT — Sous-Agents Management Dashboard — {new Date().getFullYear()}
           </div>

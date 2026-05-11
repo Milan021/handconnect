@@ -1,656 +1,322 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 
-const FONT_LINK = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap";
+const C = { primary: "#1D4ED8", primaryLight: "#3B82F6", primaryDark: "#1E3A8A", accent: "#DC2626", accentLight: "#F87171", bg: "#0B1120", bgCard: "rgba(255,255,255,0.04)", bgHover: "rgba(255,255,255,0.07)", surface: "#111827", border: "rgba(255,255,255,0.08)", borderBlue: "rgba(29,78,216,0.4)", text: "#F1F5F9", muted: "rgba(255,255,255,0.5)", dim: "rgba(255,255,255,0.3)", green: "#10B981", greenBg: "rgba(16,185,129,0.12)", gold: "#FBBF24" };
 
-// ─── ADMIN CREDENTIALS ──────────────────────────────────────────────────────
-// ⚠️ Change ces identifiants avant de déployer en production !
-const ADMIN_EMAIL = "admin@handconnect.fr";
-const ADMIN_PASSWORD = "HandConnect2026!";
+const PLAYERS = [
+  { id:1, first:"Lucas", last:"Moreau", pos:"arriere_gauche", club:"USM Villeparisis", city:"Paris", rating:4.7, height:192, age:26, avail:true, bio:"Arrière puissant, tir à 9m redoutable.", tags:["Tir puissant","Leadership"], phone:"06 12 34 56 78", email:"lucas.moreau@email.com", verified:true, premium:true, div:"N2", goals:89, mj:22, eff:62.7 },
+  { id:2, first:"Aminata", last:"Diallo", pos:"ailier_gauche", club:"AS Bondy", city:"Bondy", rating:4.3, height:174, age:24, avail:true, bio:"Ailière explosive, rapide en contre-attaque.", tags:["Vitesse","Contre-attaque"], phone:"06 23 45 67 89", email:"aminata.d@email.com", verified:true, premium:false, div:"N3", goals:67, mj:20, eff:70.5 },
+  { id:3, first:"Chloé", last:"Lefèvre", pos:"demi_centre", club:null, city:"Lyon", rating:4.5, height:175, age:27, avail:true, bio:"Meneuse créative, vision exceptionnelle.", tags:["Vision","Passes"], phone:"06 45 67 89 01", email:"chloe.lf@email.com", verified:false, premium:true, div:"N1F", goals:72, mj:26, eff:58.1 },
+  { id:4, first:"Karim", last:"Benzarti", pos:"gardien", club:"USAM Nîmes", city:"Nîmes", rating:4.8, height:190, age:32, avail:false, bio:"Gardien haut niveau, réflexes exceptionnels.", tags:["Réflexes","Envergure"], phone:"06 56 78 90 12", email:"karim.bz@email.com", verified:true, premium:false, div:"Starligue", goals:2, mj:22, eff:34.2, isGK:true, saves:198, saveRate:34.2 },
+  { id:5, first:"Yassine", last:"Khaldi", pos:"arriere_droit", club:"Créteil", city:"Créteil", rating:4.2, height:188, age:25, avail:true, bio:"Arrière gaucher, tir extérieur décisif.", tags:["Tir extérieur","Gaucher"], phone:"06 78 90 12 34", email:"yassine.k@email.com", verified:true, premium:true, div:"N2", goals:61, mj:19, eff:58.1 },
+  { id:6, first:"Emma", last:"Petit", pos:"ailier_droit", club:"Brest BH", city:"Brest", rating:3.9, height:170, age:22, avail:true, bio:"Jeune ailière prometteuse.", tags:["Jeune talent","Rapidité"], phone:"06 67 89 01 23", email:"emma.p@email.com", verified:true, premium:false, div:"D1F", goals:54, mj:18, eff:69.2 },
+];
 
-// ─── DATA ────────────────────────────────────────────────────────────────────
+const TRAINERS = [
+  { id:101, first:"Marc", last:"Dubois", age:42, city:"Lyon", titre:"titre5", specs:["Défense","Performance"], audience:["Seniors M","U18"], yrs:12, avail:true, club:"Bron Handball", div:"N3", salary:"1500-2200€/mois", bio:"Ancien joueur N1. La défense gagne les matchs.", phone:"06 11 22 33 44", email:"marc.dubois@email.com", premium:true },
+  { id:102, first:"Sophie", last:"Renard", age:35, city:"Grenoble", titre:"titre4", specs:["Formation jeunes","Babyhand"], audience:["U11","U13","U15"], yrs:7, avail:true, club:"Grenoble Sud HB", div:"—", salary:"1200-1600€/mois", bio:"J'aime voir les jeunes grandir avec le hand.", phone:"06 22 33 44 55", email:"sophie.renard@email.com", premium:false },
+  { id:103, first:"Julien", last:"Martinez", age:38, city:"Saint-Étienne", titre:"titre5", specs:["Prépa physique","Performance"], audience:["Seniors M","Seniors F"], yrs:15, avail:true, club:"Saint-Étienne HB", div:"N2", salary:"1800-2500€/mois", bio:"Coach exigeant. La prépa physique est le socle.", phone:"06 33 44 55 66", email:"julien.martinez@email.com", premium:true },
+];
 
-const initialAgents = {
-  cto: {
-    label: "🧠 Pôle CTO — Architecture & Vision",
-    color: "#FF6B35",
-    description: "Responsable de la vision technique, des choix d'architecture, de la roadmap produit et de la supervision des équipes tech.",
-    agents: [
-      {
-        id: "cto-1",
-        name: "Agent Architecte Solution",
-        role: "CTO / Lead Architect",
-        mission: "Définir l'architecture technique de Hand Connect (stack, infra, API, BDD). Valider les choix technologiques et assurer la scalabilité.",
-        tasks: [
-          "Définir le stack technique (React Native / Flutter, Node.js / Python, PostgreSQL / Firebase)",
-          "Concevoir l'architecture microservices ou monolithique",
-          "Mettre en place le CI/CD (GitHub Actions, Vercel, Docker)",
-          "Définir la stratégie de déploiement (cloud provider, staging, prod)",
-          "Superviser la sécurité et la conformité RGPD",
-        ],
-        status: "active",
-        priority: "critical",
-        kpis: ["Architecture validée", "Stack choisi", "Infra déployée"],
-      },
-      {
-        id: "cto-2",
-        name: "Agent Roadmap Produit",
-        role: "Product Owner Technique",
-        mission: "Structurer la roadmap technique, prioriser les features, coordonner les sprints entre dev et test.",
-        tasks: [
-          "Définir les User Stories et les critères d'acceptation",
-          "Planifier les sprints (2 semaines) avec les dev et testeurs",
-          "Prioriser le backlog selon la valeur business (MoSCoW)",
-          "Coordonner les releases et les démos",
-          "Rédiger la documentation technique",
-        ],
-        status: "active",
-        priority: "high",
-        kpis: ["Vélocité sprints", "Features livrées/sprint", "Backlog priorisé"],
-      },
-    ],
-  },
-  dev: {
-    label: "💻 Pôle Développement",
-    color: "#3B82F6",
-    description: "Équipe de développeurs front-end, back-end et mobile responsable du code, des fonctionnalités et de l'intégration.",
-    agents: [
-      {
-        id: "dev-1",
-        name: "Agent Frontend Mobile",
-        role: "Développeur Mobile (React Native / Flutter)",
-        mission: "Développer l'application mobile Hand Connect pour iOS et Android avec une UX fluide et performante.",
-        tasks: [
-          "Développer les écrans : profil joueur, recherche club, messagerie, offres",
-          "Implémenter le système d'authentification (OAuth, email/password)",
-          "Intégrer les notifications push (Firebase Cloud Messaging)",
-          "Optimiser les performances (lazy loading, cache, animations 60fps)",
-          "Gérer le responsive et l'accessibilité",
-        ],
-        status: "active",
-        priority: "critical",
-        kpis: ["Écrans livrés", "Performance Lighthouse > 90", "Crash rate < 0.1%"],
-      },
-      {
-        id: "dev-2",
-        name: "Agent Backend API",
-        role: "Développeur Backend (Node.js / Python)",
-        mission: "Construire et maintenir l'API REST/GraphQL, la base de données et les services métier de Hand Connect.",
-        tasks: [
-          "Concevoir et implémenter les endpoints API (joueurs, clubs, offres, matchs)",
-          "Modéliser la base de données (joueurs, clubs, contrats, statistiques)",
-          "Implémenter le système de matching joueur/club intelligent",
-          "Gérer l'upload et le stockage des médias (vidéos, photos profil)",
-          "Mettre en place le système de messagerie temps réel (WebSocket)",
-        ],
-        status: "active",
-        priority: "critical",
-        kpis: ["Endpoints livrés", "Temps de réponse < 200ms", "Uptime 99.9%"],
-      },
-      {
-        id: "dev-3",
-        name: "Agent Dashboard Web",
-        role: "Développeur Frontend Web (React / Next.js)",
-        mission: "Développer le dashboard web pour les clubs et les administrateurs Hand Connect.",
-        tasks: [
-          "Créer le dashboard club (gestion effectif, recrutement, statistiques)",
-          "Développer l'interface admin (validation profils, modération, analytics)",
-          "Implémenter les visualisations de données (graphiques, stats joueurs)",
-          "Intégrer le système de paiement (Stripe) pour les abonnements clubs",
-          "Développer la landing page marketing",
-        ],
-        status: "pending",
-        priority: "high",
-        kpis: ["Pages livrées", "Conversion landing page", "Taux rebond < 40%"],
-      },
-    ],
-  },
-  test: {
-    label: "🧪 Pôle Test & Qualité",
-    color: "#10B981",
-    description: "Équipe de testeurs QA responsable de la validation fonctionnelle, des tests automatisés et de la qualité globale du produit.",
-    agents: [
-      {
-        id: "test-1",
-        name: "Agent QA Fonctionnel",
-        role: "Testeur QA / Recetteur",
-        mission: "Valider chaque feature livrée par les développeurs, rédiger et exécuter les cas de test, reporter les bugs.",
-        tasks: [
-          "Rédiger les plans de test pour chaque User Story",
-          "Exécuter les tests de recette (inscription, profil, matching, messagerie)",
-          "Reporter et suivre les bugs sur Jira/Linear avec sévérité et reproductibilité",
-          "Valider les corrections de bugs (test de non-régression)",
-          "Tester sur les différents devices (iOS/Android, différentes tailles d'écran)",
-        ],
-        status: "active",
-        priority: "high",
-        kpis: ["Cas de test exécutés", "Taux de bugs bloquants < 5%", "Coverage fonctionnel > 80%"],
-      },
-      {
-        id: "test-2",
-        name: "Agent Test Automatisé",
-        role: "QA Automation Engineer",
-        mission: "Mettre en place et maintenir la suite de tests automatisés (unit, intégration, E2E) pour garantir la qualité continue.",
-        tasks: [
-          "Configurer le framework de tests (Jest, Cypress, Detox pour mobile)",
-          "Écrire les tests unitaires pour les services backend critiques",
-          "Automatiser les parcours E2E clés (inscription → profil → match → contact)",
-          "Intégrer les tests dans le pipeline CI/CD",
-          "Monitorer la couverture de code et les métriques qualité",
-        ],
-        status: "pending",
-        priority: "medium",
-        kpis: ["Couverture tests > 70%", "Tests E2E automatisés", "Temps pipeline < 10min"],
-      },
-    ],
-  },
-  commercial: {
-    label: "📞 Pôle Commercial — Acquisition Clubs",
-    color: "#F59E0B",
-    description: "Équipe commerciale dédiée à contacter les présidents de clubs de handball pour leur proposer de tester Hand Connect en version bêta.",
-    agents: [
-      {
-        id: "com-1",
-        name: "Agent Prospection & Base de Données",
-        role: "Sales Data Analyst",
-        mission: "Constituer et enrichir la base de données de tous les clubs de handball en France avec les coordonnées des présidents.",
-        tasks: [
-          "Scraper les annuaires fédéraux (FFHB) pour lister tous les clubs par ligue/comité",
-          "Collecter les noms et emails des présidents de club (site fédéral, LinkedIn, Google)",
-          "Segmenter les clubs par division (N1, N2, N3, Régional, Départemental)",
-          "Prioriser les clubs : commencer par N1/N2/N3 puis descendre",
-          "Enrichir les fiches avec : taille effectif, ville, division, historique transferts",
-        ],
-        status: "active",
-        priority: "critical",
-        kpis: ["Nb clubs dans la BDD", "Taux d'enrichissement > 80%", "Contacts qualifiés"],
-      },
-      {
-        id: "com-2",
-        name: "Agent Emailing & Séquences",
-        role: "Growth / Outbound Specialist",
-        mission: "Concevoir et exécuter les campagnes d'emailing automatisées pour inviter les présidents à tester Hand Connect.",
-        tasks: [
-          "Rédiger les séquences email (3 touchpoints : intro → relance → dernier appel)",
-          "Personnaliser chaque email avec le nom du club, la division, la ville",
-          "Configurer l'outil d'emailing (Lemlist, Instantly, ou Brevo)",
-          "A/B tester les objets d'email pour optimiser le taux d'ouverture",
-          "Suivre les KPIs : taux d'ouverture, de clic, de réponse, de RDV pris",
-        ],
-        status: "active",
-        priority: "critical",
-        kpis: ["Taux ouverture > 40%", "Taux réponse > 15%", "RDV pris / semaine"],
-      },
-      {
-        id: "com-3",
-        name: "Agent Phoning & Closing",
-        role: "Business Developer",
-        mission: "Appeler les présidents de club pour présenter Hand Connect, répondre aux objections et convertir en utilisateurs bêta.",
-        tasks: [
-          "Préparer le script d'appel adapté au handball (parler le langage du hand)",
-          "Appeler les présidents ayant ouvert les emails mais pas répondu",
-          "Présenter la proposition de valeur : gratuit en bêta, gain de temps recrutement, visibilité joueurs",
-          "Gérer les objections courantes ('on recrute en local', 'pas le temps', 'déjà Handnews')",
-          "Planifier les démos et onboardings pour les clubs intéressés",
-        ],
-        status: "pending",
-        priority: "high",
-        kpis: ["Appels / jour", "Taux de conversion appel → démo", "Clubs onboardés"],
-      },
-      {
-        id: "com-4",
-        name: "Agent Partenariats & Réseaux",
-        role: "Partnership Manager",
-        mission: "Nouer des partenariats avec les ligues régionales, comités départementaux et médias handball pour amplifier l'acquisition.",
-        tasks: [
-          "Contacter les 18 ligues régionales FFHB pour proposer un partenariat",
-          "Proposer aux ligues d'intégrer Hand Connect dans leur communication aux clubs",
-          "Identifier et approcher les influenceurs/médias handball (HandNews, HandZone, Parlons Hand)",
-          "Organiser des webinaires de présentation pour les comités départementaux",
-          "Négocier une visibilité lors des événements fédéraux (AG, tournois)",
-        ],
-        status: "pending",
-        priority: "medium",
-        kpis: ["Ligues partenaires", "Articles/posts obtenus", "Clubs via partenariats"],
-      },
-    ],
-  },
-};
+const CLUBS = [
+  { id:1, name:"USM Villeparisis", short:"USMV", city:"Villeparisis", div:"Nationale 2", seeking:["pivot","ailier_gauche"], plan:"premium", phone:"01 60 12 34 56", email:"contact@usmv-hand.fr" },
+  { id:2, name:"AS Bondy Handball", short:"ASB", city:"Bondy", div:"Nationale 3", seeking:["gardien","demi_centre"], plan:"standard", phone:"01 48 23 45 67", email:"secretariat@asb-hand.fr" },
+  { id:3, name:"HBC Nantes Réserve", short:"HBCN", city:"Nantes", div:"Nationale 1", seeking:[], plan:"premium", phone:"02 40 34 56 78", email:"reserve@hbcnantes.com" },
+  { id:4, name:"Brest Bretagne HB", short:"BBH", city:"Brest", div:"D1F", seeking:["arriere_gauche"], plan:"standard", phone:"02 98 45 67 89", email:"contact@bbh.fr" },
+];
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const ANNONCES = [
+  { id:1, type:"player", title:"Pivot expérimenté recherché", club:"USM Villeparisis", div:"N2", city:"Villeparisis", pos:"pivot", desc:"Recherchons un pivot solide. Min 3 ans d'expérience.", urgent:true, cands:7, bens:["prime","logement","job"] },
+  { id:2, type:"player", title:"Gardien(ne) saison 2026-27", club:"AS Bondy", div:"N3", city:"Bondy", pos:"gardien", desc:"Profil fiable pour la prochaine saison.", urgent:false, cands:12, bens:["prime","formation"] },
+  { id:3, type:"player", title:"Ailier gauche rapide", club:"USAM Nîmes", div:"Starligue", city:"Nîmes", pos:"ailier_gauche", desc:"Profil athlétique pour aile gauche.", urgent:true, cands:4, bens:["prime","logement"] },
+  { id:4, type:"trainer", title:"Entraîneur Seniors M — N3", club:"AS Bondy", div:"N3", city:"Bondy", titre:"titre5", desc:"Recherchons un entraîneur Titre V pour nos Seniors.", urgent:false, cands:5, bens:["prime"], salary:"1400-1800€/mois" },
+  { id:5, type:"trainer", title:"Éducateur jeunes U13-U15", club:"Brest BH", div:"D1F", city:"Brest", titre:"titre4", desc:"Notre école de hand recherche un éducateur Titre IV.", urgent:false, cands:8, bens:["logement","formation"], salary:"900-1300€/mois" },
+];
 
-const statusConfig = {
-  active: { label: "Actif", color: "#10B981", bg: "rgba(16,185,129,0.12)" },
-  pending: { label: "En attente", color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-  paused: { label: "Pausé", color: "#6B7280", bg: "rgba(107,114,128,0.12)" },
-  done: { label: "Terminé", color: "#3B82F6", bg: "rgba(59,130,246,0.12)" },
-};
+const PRICING = [
+  { key:"free", label:"Club Free", price:0, per:"", desc:"Pour découvrir", feats:["1 annonce active","10 profils visibles","Messagerie limitée"], color:C.dim },
+  { key:"standard", label:"Club Standard", price:19, per:"/mois", desc:"Pour les clubs actifs", feats:["Annonces illimitées","Tous les profils","Messagerie illimitée","Alertes candidats"], color:C.primary, pop:true },
+  { key:"premium", label:"Club Premium", price:49, per:"/mois", desc:"Pour les ambitieux", feats:["Tout Standard +","Annonces en avant","Stats FFHB avancées","Support prioritaire"], color:C.gold },
+];
 
-const priorityConfig = {
-  critical: { label: "Critique", color: "#EF4444", icon: "🔴" },
-  high: { label: "Haute", color: "#F59E0B", icon: "🟠" },
-  medium: { label: "Moyenne", color: "#3B82F6", icon: "🔵" },
-  low: { label: "Basse", color: "#6B7280", icon: "⚪" },
-};
+const POS = { gardien:"Gardien", ailier_gauche:"Ailier G.", ailier_droit:"Ailier D.", arriere_gauche:"Arrière G.", arriere_droit:"Arrière D.", demi_centre:"Demi-centre", pivot:"Pivot" };
+const BEN_ICO = { prime:"💰", logement:"🏠", job:"💼", formation:"🎓" };
 
-// ─── LOGIN SCREEN ────────────────────────────────────────────────────────────
+/* ═══════ MICRO COMPONENTS ═══════ */
+function Bdg({children,color=C.primary,filled}){return <span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"3px 10px",background:filled?color:`${color}18`,color:filled?"#fff":color,borderRadius:6,fontSize:10,fontWeight:700,border:`1px solid ${color}30`,letterSpacing:.8,textTransform:"uppercase",whiteSpace:"nowrap"}}>{children}</span>}
+function Dot(){return <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 10px",background:C.greenBg,borderRadius:20,border:`1px solid ${C.green}30`}}><div style={{width:6,height:6,borderRadius:"50%",background:C.green,boxShadow:`0 0 8px ${C.green}60`}}/><span style={{color:C.green,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Dispo</span></div>}
+function Stars({r}){return <span style={{display:"inline-flex",alignItems:"center",gap:1}}>{[1,2,3,4,5].map(i=><span key={i} style={{color:i<=Math.round(r)?C.gold:"rgba(255,255,255,0.1)",fontSize:12}}>★</span>)}<span style={{marginLeft:5,fontSize:11,color:C.dim,fontFamily:"monospace"}}>{Number(r).toFixed(1)}</span></span>}
+function Toast({msg,onClose}){if(!msg)return null;return <div style={{position:"fixed",top:24,right:24,padding:"14px 22px",borderRadius:14,zIndex:9999,background:`${C.green}20`,backdropFilter:"blur(20px)",border:`1px solid ${C.green}40`,color:C.green,fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,0.3)",animation:"slideDown .4s cubic-bezier(0.16,1,0.3,1)",display:"flex",alignItems:"center",gap:10}}>{msg}<span onClick={onClose} style={{cursor:"pointer",opacity:.5,fontSize:16,marginLeft:8}}>✕</span></div>}
 
-function AdminLogin({ onLogin }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+/* ═══════ MODAL WRAPPER ═══════ */
+function Modal({children,onClose}){return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(180deg,${C.surface},${C.bg})`,borderRadius:24,maxWidth:500,width:"100%",overflow:"hidden",maxHeight:"90vh",overflowY:"auto",border:`1px solid ${C.border}`,animation:"modalUp .4s cubic-bezier(0.16,1,0.3,1)"}}>{children}</div></div>}
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+function ModalHeader({color,initials,onClose,badges}){return <div style={{height:120,background:`linear-gradient(135deg,${color},${color}cc)`,position:"relative"}}><button onClick={onClose} style={{position:"absolute",top:12,right:12,background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>{badges&&<div style={{position:"absolute",top:12,left:12,display:"flex",gap:6}}>{badges}</div>}<div style={{width:76,height:76,borderRadius:"50%",background:C.bg,border:`4px solid ${color}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:800,color,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-34,left:"50%",transform:"translateX(-50%)",boxShadow:"0 10px 30px rgba(0,0,0,0.4)"}}>{initials}</div></div>}
 
-    setTimeout(() => {
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        sessionStorage.setItem("hc_admin_auth", JSON.stringify({ email, ts: Date.now() }));
-        onLogin(true);
-      } else {
-        setError("Email ou mot de passe incorrect");
-        setLoading(false);
-      }
-    }, 800);
-  };
+function ContactBlock({phone,email}){return <div style={{background:C.bgCard,borderRadius:12,padding:14,border:`1px solid ${C.border}`,marginBottom:14}}><div style={{display:"flex",flexDirection:"column",gap:6}}><div style={{display:"flex",alignItems:"center",gap:10,fontSize:13}}>📱 <span style={{color:C.text,fontFamily:"monospace"}}>{phone}</span></div><div style={{display:"flex",alignItems:"center",gap:10,fontSize:13}}>✉️ <span style={{color:C.text,fontFamily:"monospace"}}>{email}</span></div></div></div>}
 
-  return (
-    <div style={{
-      minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center",
-      justifyContent: "center", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden",
-    }}>
-      <link href={FONT_LINK} rel="stylesheet" />
-      <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,107,53,0.08) 0%, transparent 70%)", top: -150, right: -100, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", bottom: -100, left: -100, pointerEvents: "none" }} />
+function Disclaimer(){return <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 14px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>ℹ️ HandConnect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>}
 
-      <div style={{
-        width: 380, padding: 40, background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24,
-        backdropFilter: "blur(20px)", position: "relative", zIndex: 1,
-      }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: "linear-gradient(135deg, #FF6B35, #C13C00)",
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            fontSize: 28, boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: 16,
-          }}>🤾</div>
-          <h1 style={{ fontSize: 32, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>
-            HAND<span style={{ color: "#FF6B35" }}>CONNECT</span>
-          </h1>
-          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: 2, fontWeight: 600, margin: 0 }}>ESPACE ADMINISTRATEUR</p>
-        </div>
-
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{
-            width: 44, height: 44, borderRadius: 12,
-            background: "rgba(255,107,53,0.08)", border: "1px solid rgba(255,107,53,0.15)",
-            display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 20,
-          }}>🔒</div>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 10, lineHeight: 1.5 }}>
-            Accès réservé aux administrateurs.<br />Connectez-vous pour continuer.
-          </p>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div>
-            <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>EMAIL</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@handconnect.fr"
-              style={{
-                width: "100%", padding: "12px 14px", borderRadius: 12,
-                border: error ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none",
-                fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box",
-              }} />
-          </div>
-
-          <div>
-            <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>MOT DE PASSE</label>
-            <div style={{ position: "relative" }}>
-              <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••••"
-                onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(e); }}
-                style={{
-                  width: "100%", padding: "12px 44px 12px 14px", borderRadius: 12,
-                  border: error ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                  background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none",
-                  fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box",
-                }} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)}
-                style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 14, padding: 0 }}>
-                {showPassword ? "🙈" : "👁️"}
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div style={{
-              padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)",
-              border: "1px solid rgba(239,68,68,0.2)", color: "#EF4444", fontSize: 12, fontWeight: 500,
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              <span>⚠️</span> {error}
-            </div>
-          )}
-
-          <button onClick={handleSubmit} disabled={loading || !email || !password}
-            style={{
-              padding: "14px 20px", borderRadius: 12, border: "none",
-              background: loading || !email || !password ? "rgba(255,107,53,0.2)" : "linear-gradient(135deg, #FF6B35, #C13C00)",
-              color: loading || !email || !password ? "rgba(255,255,255,0.3)" : "#fff",
-              fontSize: 13, fontWeight: 700, cursor: loading || !email || !password ? "not-allowed" : "pointer",
-              fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.3s",
-              boxShadow: loading || !email || !password ? "none" : "0 4px 20px rgba(255,107,53,0.3)", marginTop: 4,
-            }}>
-            {loading ? "Connexion en cours..." : "SE CONNECTER"}
-          </button>
-        </div>
-
-        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.15)", marginTop: 24, marginBottom: 0 }}>
-          Hand Connect © {new Date().getFullYear()} — Accès sécurisé
-        </p>
+/* ═══════ PLAYER CARD ═══════ */
+function PlayerCard({p,onClick,i,locked}){
+  return <div onClick={()=>onClick(p)} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",cursor:"pointer",border:`1px solid ${C.border}`,transition:"all .35s cubic-bezier(0.16,1,0.3,1)",position:"relative",animation:`fadeUp .5s ease ${i*.05}s both`,opacity:locked?.5:1}} onMouseEnter={e=>{if(!locked){e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=C.borderBlue;e.currentTarget.style.boxShadow=`0 16px 48px ${C.primary}15`}}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow=""}}>
+    {locked&&<div style={{position:"absolute",inset:0,zIndex:5,background:"rgba(11,17,32,0.65)",backdropFilter:"blur(3px)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6}}><span style={{fontSize:24}}>🔒</span><span style={{fontSize:10,color:C.muted,fontWeight:600,textTransform:"uppercase",letterSpacing:1.5}}>Plan Standard requis</span></div>}
+    {p.avail&&<div style={{position:"absolute",top:12,left:12,zIndex:2}}><Dot/></div>}
+    <div style={{position:"absolute",top:12,right:12,zIndex:2,display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>{p.verified&&<Bdg color={C.primaryLight}>✓ FFHB</Bdg>}{p.premium&&<Bdg color={C.gold}>⚡ Boost</Bdg>}</div>
+    <div style={{height:80,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,position:"relative"}}><div style={{width:56,height:56,borderRadius:"50%",background:C.bg,border:`3px solid ${C.primary}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:800,color:C.primaryLight,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-24,left:"50%",transform:"translateX(-50%)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>{p.first[0]}{p.last[0]}</div></div>
+    <div style={{padding:"30px 16px 16px",textAlign:"center"}}>
+      <h3 style={{margin:0,fontSize:15,fontWeight:700,color:C.text}}>{p.first} {p.last}</h3>
+      <p style={{margin:"2px 0",fontSize:10,color:C.primary,fontWeight:700,fontFamily:"monospace",textTransform:"uppercase",letterSpacing:1.5}}>{POS[p.pos]}</p>
+      <p style={{fontSize:10,color:C.dim}}>{p.club||"Sans club"} · {p.div}</p>
+      <div style={{margin:"8px 0 10px"}}><Stars r={p.rating}/></div>
+      <div style={{display:"flex",justifyContent:"center",gap:16,paddingTop:10,borderTop:`1px solid ${C.border}`}}>
+        {[[p.isGK?"Arrêts":"Buts",p.isGK?p.saves:p.goals],["MJ",p.mj],[p.isGK?"%Arr.":"Eff.",`${p.isGK?p.saveRate:p.eff}%`]].map(([l,v])=><div key={l} style={{textAlign:"center"}}><div style={{fontSize:17,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif"}}>{v}</div><div style={{fontSize:8,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>{l}</div></div>)}
       </div>
     </div>
-  );
+  </div>
 }
 
-// ─── AGENT CARD ──────────────────────────────────────────────────────────────
-
-function AgentCard({ agent, poleColor, onStatusChange, expanded, onToggle }) {
-  const st = statusConfig[agent.status];
-  const pr = priorityConfig[agent.priority];
-  const [taskChecks, setTaskChecks] = useState(() => agent.tasks.map(() => false));
-  const completedTasks = taskChecks.filter(Boolean).length;
-  const progress = Math.round((completedTasks / agent.tasks.length) * 100);
-
-  return (
-    <div onClick={onToggle} style={{
-      background: "rgba(255,255,255,0.03)",
-      border: `1px solid ${expanded ? poleColor + "44" : "rgba(255,255,255,0.06)"}`,
-      borderRadius: 16, overflow: "hidden", transition: "all 0.3s ease", cursor: "pointer",
-    }}>
-      <div style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{
-          width: 42, height: 42, borderRadius: 12,
-          background: `linear-gradient(135deg, ${poleColor}22, ${poleColor}08)`,
-          border: `1px solid ${poleColor}33`,
-          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0,
-        }}>
-          {agent.role.includes("CTO") ? "🏗️" : agent.role.includes("Mobile") ? "📱" : agent.role.includes("Backend") ? "⚙️" : agent.role.includes("Frontend") || agent.role.includes("Dashboard") ? "🖥️" : agent.role.includes("QA") || agent.role.includes("Test") ? "🔍" : agent.role.includes("Data") ? "📊" : agent.role.includes("Email") || agent.role.includes("Growth") ? "✉️" : agent.role.includes("Business") || agent.role.includes("Phoning") ? "📞" : agent.role.includes("Partner") ? "🤝" : agent.role.includes("Product") ? "📋" : "🤖"}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>{agent.name}</span>
-            <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
-            <span style={{ fontSize: 10, opacity: 0.5 }}>{pr.icon} {pr.label}</span>
-          </div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3, fontFamily: "'DM Sans', sans-serif" }}>{agent.role}</div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ position: "relative", width: 36, height: 36 }}>
-            <svg width="36" height="36" style={{ transform: "rotate(-90deg)" }}>
-              <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
-              <circle cx="18" cy="18" r="14" fill="none" stroke={poleColor} strokeWidth="3" strokeDasharray={`${(progress / 100) * 88} 88`} strokeLinecap="round" style={{ transition: "stroke-dasharray 0.5s ease" }} />
-            </svg>
-            <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.6)" }}>{progress}%</span>
-          </div>
-          <span style={{ fontSize: 16, transform: expanded ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.3s", color: "rgba(255,255,255,0.3)" }}>▾</span>
-        </div>
-      </div>
-
-      {expanded && (
-        <div style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(255,255,255,0.04)" }} onClick={(e) => e.stopPropagation()}>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, margin: "14px 0", fontFamily: "'DM Sans', sans-serif" }}>
-            <strong style={{ color: "rgba(255,255,255,0.7)" }}>Mission :</strong> {agent.mission}
-          </p>
-          <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
-            {Object.entries(statusConfig).map(([key, cfg]) => (
-              <button key={key} onClick={() => onStatusChange(agent.id, key)} style={{
-                padding: "4px 12px", borderRadius: 8,
-                border: agent.status === key ? `1px solid ${cfg.color}` : "1px solid rgba(255,255,255,0.08)",
-                background: agent.status === key ? cfg.bg : "transparent",
-                color: agent.status === key ? cfg.color : "rgba(255,255,255,0.4)",
-                fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-              }}>{cfg.label}</button>
-            ))}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {agent.tasks.map((task, i) => (
-              <label key={i} style={{
-                display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 12px", borderRadius: 10,
-                background: taskChecks[i] ? "rgba(16,185,129,0.06)" : "rgba(255,255,255,0.02)",
-                border: `1px solid ${taskChecks[i] ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.04)"}`,
-                cursor: "pointer",
-              }}>
-                <input type="checkbox" checked={taskChecks[i]} onChange={() => {
-                  const next = [...taskChecks]; next[i] = !next[i]; setTaskChecks(next);
-                }} style={{ accentColor: poleColor, marginTop: 2, flexShrink: 0 }} />
-                <span style={{
-                  fontSize: 12, color: taskChecks[i] ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.65)",
-                  textDecoration: taskChecks[i] ? "line-through" : "none", lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif",
-                }}>{task}</span>
-              </label>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-            {agent.kpis.map((kpi, i) => (
-              <span key={i} style={{
-                fontSize: 10, padding: "4px 10px", borderRadius: 8,
-                background: `${poleColor}11`, border: `1px solid ${poleColor}22`,
-                color: poleColor, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
-              }}>📈 {kpi}</span>
-            ))}
-          </div>
-        </div>
-      )}
+/* ═══════ PLAYER MODAL ═══════ */
+function PlayerModal({player:p,onClose}){
+  if(!p)return null;
+  return <Modal onClose={onClose}>
+    <ModalHeader color={C.primary} initials={p.first[0]+p.last[0]} onClose={onClose} badges={p.verified?<Bdg color="#93C5FD">✓ FFHB Vérifié</Bdg>:null}/>
+    <div style={{padding:"44px 28px 0",textAlign:"center"}}>
+      <h2 style={{fontSize:22,fontWeight:700,margin:0,color:C.text}}>{p.first} {p.last}</h2>
+      <p style={{color:C.primary,fontWeight:700,fontSize:11,fontFamily:"monospace",margin:"4px 0",textTransform:"uppercase",letterSpacing:2}}>{POS[p.pos]}</p>
+      <p style={{color:C.dim,fontSize:12,margin:0}}>{p.club||"Sans club"} · {p.city} · {p.age} ans · {p.height}cm</p>
+      <div style={{margin:"10px 0 16px"}}><Stars r={p.rating}/></div>
     </div>
-  );
+    <div style={{padding:"0 28px 28px"}}>
+      <div style={{display:"flex",justifyContent:"space-around",background:`${C.primary}10`,borderRadius:14,padding:16,border:`1px solid ${C.primary}20`,marginBottom:16}}>
+        {(p.isGK?[["Arrêts",p.saves],["%Arr.",`${p.saveRate}%`],["MJ",p.mj]]:[["Buts",p.goals],["Eff.",`${p.eff}%`],["MJ",p.mj]]).map(([l,v])=><div key={l} style={{textAlign:"center"}}><div style={{fontSize:28,fontWeight:800,color:C.primary,fontFamily:"'Bebas Neue',sans-serif"}}>{v}</div><div style={{fontSize:9,color:C.muted,textTransform:"uppercase",fontWeight:600}}>{l}</div></div>)}
+      </div>
+      <p style={{fontSize:13,color:C.muted,lineHeight:1.7,margin:"0 0 14px"}}>{p.bio}</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center",marginBottom:16}}>{p.tags.map(t=><span key={t} style={{background:`${C.primary}12`,color:C.primaryLight,fontSize:11,fontWeight:600,padding:"4px 12px",borderRadius:20,border:`1px solid ${C.primary}20`}}>{t}</span>)}</div>
+      <ContactBlock phone={p.phone} email={p.email}/>
+      <Disclaimer/>
+      <button style={{width:"100%",padding:"13px 0",border:"none",borderRadius:12,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${C.primary}30`}}>💬 Contacter</button>
+    </div>
+  </Modal>
 }
 
-// ─── POLE SECTION ────────────────────────────────────────────────────────────
-
-function PoleSection({ pole, agents, onStatusChange, expandedId, setExpandedId }) {
-  const totalTasks = agents.reduce((s, a) => s + a.tasks.length, 0);
-  const activeAgents = agents.filter((a) => a.status === "active").length;
-
-  return (
-    <div style={{ marginBottom: 32 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-        <div style={{ width: 4, height: 40, borderRadius: 4, background: `linear-gradient(180deg, ${pole.color}, ${pole.color}44)` }} />
-        <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, color: "#fff", margin: 0, lineHeight: 1.2 }}>{pole.label}</h2>
-          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "4px 0 0", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5 }}>{pole.description}</p>
-        </div>
-        <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
-          {[
-            { val: agents.length, lbl: "agents", col: pole.color },
-            { val: activeAgents, lbl: "actifs", col: "#10B981" },
-            { val: totalTasks, lbl: "tâches", col: "rgba(255,255,255,0.6)" },
-          ].map((s, i) => (
-            <div key={i} style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: s.col, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{s.val}</div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif" }}>{s.lbl}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {agents.map((agent) => (
-          <AgentCard key={agent.id} agent={agent} poleColor={pole.color} onStatusChange={onStatusChange} expanded={expandedId === agent.id} onToggle={() => setExpandedId(expandedId === agent.id ? null : agent.id)} />
-        ))}
-      </div>
+/* ═══════ TRAINER CARD ═══════ */
+function TrainerCard({t,onClick,i,locked}){
+  const tc=t.titre==="titre5"?C.accent:C.green;
+  const tl=t.titre==="titre5"?"Titre V":"Titre IV";
+  return <div onClick={()=>onClick(t)} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",cursor:"pointer",border:`1px solid ${C.border}`,transition:"all .35s cubic-bezier(0.16,1,0.3,1)",position:"relative",animation:`fadeUp .5s ease ${i*.05}s both`,opacity:locked?.5:1}} onMouseEnter={e=>{if(!locked){e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=`${C.accent}40`;e.currentTarget.style.boxShadow=`0 16px 48px ${C.accent}10`}}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow=""}}>
+    {locked&&<div style={{position:"absolute",inset:0,zIndex:5,background:"rgba(11,17,32,0.65)",backdropFilter:"blur(3px)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:6}}><span style={{fontSize:24}}>🔒</span><span style={{fontSize:10,color:C.muted,fontWeight:600,textTransform:"uppercase",letterSpacing:1.5}}>Plan Standard requis</span></div>}
+    {t.avail&&<div style={{position:"absolute",top:12,left:12,zIndex:2}}><Dot/></div>}
+    <div style={{position:"absolute",top:12,right:12,zIndex:2,display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}><Bdg color={tc}>{tl}</Bdg>{t.premium&&<Bdg color={C.gold}>⚡ Pro</Bdg>}</div>
+    <div style={{height:80,background:`linear-gradient(135deg,${C.accent},#991B1B)`,position:"relative"}}><div style={{width:56,height:56,borderRadius:"50%",background:C.bg,border:`3px solid ${C.accent}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:800,color:C.accentLight,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-24,left:"50%",transform:"translateX(-50%)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>{t.first[0]}{t.last[0]}</div></div>
+    <div style={{padding:"30px 16px 16px",textAlign:"center"}}>
+      <h3 style={{margin:0,fontSize:15,fontWeight:700,color:C.text}}>{t.first} {t.last}</h3>
+      <p style={{margin:"2px 0",fontSize:10,color:C.accent,fontWeight:700,fontFamily:"monospace",textTransform:"uppercase",letterSpacing:1.5}}>Coach · {t.yrs} ans</p>
+      <p style={{fontSize:10,color:C.dim}}>{t.club} · {t.city}</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:4,justifyContent:"center",margin:"10px 0 12px"}}>{t.audience.slice(0,3).map(a=><span key={a} style={{background:`${C.accent}12`,color:C.accentLight,fontSize:9,padding:"2px 8px",borderRadius:6,fontWeight:600,border:`1px solid ${C.accent}18`}}>{a}</span>)}</div>
+      <div style={{display:"flex",justifyContent:"center",gap:14,paddingTop:10,borderTop:`1px solid ${C.border}`}}>{[["Exp.",`${t.yrs}a`],["Ville",t.city.slice(0,6)]].map(([l,v])=><div key={l} style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif"}}>{v}</div><div style={{fontSize:8,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>{l}</div></div>)}</div>
     </div>
-  );
+  </div>
 }
 
-// ─── MAIN APP ────────────────────────────────────────────────────────────────
-
-export default function HandConnectAgents() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
-  const [data, setData] = useState(initialAgents);
-  const [activeTab, setActiveTab] = useState("all");
-  const [expandedId, setExpandedId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    const session = sessionStorage.getItem("hc_admin_auth");
-    if (session) {
-      try {
-        const parsed = JSON.parse(session);
-        if (Date.now() - parsed.ts < 4 * 60 * 60 * 1000) {
-          setIsAuthenticated(true);
-        } else {
-          sessionStorage.removeItem("hc_admin_auth");
-        }
-      } catch { sessionStorage.removeItem("hc_admin_auth"); }
-    }
-    setCheckingSession(false);
-  }, []);
-
-  const handleLogout = () => {
-    sessionStorage.removeItem("hc_admin_auth");
-    setIsAuthenticated(false);
-  };
-
-  const handleStatusChange = useCallback((agentId, newStatus) => {
-    setData((prev) => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = { ...next[key], agents: next[key].agents.map((a) => a.id === agentId ? { ...a, status: newStatus } : a) };
-      }
-      return next;
-    });
-  }, []);
-
-  if (checkingSession) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <link href={FONT_LINK} rel="stylesheet" />
-        <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Chargement...</div>
+/* ═══════ TRAINER MODAL ═══════ */
+function TrainerModal({trainer:t,onClose}){
+  if(!t)return null;
+  const tc=t.titre==="titre5"?C.accent:C.green;
+  return <Modal onClose={onClose}>
+    <ModalHeader color={C.accent} initials={t.first[0]+t.last[0]} onClose={onClose} badges={<Bdg color={tc}>{t.titre==="titre5"?"Titre V":"Titre IV"}</Bdg>}/>
+    <div style={{padding:"44px 28px 0",textAlign:"center"}}>
+      <h2 style={{fontSize:22,fontWeight:700,margin:0,color:C.text}}>{t.first} {t.last}</h2>
+      <p style={{color:C.accent,fontWeight:700,fontSize:11,fontFamily:"monospace",margin:"4px 0",textTransform:"uppercase",letterSpacing:2}}>Entraîneur · {t.yrs} ans</p>
+      <p style={{color:C.dim,fontSize:12,margin:0}}>{t.city} · {t.age} ans</p>
+    </div>
+    <div style={{padding:"16px 28px 28px"}}>
+      <p style={{fontSize:13,color:C.muted,lineHeight:1.7,textAlign:"center",margin:"0 0 16px"}}>{t.bio}</p>
+      <div style={{marginBottom:14}}><p style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:8,fontWeight:600}}>Spécialités</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{t.specs.map(s=><span key={s} style={{background:`${C.accent}12`,color:C.accentLight,fontSize:11,fontWeight:600,padding:"4px 12px",borderRadius:20,border:`1px solid ${C.accent}18`}}>{s}</span>)}</div></div>
+      <div style={{marginBottom:14}}><p style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:8,fontWeight:600}}>Public</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{t.audience.map(a=><span key={a} style={{background:`${C.primary}12`,color:C.primaryLight,fontSize:11,fontWeight:600,padding:"4px 12px",borderRadius:20,border:`1px solid ${C.primary}18`}}>{a}</span>)}</div></div>
+      <div style={{background:C.bgCard,borderRadius:12,padding:14,border:`1px solid ${C.border}`,marginBottom:14}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}><span style={{color:C.muted}}>Prétentions</span><span style={{color:C.accent,fontWeight:700,fontFamily:"monospace"}}>{t.salary}</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}><span style={{color:C.muted}}>Club actuel</span><span style={{color:C.text}}>{t.club}</span></div>
       </div>
-    );
-  }
+      <ContactBlock phone={t.phone} email={t.email}/>
+      <Disclaimer/>
+      <button style={{width:"100%",padding:"13px 0",border:"none",borderRadius:12,background:`linear-gradient(135deg,${C.accent},#991B1B)`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${C.accent}30`}}>💬 Contacter</button>
+    </div>
+  </Modal>
+}
 
-  if (!isAuthenticated) {
-    return <AdminLogin onLogin={setIsAuthenticated} />;
-  }
-
-  const tabs = [
-    { key: "all", label: "Vue globale", icon: "🌐" },
-    { key: "cto", label: "CTO", icon: "🧠" },
-    { key: "dev", label: "Dev", icon: "💻" },
-    { key: "test", label: "Test", icon: "🧪" },
-    { key: "commercial", label: "Commercial", icon: "📞" },
-  ];
-
-  const filteredPoles = activeTab === "all" ? Object.entries(data) : Object.entries(data).filter(([key]) => key === activeTab);
-  const allAgents = Object.values(data).flatMap((p) => p.agents);
-  const totalAgents = allAgents.length;
-  const activeAgents = allAgents.filter((a) => a.status === "active").length;
-  const criticalAgents = allAgents.filter((a) => a.priority === "critical").length;
-  const totalTasks = allAgents.reduce((s, a) => s + a.tasks.length, 0);
-
-  return (
-    <div style={{ minHeight: "100vh", background: "#0A0E1A", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
-      <link href={FONT_LINK} rel="stylesheet" />
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-        <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,107,53,0.06) 0%, transparent 70%)", top: -200, right: -100 }} />
-        <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%)", bottom: -100, left: -150 }} />
+/* ═══════ ANNONCE CARD ═══════ */
+function AnnonceCard({a,i,onClick}){
+  const isTr=a.type==="trainer";const ac=isTr?C.accent:C.primary;
+  return <div onClick={()=>onClick(a)} style={{background:C.bgCard,borderRadius:16,padding:20,border:`1px solid ${C.border}`,borderLeft:`3px solid ${a.urgent?C.accent:ac}`,cursor:"pointer",transition:"all .25s ease",animation:`fadeUp .5s ease ${i*.05}s both`}} onMouseEnter={e=>{e.currentTarget.style.background=C.bgHover;e.currentTarget.style.transform="translateX(4px)"}} onMouseLeave={e=>{e.currentTarget.style.background=C.bgCard;e.currentTarget.style.transform=""}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:6}}>
+      <div style={{flex:1}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,flexWrap:"wrap"}}>
+          <Bdg color={ac}>{isTr?"🎯 Coach":"🤾 Joueur"}</Bdg>
+          {isTr&&<Bdg color={a.titre==="titre5"?C.accent:C.green}>{a.titre==="titre5"?"Titre V":"Titre IV"}</Bdg>}
+          {a.urgent&&<Bdg color={C.accent} filled>Urgent</Bdg>}
+        </div>
+        <h3 style={{margin:"0 0 3px",fontSize:15,fontWeight:700,color:C.text}}>{a.title}</h3>
+        <p style={{margin:0,fontSize:12,color:ac,fontWeight:600,fontFamily:"monospace"}}>{a.club} · {a.div} · {a.city}</p>
       </div>
+      <span style={{fontSize:11,color:C.dim,background:C.bgCard,padding:"4px 10px",borderRadius:20,whiteSpace:"nowrap",border:`1px solid ${C.border}`}}>{a.cands} cand.</span>
+    </div>
+    <p style={{fontSize:13,color:C.muted,margin:"8px 0 10px",lineHeight:1.6}}>{a.desc}</p>
+    {isTr&&a.salary&&<p style={{fontSize:12,color:C.accent,fontWeight:600,margin:"0 0 8px",fontFamily:"monospace"}}>💶 {a.salary}</p>}
+    {a.bens.length>0&&<div style={{display:"flex",gap:6,paddingTop:8,borderTop:`1px solid ${C.border}`}}>{a.bens.map(b=><span key={b} style={{fontSize:10,padding:"3px 8px",background:`${ac}10`,color:ac,borderRadius:6,fontWeight:600,border:`1px solid ${ac}18`}}>{BEN_ICO[b]} {b}</span>)}</div>}
+  </div>
+}
 
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <header style={{ background: "rgba(10,14,26,0.9)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 24px", position: "sticky", top: 0, zIndex: 100 }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg, #FF6B35, #C13C00)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 4px 16px rgba(255,107,53,0.3)" }}>🤾</div>
-              <div>
-                <h1 style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1, margin: 0 }}>HAND<span style={{ color: "#FF6B35" }}>CONNECT</span></h1>
-                <span style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", letterSpacing: 2, fontWeight: 600 }}>GESTION DES SOUS-AGENTS</span>
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <input type="text" placeholder="Rechercher un agent..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 12, outline: "none", width: 180, fontFamily: "'DM Sans', sans-serif" }} />
-              <button onClick={handleLogout} style={{
-                padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.2)",
-                background: "rgba(239,68,68,0.08)", color: "#EF4444", fontSize: 11, fontWeight: 600,
-                cursor: "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 6,
-              }}>🚪 Déconnexion</button>
-            </div>
-          </div>
-        </header>
+/* ═══════ ANNONCE MODAL ═══════ */
+function AnnonceModal({annonce:a,onClose}){
+  if(!a)return null;const isTr=a.type==="trainer";const ac=isTr?C.accent:C.primary;
+  return <Modal onClose={onClose}>
+    <div style={{padding:"24px 28px",background:`${ac}10`,borderBottom:`1px solid ${ac}20`,position:"relative"}}>
+      <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.06)",border:"none",color:C.dim,width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+        <Bdg color={ac}>{isTr?"🎯 Coach":"🤾 Joueur"}</Bdg>
+        {isTr&&<Bdg color={a.titre==="titre5"?C.accent:C.green}>{a.titre==="titre5"?"Titre V":"Titre IV"}</Bdg>}
+        {!isTr&&<Bdg color={C.primary}>{POS[a.pos]}</Bdg>}
+        {a.urgent&&<Bdg color={C.accent} filled>Urgent</Bdg>}
+      </div>
+      <h2 style={{margin:"0 0 4px",fontSize:20,fontWeight:700,color:C.text}}>{a.title}</h2>
+      <p style={{margin:0,fontSize:13,color:ac,fontWeight:600}}>{a.club} · {a.div} · {a.city}</p>
+    </div>
+    <div style={{padding:28}}>
+      <p style={{fontSize:14,color:C.muted,lineHeight:1.7,margin:"0 0 20px"}}>{a.desc}</p>
+      {isTr&&a.salary&&<div style={{background:`${C.accent}08`,borderRadius:12,padding:14,border:`1px solid ${C.accent}15`,marginBottom:18,textAlign:"center"}}><span style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:1.5}}>Rémunération</span><div style={{fontSize:20,color:C.accent,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",marginTop:4}}>{a.salary}</div></div>}
+      {a.bens.length>0&&<div style={{marginBottom:20}}><p style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:8,fontWeight:600}}>Avantages</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{a.bens.map(b=><span key={b} style={{padding:"6px 14px",background:`${ac}10`,color:ac,borderRadius:10,fontSize:12,fontWeight:600,border:`1px solid ${ac}18`}}>{BEN_ICO[b]} {b.charAt(0).toUpperCase()+b.slice(1)}</span>)}</div></div>}
+      <Disclaimer/>
+      <button style={{width:"100%",padding:"14px 0",border:"none",borderRadius:12,background:`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${ac}30`}}>✉️ Postuler</button>
+    </div>
+  </Modal>
+}
 
-        <main style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
-            {[
-              { label: "Total Agents", value: totalAgents, color: "#FF6B35", icon: "🤖" },
-              { label: "Agents Actifs", value: activeAgents, color: "#10B981", icon: "✅" },
-              { label: "Critiques", value: criticalAgents, color: "#EF4444", icon: "🔴" },
-              { label: "Total Tâches", value: totalTasks, color: "#3B82F6", icon: "📋" },
-            ].map((stat, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "16px 18px", textAlign: "center" }}>
-                <div style={{ fontSize: 20, marginBottom: 6 }}>{stat.icon}</div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: stat.color, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{stat.value}</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 600, letterSpacing: 0.5 }}>{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: "flex", gap: 6, marginBottom: 24, flexWrap: "wrap" }}>
-            {tabs.map((t) => (
-              <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
-                padding: "8px 16px", borderRadius: 10,
-                border: activeTab === t.key ? "1px solid rgba(255,107,53,0.3)" : "1px solid rgba(255,255,255,0.06)",
-                background: activeTab === t.key ? "rgba(255,107,53,0.1)" : "rgba(255,255,255,0.02)",
-                color: activeTab === t.key ? "#FF6B35" : "rgba(255,255,255,0.5)",
-                fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                display: "flex", alignItems: "center", gap: 6,
-              }}>{t.icon} {t.label}</button>
-            ))}
-          </div>
-
-          {filteredPoles.map(([key, pole]) => {
-            let agents = pole.agents;
-            if (searchTerm) {
-              const q = searchTerm.toLowerCase();
-              agents = agents.filter((a) => a.name.toLowerCase().includes(q) || a.role.toLowerCase().includes(q) || a.mission.toLowerCase().includes(q));
-            }
-            if (agents.length === 0 && searchTerm) return null;
-            return <PoleSection key={key} pole={pole} agents={agents} onStatusChange={handleStatusChange} expandedId={expandedId} setExpandedId={setExpandedId} />;
-          })}
-
-          <div style={{ marginTop: 12, padding: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16 }}>
-            <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, fontSize: 18, color: "#FF6B35", margin: "0 0 14px" }}>🔄 WORKFLOW — PIPELINE D'ACQUISITION CLUBS</h3>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              {[
-                { step: "1", label: "Scraping FFHB", color: "#F59E0B" },
-                { step: "2", label: "Enrichissement BDD", color: "#F59E0B" },
-                { step: "3", label: "Séquence Email", color: "#F59E0B" },
-                { step: "4", label: "Relance Phoning", color: "#FF6B35" },
-                { step: "5", label: "Démo / Onboarding", color: "#10B981" },
-                { step: "6", label: "Club Actif ✅", color: "#10B981" },
-              ].map((s, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{
-                    padding: "8px 14px", borderRadius: 10, background: `${s.color}15`,
-                    border: `1px solid ${s.color}33`, color: s.color, fontSize: 11, fontWeight: 600,
-                    fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
-                  }}><span style={{ opacity: 0.5, marginRight: 4 }}>#{s.step}</span> {s.label}</div>
-                  {i < 5 && <span style={{ color: "rgba(255,255,255,0.15)", fontSize: 14 }}>→</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ textAlign: "center", padding: "32px 0 16px", fontSize: 10, color: "rgba(255,255,255,0.15)", fontFamily: "'DM Sans', sans-serif" }}>
-            HAND CONNECT — Sous-Agents Management Dashboard — {new Date().getFullYear()}
-          </div>
-        </main>
+/* ═══════ CLUB CARD ═══════ */
+function ClubCard({c,i}){
+  return <div style={{background:C.bgCard,borderRadius:16,padding:20,border:`1px solid ${C.border}`,animation:`fadeUp .5s ease ${i*.05}s both`,transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.borderBlue}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border}}>
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+      <div style={{width:46,height:46,borderRadius:12,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:14,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1}}>{c.short}</div>
+      <div style={{flex:1}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><h3 style={{margin:0,fontSize:15,fontWeight:700,color:C.text}}>{c.name}</h3>{c.plan==="premium"&&<Bdg color={C.gold}>👑</Bdg>}</div>
+        <p style={{margin:"2px 0 0",fontSize:12,color:C.dim}}>{c.city} · {c.div}</p>
       </div>
     </div>
-  );
+    {c.seeking.length>0&&<div style={{marginBottom:12}}><p style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,marginBottom:6,fontWeight:600}}>Postes recherchés</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{c.seeking.map(p=><Bdg key={p} color={C.primary}>{POS[p]}</Bdg>)}</div></div>}
+    <div style={{background:"rgba(0,0,0,0.15)",borderRadius:10,padding:10}}><div style={{fontSize:12,color:C.muted,display:"flex",flexDirection:"column",gap:4}}><span>📱 <span style={{fontFamily:"monospace"}}>{c.phone}</span></span><span>✉️ <span style={{fontFamily:"monospace"}}>{c.email}</span></span></div></div>
+  </div>
+}
+
+/* ═══════ PRICING ═══════ */
+function PricingTab({plan:cur,onChoose}){
+  return <div>
+    <div style={{textAlign:"center",marginBottom:28}}>
+      <h2 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:3,color:C.text,margin:"0 0 6px"}}>NOS <span style={{color:C.primary}}>OFFRES</span></h2>
+      <p style={{color:C.muted,fontSize:13}}>Sans commission · Sans engagement · Paiement sécurisé</p>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:16,marginBottom:24}}>
+      {PRICING.map((p,i)=>{const isCur=cur===p.key;return <div key={p.key} style={{background:p.pop?`${C.primary}08`:C.bgCard,borderRadius:20,padding:24,border:`1px solid ${p.pop?`${C.primary}30`:C.border}`,position:"relative",animation:`fadeUp .5s ease ${i*.08}s both`,transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}>
+        {p.pop&&<div style={{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:9,fontWeight:800,padding:"4px 14px",borderRadius:12,letterSpacing:1.5,textTransform:"uppercase",boxShadow:`0 4px 12px ${C.primary}30`}}>★ Populaire</div>}
+        <h3 style={{margin:"0 0 4px",fontSize:16,color:p.color,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{p.label.toUpperCase()}</h3>
+        <p style={{margin:0,fontSize:12,color:C.dim}}>{p.desc}</p>
+        <div style={{margin:"18px 0",display:"flex",alignItems:"baseline",gap:4}}><span style={{fontSize:42,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif",lineHeight:1}}>{p.price}€</span><span style={{fontSize:13,color:C.dim}}>{p.per}</span></div>
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18,minHeight:120}}>{p.feats.map(f=><div key={f} style={{display:"flex",alignItems:"flex-start",gap:8,fontSize:12}}><span style={{color:p.color||C.green,fontSize:12,marginTop:1}}>✓</span><span style={{color:C.muted}}>{f}</span></div>)}</div>
+        <button onClick={()=>onChoose(p.key)} disabled={isCur} style={{width:"100%",padding:"12px 0",border:isCur?`1px solid ${p.color}40`:"none",borderRadius:12,background:isCur?`${p.color}15`:(p.pop?`linear-gradient(135deg,${C.primary},${C.primaryDark})`:C.bgHover),color:isCur?p.color:"#fff",fontSize:12,fontWeight:700,cursor:isCur?"default":"pointer",boxShadow:p.pop&&!isCur?`0 6px 20px ${C.primary}25`:"none"}}>{isCur?"✓ Plan actuel":(p.price===0?"Commencer gratuitement":"Choisir ce plan →")}</button>
+      </div>})}
+    </div>
+    <Disclaimer/>
+  </div>
+}
+
+/* ═══════ UPGRADE MODAL ═══════ */
+function UpgradeModal({open,onClose,onUp}){
+  if(!open)return null;
+  return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(20px)",zIndex:2500,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(180deg,${C.surface},${C.bg})`,borderRadius:24,maxWidth:420,width:"100%",overflow:"hidden",border:`1px solid ${C.primary}30`,boxShadow:`0 40px 100px ${C.primary}15`,animation:"modalUp .4s cubic-bezier(0.16,1,0.3,1)"}}>
+      <div style={{padding:"28px 28px 20px",background:`${C.primary}10`,borderBottom:`1px solid ${C.primary}15`,textAlign:"center"}}><div style={{fontSize:36,marginBottom:8}}>🔓</div><h2 style={{margin:0,fontSize:22,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,color:C.text}}>PASSER AU STANDARD</h2><p style={{margin:"6px 0 0",fontSize:12,color:C.muted}}>Débloquez tous les profils</p></div>
+      <div style={{padding:24}}>
+        {["Annonces illimitées","Tous les profils","Messagerie illimitée","Alertes candidats"].map(f=><div key={f} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",fontSize:13}}><span style={{color:C.green,fontSize:14}}>✓</span><span style={{color:C.muted}}>{f}</span></div>)}
+        <div style={{background:`${C.primary}08`,borderRadius:12,padding:14,margin:"16px 0",textAlign:"center",border:`1px solid ${C.primary}15`}}><span style={{fontSize:36,fontFamily:"'Bebas Neue',sans-serif",fontWeight:800,color:C.primary}}>19€</span><span style={{fontSize:14,color:C.dim}}>/mois</span><p style={{margin:"4px 0 0",fontSize:11,color:C.dim}}>ou <strong style={{color:C.gold}}>190€/an</strong> (2 mois offerts)</p></div>
+        <div style={{display:"flex",gap:10}}><button onClick={onClose} style={{flex:1,padding:"12px 0",border:`1px solid ${C.border}`,borderRadius:12,background:"transparent",color:C.muted,fontSize:13,fontWeight:600,cursor:"pointer"}}>Plus tard</button><button onClick={onUp} style={{flex:2,padding:"12px 0",border:"none",borderRadius:12,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${C.primary}30`}}>Passer Standard →</button></div>
+      </div>
+    </div>
+  </div>
+}
+
+/* ═══════════════════════ MAIN APP ═══════════════════════ */
+export default function HandConnect(){
+  const [tab,setTab]=useState("annonces");
+  const [search,setSearch]=useState("");
+  const [posF,setPosF]=useState("");
+  const [availF,setAvailF]=useState(false);
+  const [aType,setAType]=useState("all");
+  const [selPlayer,setSelPlayer]=useState(null);
+  const [selTrainer,setSelTrainer]=useState(null);
+  const [selAnnonce,setSelAnnonce]=useState(null);
+  const [toast,setToast]=useState("");
+  const [showUp,setShowUp]=useState(false);
+  const [plan,setPlan]=useState("free");
+
+  const flash=(m)=>{setToast(m);setTimeout(()=>setToast(""),3000)};
+  const clickPlayer=(p)=>{if(plan==="free"&&p.id>3){setShowUp(true);return}setSelPlayer(p)};
+  const clickTrainer=(t)=>{if(plan==="free"&&t.id>102){setShowUp(true);return}setSelTrainer(t)};
+  const doUpgrade=(k)=>{setPlan(k||"standard");setShowUp(false);flash(`✓ Plan ${k||"Standard"} activé`)};
+
+  const fPlayers=useMemo(()=>PLAYERS.filter(p=>{if(posF&&p.pos!==posF)return false;if(availF&&!p.avail)return false;if(search)return`${p.first} ${p.last} ${p.city} ${p.club||""}`.toLowerCase().includes(search.toLowerCase());return true}),[search,posF,availF]);
+  const fTrainers=useMemo(()=>TRAINERS.filter(t=>{if(availF&&!t.avail)return false;if(search)return`${t.first} ${t.last} ${t.city}`.toLowerCase().includes(search.toLowerCase());return true}),[search,availF]);
+  const fAnnonces=ANNONCES.filter(a=>{if(aType!=="all"&&a.type!==aType)return false;if(search)return`${a.title} ${a.club} ${a.city}`.toLowerCase().includes(search.toLowerCase());return true});
+  const fClubs=CLUBS.filter(c=>search?`${c.name} ${c.city}`.toLowerCase().includes(search.toLowerCase()):true);
+
+  const tabs=[{k:"annonces",l:"Annonces",i:"📢"},{k:"joueurs",l:"Joueurs",i:"🤾"},{k:"entraineurs",l:"Entraîneurs",i:"🎯"},{k:"clubs",l:"Clubs",i:"🏟️"},{k:"tarifs",l:"Tarifs",i:"💎"}];
+  const inpS={padding:"11px 14px",background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,borderRadius:10,color:C.text,fontSize:13,outline:"none",transition:"all .2s",width:"100%",boxSizing:"border-box"};
+
+  const css=`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;margin:0;padding:0}@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}@keyframes modalUp{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}input:focus,select:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px ${C.primary}15!important}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}`;
+
+  return <>
+    <style>{css}</style>
+    <div style={{minHeight:"100vh",background:C.bg,color:C.text,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"fixed",top:-300,right:-200,width:700,height:700,borderRadius:"50%",background:`radial-gradient(circle,${C.primary}08,transparent 70%)`,pointerEvents:"none"}}/>
+      <div style={{position:"fixed",bottom:-300,left:-200,width:600,height:600,borderRadius:"50%",background:`radial-gradient(circle,${C.accent}05,transparent 70%)`,pointerEvents:"none"}}/>
+
+      <Toast msg={toast} onClose={()=>setToast("")}/>
+
+      <header style={{background:`${C.bg}ee`,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.border}`,padding:"0 20px",position:"sticky",top:0,zIndex:100}}>
+        <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:60}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${C.primary},${C.accent})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:`0 4px 14px ${C.primary}30`}}>🤾</div>
+            <h1 style={{fontSize:20,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,color:"#fff",lineHeight:1}}>HAND<span style={{color:C.primary}}>CONNECT</span></h1>
+            <span style={{fontSize:8,color:C.dim,background:C.bgCard,padding:"2px 7px",borderRadius:5,fontWeight:600,letterSpacing:1,border:`1px solid ${C.border}`}}>BETA</span>
+          </div>
+          <nav style={{display:"flex",gap:2}}>{tabs.map(t=><button key={t.k} onClick={()=>{setTab(t.k);setSearch("");setPosF("");setAType("all")}} style={{padding:"7px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,transition:"all .2s",background:tab===t.k?`${C.primary}18`:"transparent",color:tab===t.k?C.primaryLight:C.dim,whiteSpace:"nowrap"}}><span style={{marginRight:4,fontSize:12}}>{t.i}</span>{t.l}</button>)}</nav>
+          <Bdg color={plan==="free"?C.dim:plan==="premium"?C.gold:C.primary}>{plan==="free"?"Free":plan==="premium"?"👑 Premium":"Standard"}</Bdg>
+        </div>
+      </header>
+
+      <main style={{maxWidth:1100,margin:"0 auto",padding:"20px 20px 60px"}}>
+        {tab!=="tarifs"&&<div style={{marginBottom:18,animation:"fadeUp .3s ease"}}>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." style={{...inpS,flex:"1 1 200px",width:"auto"}}/>
+            {(tab==="joueurs"||(tab==="annonces"&&aType!=="trainer"))&&<select value={posF} onChange={e=>setPosF(e.target.value)} style={{...inpS,minWidth:140,width:"auto"}}><option value="">Tous postes</option>{Object.entries(POS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select>}
+            {(tab==="joueurs"||tab==="entraineurs")&&<button onClick={()=>setAvailF(!availF)} style={{padding:"11px 14px",border:`1px solid ${availF?`${C.green}40`:C.border}`,borderRadius:10,fontSize:12,fontWeight:600,cursor:"pointer",background:availF?C.greenBg:"transparent",color:availF?C.green:C.dim}}>🟢 Dispos</button>}
+          </div>
+          {tab==="annonces"&&<div style={{display:"flex",gap:6,marginTop:10}}>{[["all","Toutes"],["player","🤾 Joueurs"],["trainer","🎯 Coachs"]].map(([k,l])=><button key={k} onClick={()=>setAType(k)} style={{padding:"6px 12px",border:`1px solid ${aType===k?`${C.primary}40`:C.border}`,borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",background:aType===k?`${C.primary}15`:"transparent",color:aType===k?C.primaryLight:C.dim}}>{l}</button>)}</div>}
+        </div>}
+
+        {tab==="annonces"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>{fAnnonces.map((a,i)=><AnnonceCard key={a.id} a={a} i={i} onClick={setSelAnnonce}/>)}{fAnnonces.length===0&&<div style={{textAlign:"center",padding:50,color:C.dim}}>📭 Aucune annonce</div>}</div>}
+
+        {tab==="joueurs"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{fPlayers.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={clickPlayer} locked={plan==="free"&&p.id>3}/>)}{fPlayers.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:C.dim}}>Aucun joueur</div>}</div>}
+
+        {tab==="entraineurs"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{fTrainers.map((t,i)=><TrainerCard key={t.id} t={t} i={i} onClick={clickTrainer} locked={plan==="free"&&t.id>102}/>)}{fTrainers.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:C.dim}}>Aucun entraîneur</div>}</div>}
+
+        {tab==="clubs"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{fClubs.map((c,i)=><ClubCard key={c.id} c={c} i={i}/>)}</div>}
+
+        {tab==="tarifs"&&<PricingTab plan={plan} onChoose={doUpgrade}/>}
+      </main>
+
+      <PlayerModal player={selPlayer} onClose={()=>setSelPlayer(null)}/>
+      <TrainerModal trainer={selTrainer} onClose={()=>setSelTrainer(null)}/>
+      <AnnonceModal annonce={selAnnonce} onClose={()=>setSelAnnonce(null)}/>
+      <UpgradeModal open={showUp} onClose={()=>setShowUp(false)} onUp={()=>doUpgrade("standard")}/>
+    </div>
+  </>
 }

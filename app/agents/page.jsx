@@ -236,9 +236,9 @@ textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px ${C.prim
           <div style={{ fontSize: 48, marginBottom: 16 }}>🔐</div>
           <h2 style={{ color: C.text, fontSize: 22, marginBottom: 6, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 3 }}>ACCÈS ADMIN</h2>
           <p style={{ color: C.muted, fontSize: 12, marginBottom: 20 }}>Espace réservé au fondateur</p>
-          <input type="password" value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && pin === "Lyonnais1987*") setAdminOk(true); }} placeholder="Code d'accès" style={{ padding: "12px 16px", background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 14, outline: "none", textAlign: "center", width: 220 }} autoFocus />
+          <input type="password" value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && pin === "Milan021*") setAdminOk(true); }} placeholder="Code d'accès" style={{ padding: "12px 16px", background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 14, outline: "none", textAlign: "center", width: 220 }} autoFocus />
           <br />
-          <button onClick={() => { if (pin === "handball2026") setAdminOk(true); }} style={{ marginTop: 12, padding: "10px 28px", border: "none", borderRadius: 10, background: `linear-gradient(135deg,${C.primary},${C.primaryDark})`, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 14px ${C.primary}30` }}>Entrer</button>
+          <button onClick={() => { if (pin === "Milan021*") setAdminOk(true); }} style={{ marginTop: 12, padding: "10px 28px", border: "none", borderRadius: 10, background: `linear-gradient(135deg,${C.primary},${C.primaryDark})`, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 14px ${C.primary}30` }}>Entrer</button>
           {pin && pin !== "handball2026" && pin.length > 3 && <p style={{ color: C.accentLight, fontSize: 11, marginTop: 10 }}>Code incorrect</p>}
         </div>
       </div>

@@ -102,15 +102,12 @@ function AgentChat({ agent, onBack }) {
       });
       apiMessages.push({ role: "user", content: userContent });
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 2000,
           system: agent.systemPrompt,
           messages: apiMessages,
-        }),
       });
       const data = await response.json();
       const reply = data.content?.map(b => b.text || "").filter(Boolean).join("\n") || "Erreur de réponse.";

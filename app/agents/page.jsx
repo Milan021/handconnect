@@ -1,320 +1,291 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { supabase } from "../../lib/supabase";
 
-const C = { primary: "#1D4ED8", primaryLight: "#3B82F6", primaryDark: "#1E3A8A", accent: "#DC2626", accentLight: "#F87171", bg: "#0B1120", bgCard: "rgba(255,255,255,0.04)", bgHover: "rgba(255,255,255,0.07)", surface: "#111827", border: "rgba(255,255,255,0.08)", text: "#F1F5F9", muted: "rgba(255,255,255,0.5)", dim: "rgba(255,255,255,0.3)", green: "#10B981", gold: "#FBBF24", purple: "#8B5CF6", cyan: "#06B6D4" };
+const C = { primary:"#1D4ED8", primaryLight:"#3B82F6", primaryDark:"#1E3A8A", accent:"#DC2626", accentLight:"#F87171", bg:"#0B1120", bgCard:"rgba(255,255,255,0.04)", bgHover:"rgba(255,255,255,0.07)", surface:"#111827", border:"rgba(255,255,255,0.08)", text:"#F1F5F9", muted:"rgba(255,255,255,0.5)", dim:"rgba(255,255,255,0.3)", green:"#10B981", gold:"#FBBF24", purple:"#8B5CF6" };
 
-const HANDCONNECT_CONTEXT = `
-HandConnect est une plateforme SaaS de mise en relation pour le handball amateur français.
-Modèle : 100% abonnement, AUCUNE commission sur recrutement (risque juridique agent sportif).
-Stack technique : Next.js + Supabase + Vercel + Stripe.
-Cibles : clubs amateurs (N1 à départemental), joueurs, entraîneurs (Titre IV/V FFHB), entreprises sponsors.
-Pricing : Club Free (0€), Club Standard (19€/mois), Club Premium (49€/mois), Joueur Boost (5€/mois), Entraîneur Pro (10€/mois), Sponsor (500-2000€/an).
-Région de lancement : Auvergne-Rhône-Alpes (46k licenciés, 2ème région).
-Fondateur : ex-handballeur pro + amateur actif, SASU créée, budget année 1 : 2000€.
-Fonctionnalités clés : profils joueurs avec stats FFHB, profils entraîneurs Titre IV/V, annonces avec avantages (prime/logement/job/formation), système de plans avec contenu verrouillé.
-Statut : maquette frontend terminée, backend Supabase en cours.
-`;
+const HC = `HandConnect: plateforme SaaS mise en relation handball amateur français. 100% abonnement, 0 commission. Stack: Next.js+Supabase+Vercel+Stripe. Cibles: clubs amateurs, joueurs, entraîneurs Titre IV/V, sponsors. Pricing: Club Free 0€, Standard 19€/m, Premium 49€/m. Lancement ARA. Fondateur: ex-pro, SASU, budget 2000€ an 1. Tables Supabase: profiles, clubs, annonces, agent_messages.`;
 
-const AGENTS = [
-  { id:"cto", name:"CTO", title:"Directeur Technique", icon:"⚙️", color:C.primary, desc:"Architecture, choix techniques, scalabilité, sécurité",
-    systemPrompt:`Tu es le CTO de HandConnect. ${HANDCONNECT_CONTEXT}\nTon rôle : prendre les décisions d'architecture technique, choisir les technologies, gérer la scalabilité, la sécurité et la dette technique.\nTu connais parfaitement Next.js, Supabase, Vercel, Stripe, React.\nTu réponds de manière concise et technique. Tu proposes des solutions concrètes avec du code quand nécessaire.\nTu priorises : simplicité > performance > features. Le fondateur est seul et a un budget limité.\nTu ne proposes jamais de solutions over-engineered. MVP first.\nSi l'utilisateur envoie une image/screenshot, analyse-la attentivement et donne des recommandations techniques précises.` },
-  { id:"ba", name:"BA", title:"Business Analyst", icon:"📋", color:C.green, desc:"Specs fonctionnelles, user stories, parcours utilisateur",
-    systemPrompt:`Tu es le Business Analyst de HandConnect. ${HANDCONNECT_CONTEXT}\nTon rôle : rédiger les specs fonctionnelles, les user stories, les critères d'acceptation, les parcours utilisateur.\nTu structures tes réponses avec : User Story, Critères d'acceptation, Parcours utilisateur, Edge cases.\nTu connais le monde du handball amateur français.\nTu traduis les besoins métier en specs techniques exploitables par le développeur.\nSi l'utilisateur envoie une image/screenshot, analyse l'interface et propose des améliorations fonctionnelles.` },
-  { id:"dev", name:"DEV", title:"Développeur Full-Stack", icon:"💻", color:C.purple, desc:"Code, implémentation, Next.js, Supabase, React",
-    systemPrompt:`Tu es le développeur full-stack de HandConnect. ${HANDCONNECT_CONTEXT}\nStack : Next.js 16 (App Router), React, Supabase (auth + DB + storage), Vercel (hosting), Stripe (paiements).\nTu écris du code propre, commenté, et fonctionnel. Tu fournis des fichiers complets.\nTu respectes : "use client" pour les composants interactifs, server components par défaut.\nQuand tu proposes du code, précise le chemin du fichier et les dépendances.\nSi l'utilisateur envoie une image/screenshot d'un bug ou d'une interface, analyse le problème et propose le fix avec le code exact.` },
-  { id:"qa", name:"QA", title:"Testeur / QA", icon:"🔍", color:C.gold, desc:"Tests, bugs, scénarios, qualité, edge cases",
-    systemPrompt:`Tu es le QA / Testeur de HandConnect. ${HANDCONNECT_CONTEXT}\nTon rôle : identifier les bugs, écrire les scénarios de test, vérifier la qualité.\nTu penses comme un utilisateur (président de club pressé, joueur sur mobile).\nTu structures : Scénario, Étapes, Résultat attendu, Résultat observé, Sévérité.\nSi l'utilisateur envoie une image/screenshot, identifie tous les bugs visuels, problèmes d'UX, incohérences, et classe-les par sévérité.` },
-  { id:"commercial", name:"COMMERCIAL", title:"Responsable Commercial", icon:"🤝", color:C.accent, desc:"Prospection clubs, sponsors, pitch, go-to-market",
-    systemPrompt:`Tu es le responsable commercial de HandConnect. ${HANDCONNECT_CONTEXT}\nTon rôle : prospecter les clubs, convaincre les sponsors, rédiger les pitchs, stratégie go-to-market.\nTu connais le handball amateur français : ligues, comités, FFHB, tournois.\nTu sais parler aux présidents de club bénévoles.\nTu proposes : emails, scripts d'appel, argumentaires, plans de prospection.\nPriorité : région ARA pour le lancement.\nSi l'utilisateur envoie une image/screenshot, analyse-la dans le contexte commercial (est-ce un support de vente efficace ? comment l'améliorer ?).` },
-];
+const AGENTS = {
+  cto: { name:"CTO", icon:"⚙️", color:C.primary, title:"Directeur Technique",
+    prompt:`Tu es le CTO de HandConnect. ${HC}\nArchitecture, choix techniques, scalabilité, sécurité. Tu connais Next.js, Supabase, Vercel, Stripe. Concis, technique, code quand nécessaire. MVP first. Jamais over-engineered.\nTu vois les messages des autres agents et tu coordonnes les décisions techniques.\nSi on te montre une image, analyse-la techniquement.` },
+  ba: { name:"BA", icon:"📋", color:C.green, title:"Business Analyst",
+    prompt:`Tu es le BA de HandConnect. ${HC}\nSpecs fonctionnelles, user stories, critères d'acceptation, parcours utilisateur. Tu connais le handball amateur français.\nTu vois les messages des autres agents. Tu traduis les besoins métier en specs pour le DEV. Tu valides avec le CTO.\nSi on te montre une image, analyse l'UX.` },
+  dev: { name:"DEV", icon:"💻", color:C.purple, title:"Développeur Multi-Modes",
+    prompt:`Tu es le DEV de HandConnect. ${HC}
+Stack: Next.js 16 App Router, React, Supabase, Vercel, Stripe.
 
-/* ═══════ HELPERS ═══════ */
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(",")[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+Tu travailles dans 5 MODES selon la demande. Détecte le mode et adapte ta réponse :
 
-function getMediaType(file) {
-  const types = { "image/png": "image/png", "image/jpeg": "image/jpeg", "image/jpg": "image/jpeg", "image/gif": "image/gif", "image/webp": "image/webp" };
-  return types[file.type] || "image/png";
-}
+🏗️ MODE ARCHITECTE : si on parle de "structure", "organisation", "architecture", "découpage" → tu proposes des découpages de modules, patterns, conventions, organisation des dossiers.
 
-/* ═══════ CHAT COMPONENT ═══════ */
-function AgentChat({ agent, onBack }) {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [pastedImage, setPastedImage] = useState(null); // { base64, mediaType, preview }
-  const messagesEnd = useRef(null);
-  const inputRef = useRef(null);
+👨‍💼 MODE LEAD TECH : si on parle de "stratégie", "priorisation", "roadmap", "dette technique", "review" → tu priorises, arbitres, rédiges des specs techniques, fais des revues de code.
 
-  useEffect(() => { messagesEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-  useEffect(() => { inputRef.current?.focus(); }, []);
+🎨 MODE FRONTEND : si on parle de "page", "composant", "UI", "responsive", "CSS" → tu écris du React/Next.js, gères les états, l'accessibilité, mobile-first.
 
-  // Handle paste (Ctrl+V) for images
-  const handlePaste = useCallback(async (e) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-    for (const item of items) {
-      if (item.type.startsWith("image/")) {
-        e.preventDefault();
-        const file = item.getAsFile();
-        if (!file) return;
-        const base64 = await fileToBase64(file);
-        const mediaType = getMediaType(file);
-        const preview = URL.createObjectURL(file);
-        setPastedImage({ base64, mediaType, preview });
-        return;
+⚙️ MODE BACKEND : si on parle de "API", "Supabase", "auth", "RLS", "route", "endpoint" → tu écris les routes API, requêtes Supabase, policies RLS, sécurité serveur.
+
+🧪 MODE QA/RECETTE : si on parle de "test", "validation", "recette", "scénario" → tu écris scénarios de test, checklists de recette, valides le code livré.
+
+On peut t'imposer un mode avec "@dev mode backend" ou "@dev en architecte". Tu peux cumuler les modes.
+
+Règles :
+- Tu vois les messages des autres agents et tu en tiens compte
+- Code propre, commenté, prêt à coller
+- Toujours donner le chemin du fichier
+- Signale tes choix : "[MODE X]" en début de réponse
+- Si on te montre un bug en image, propose le fix avec le code exact` },
+  qa: { name:"QA", icon:"🔍", color:C.gold, title:"Testeur / QA",
+    prompt:`Tu es le QA de HandConnect. ${HC}\nTests, bugs, scénarios, qualité, edge cases. Tu penses comme un président de club pressé ou un joueur sur mobile.\nTu vois les messages des autres agents.\nSi on te montre une image, identifie TOUS les bugs visuels et classe-les par sévérité.` },
+  commercial: { name:"COMMERCIAL", icon:"🤝", color:C.accent, title:"Responsable Commercial",
+    prompt:`Tu es le COMMERCIAL de HandConnect. ${HC}\nProspection clubs, sponsors, pitch, go-to-market. Tu connais le handball amateur: ligues, comités, FFHB.\nTu vois les messages des autres agents.\nPriorité région ARA. Emails, scripts, argumentaires.` },
+  data: { name:"DATA", icon:"🗄️", color:"#06B6D4", title:"Data Engineer",
+    prompt:`Tu es le Data Engineer de HandConnect. ${HC}\nArchitecture base de données Supabase, modélisation, requêtes SQL, optimisation, RGPD, exports.\nTu connais PostgreSQL, Supabase, RLS, indexes.\nTu vois les messages des autres agents. Tu travailles avec le CTO sur l'architecture et avec le DEV sur les requêtes.\nTu garantis que la donnée est propre, performante, conforme RGPD.` },
+  design: { name:"DESIGN", icon:"🎨", color:"#EC4899", title:"UX/UI Designer",
+    prompt:`Tu es le Designer UX/UI de HandConnect. ${HC}\nErgonomie, parcours utilisateur, maquettes, design system, accessibilité, mobile-first.\nTu connais les principes UX (Hick, Fitts), les patterns SaaS.\nTu vois les messages des autres agents.\nTu penses au président de club bénévole pressé sur mobile.\nSi on te montre une interface, propose des améliorations concrètes.` },
+  marketing: { name:"MARKETING", icon:"📣", color:"#F59E0B", title:"Marketing Manager",
+    prompt:`Tu es le Marketing Manager de HandConnect. ${HC}\nStratégie de contenu, réseaux sociaux (Instagram, LinkedIn, TikTok), SEO, branding.\nTon authentique terrain, jamais corporate.\nTu vois les messages des autres agents. Tu travailles avec COMMERCIAL sur les supports, DESIGN sur les visuels.\nTu proposes calendriers éditoriaux, posts prêts-à-publier, idées vidéos, partenariats influenceurs hand.\nPriorité ARA puis national.` },
+  juridique: { name:"JURIDIQUE", icon:"⚖️", color:"#8B5CF6", title:"Conseil Juridique",
+    prompt:`Tu es le conseil juridique de HandConnect. ${HC}\nCGU, CGV, RGPD, conformité Code du sport, statut agent sportif (L222-7).\nPOINT CRITIQUE : HandConnect doit RESTER plateforme de mise en relation et JAMAIS basculer en agent sportif (2 ans prison + 30k€ amende sans licence FFHB).\nTu vois les messages des autres agents. Tu alertes IMMÉDIATEMENT si une feature ou un discours commercial fait basculer le projet dans la zone agent sportif.\nTu rédiges mentions légales, clauses, disclaimers.\nTes conseils ne remplacent pas un avocat.` },
+  devops: { name:"DEVOPS", icon:"🚀", color:"#10B981", title:"DevOps / Infrastructure",
+    prompt:`Tu es le DevOps de HandConnect. ${HC}\nDéploiement Vercel, monitoring, performances, sauvegardes, sécurité infra, CI/CD.\nTu connais Vercel, GitHub Actions, Sentry, Cloudflare.\nTu vois les messages des autres agents.\nTu garantis app en ligne, rapide, sécurisée. Tu alertes sur les coûts. Free-tier tant que possible.` },
+};
+
+const AGENT_LIST = Object.entries(AGENTS).map(([id,a])=>({id,...a}));
+
+function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file)})}
+
+export default function AgentsTeam(){
+  const [adminOk,setAdminOk]=useState(false);
+  const [pin,setPin]=useState("");
+  const [messages,setMessages]=useState([]);
+  const [input,setInput]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [loadingAgent,setLoadingAgent]=useState(null);
+  const [pastedImage,setPastedImage]=useState(null);
+  const [user,setUser]=useState(null);
+  const [historyLoaded,setHistoryLoaded]=useState(false);
+  const messagesEnd=useRef(null);
+  const inputRef=useRef(null);
+
+  useEffect(()=>{supabase.auth.getUser().then(({data:{user:u}})=>{if(u)setUser(u)})},[]);
+
+  useEffect(()=>{
+    if(!adminOk||!user||historyLoaded)return;
+    const load=async()=>{
+      const{data}=await supabase.from("agent_messages").select("*").eq("user_id",user.id).order("created_at",{ascending:true}).limit(200);
+      if(data&&data.length>0)setMessages(data.map(m=>({role:m.role,agent:m.agent,content:m.content,id:m.id})));
+      setHistoryLoaded(true);
+    };
+    load();
+  },[adminOk,user,historyLoaded]);
+
+  useEffect(()=>{messagesEnd.current?.scrollIntoView({behavior:"smooth"})},[messages]);
+  useEffect(()=>{if(adminOk)inputRef.current?.focus()},[adminOk]);
+
+  const handlePaste=useCallback(async(e)=>{
+    const items=e.clipboardData?.items;if(!items)return;
+    for(const item of items){if(item.type.startsWith("image/")){
+      e.preventDefault();const file=item.getAsFile();if(!file)return;
+      const base64=await fileToBase64(file);
+      setPastedImage({base64,mediaType:item.type,preview:URL.createObjectURL(file)});return;
+    }}
+  },[]);
+
+  const removeImage=()=>{if(pastedImage?.preview)URL.revokeObjectURL(pastedImage.preview);setPastedImage(null)};
+
+  const parseMentions=(text)=>{
+    const mentioned=[];
+    for(const[id,a]of Object.entries(AGENTS)){
+      const patterns=[`@${id}`,`@${a.name}`,`@${a.name.toLowerCase()}`];
+      if(patterns.some(p=>text.toLowerCase().includes(p.toLowerCase())))mentioned.push(id);
+    }
+    if(mentioned.length===0){
+      if(/\b(tous|all|équipe|team|ensemble)\b/i.test(text)||!text.includes("@")){
+        return Object.keys(AGENTS);
       }
     }
-  }, []);
+    return mentioned;
+  };
 
-  const removeImage = () => { if (pastedImage?.preview) URL.revokeObjectURL(pastedImage.preview); setPastedImage(null); };
+  const saveMsg=async(role,agent,content)=>{
+    if(!user)return;
+    await supabase.from("agent_messages").insert({user_id:user.id,role,agent:agent||null,content});
+  };
 
-  const sendMessage = async () => {
-    if ((!input.trim() && !pastedImage) || loading) return;
-    const userText = input.trim();
-    setInput("");
+  const buildContext=(agentId,userText,img)=>{
+    const recent=messages.slice(-30);
+    const ctxMessages=recent.map(m=>{
+      if(m.role==="user")return{role:"user",content:m.content||"."};
+      return{role:"assistant",content:`[${(AGENTS[m.agent]?.name||"AGENT")}]: ${m.content}`};
+    });
+    const userContent=[];
+    if(img){userContent.push({type:"image",source:{type:"base64",media_type:img.mediaType,data:img.base64}})}
+    userContent.push({type:"text",text:userText||"Analyse cette image."});
+    ctxMessages.push({role:"user",content:userContent.length===1&&!img?userContent[0].text:userContent});
+    return ctxMessages;
+  };
 
-    // Build user message for display
-    const displayMsg = { role: "user", content: userText, image: pastedImage?.preview || null };
-    setMessages(prev => [...prev, displayMsg]);
-
-    // Build API content array
-    const userContent = [];
-    if (pastedImage) {
-      userContent.push({ type: "image", source: { type: "base64", media_type: pastedImage.mediaType, data: pastedImage.base64 } });
-    }
-    userContent.push({ type: "text", text: userText || "Analyse cette image." });
-
+  const sendMessage=async()=>{
+    if((!input.trim()&&!pastedImage)||loading)return;
+    const userText=input.trim();setInput("");
+    const mentioned=parseMentions(userText);
+    const userMsg={role:"user",content:userText,image:pastedImage?.preview||null};
+    setMessages(prev=>[...prev,userMsg]);
+    await saveMsg("user",null,userText);
+    const img=pastedImage;
     setPastedImage(null);
     setLoading(true);
 
-    try {
-      // Build full message history for API
-      const apiMessages = messages.map(m => {
-        if (m.role === "user") return { role: "user", content: m.content || "." };
-        return { role: "assistant", content: m.content };
-      });
-      apiMessages.push({ role: "user", content: userContent });
-
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system: agent.systemPrompt,
-          messages: apiMessages,
-      });
-      const data = await response.json();
-      const reply = data.content?.map(b => b.text || "").filter(Boolean).join("\n") || "Erreur de réponse.";
-      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
-    } catch (err) {
-      setMessages(prev => [...prev, { role: "assistant", content: "❌ Erreur de connexion à l'API." }]);
+    for(const agentId of mentioned){
+      const agent=AGENTS[agentId];
+      setLoadingAgent(agentId);
+      try{
+        const ctxMessages=buildContext(agentId,userText,img);
+        const response=await fetch("/api/chat",{
+          method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({system:agent.prompt,messages:ctxMessages}),
+        });
+        const data=await response.json();
+        const reply=data.content?.map(b=>b.text||"").filter(Boolean).join("\n")||"Erreur de réponse.";
+        const agentMsg={role:"assistant",agent:agentId,content:reply};
+        setMessages(prev=>[...prev,agentMsg]);
+        await saveMsg("assistant",agentId,reply);
+      }catch(err){
+        const errMsg={role:"assistant",agent:agentId,content:"❌ Erreur de connexion."};
+        setMessages(prev=>[...prev,errMsg]);
+      }
     }
-    setLoading(false);
+    setLoading(false);setLoadingAgent(null);
   };
 
-  const handleKeyDown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+  const handleKeyDown=(e)=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}};
 
-  const suggestions = {
-    cto: ["Quelle architecture DB pour les profils ?", "Comment structurer l'auth Supabase ?", "Plan de migration vers la prod ?"],
-    ba: ["User story : inscription d'un club", "Parcours : publier une annonce", "Specs système d'abonnement"],
-    dev: ["Code la page d'inscription", "Implémente AnnonceCard", "Setup Stripe checkout"],
-    qa: ["Scénarios de test inscription", "Checklist avant mise en prod", "Tests responsive mobile"],
-    commercial: ["Email prospection club N3", "Pitch sponsor local", "Plan prospection ARA mois 1"],
+  const clearHistory=async()=>{
+    if(!user)return;
+    if(!confirm("Effacer tout l'historique ?"))return;
+    await supabase.from("agent_messages").delete().eq("user_id",user.id);
+    setMessages([]);
   };
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 60px)" }}>
-      {/* Header */}
-      <div style={{ padding: "16px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 14, background: `${agent.color}08` }}>
-        <button onClick={onBack} style={{ background: C.bgCard, border: `1px solid ${C.border}`, color: C.muted, width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: `${agent.color}20`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{agent.icon}</div>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.text }}>{agent.name} — {agent.title}</h2>
-          <p style={{ margin: 0, fontSize: 12, color: C.muted }}>{agent.desc}</p>
+  const css=`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;margin:0;padding:0}@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes pulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.8;transform:scale(1.2)}}@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px ${C.primary}15!important}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}`;
+
+  if(!adminOk){
+    return <><style>{css}</style>
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{textAlign:"center",animation:"fadeUp .5s ease"}}>
+        <div style={{fontSize:48,marginBottom:16}}>🔐</div>
+        <h2 style={{color:C.text,fontSize:22,marginBottom:6,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3}}>ACCÈS ADMIN</h2>
+        <p style={{color:C.muted,fontSize:12,marginBottom:20}}>Espace réservé au fondateur</p>
+        <input type="password" value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&pin==="handball2026")setAdminOk(true)}} placeholder="Code d'accès" style={{padding:"12px 16px",background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:10,color:C.text,fontSize:14,outline:"none",textAlign:"center",width:220}} autoFocus/>
+        <br/>
+        <button onClick={()=>{if(pin==="handball2026")setAdminOk(true)}} style={{marginTop:12,padding:"10px 28px",border:"none",borderRadius:10,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 14px ${C.primary}30`}}>Entrer</button>
+        {pin&&pin!=="handball2026"&&pin.length>3&&<p style={{color:C.accentLight,fontSize:11,marginTop:10}}>Code incorrect</p>}
+      </div>
+    </div></>;
+  }
+
+  return <><style>{css}</style>
+  <div style={{minHeight:"100vh",background:C.bg,color:C.text,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",display:"flex",flexDirection:"column"}}>
+
+    <header style={{background:`${C.bg}ee`,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.border}`,padding:"0 20px",position:"sticky",top:0,zIndex:100}}>
+      <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:60}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${C.primary},${C.accent})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🤾</div>
+          <h1 style={{fontSize:20,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,color:"#fff",lineHeight:1}}>HAND<span style={{color:C.primary}}>CONNECT</span></h1>
+          <span style={{fontSize:10,color:C.muted,background:`${C.primary}15`,padding:"3px 10px",borderRadius:6,fontWeight:600,border:`1px solid ${C.primary}30`,marginLeft:8}}>🧠 ÉQUIPE IA · 10 AGENTS</span>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.green, boxShadow: `0 0 8px ${C.green}60` }} />
-          <span style={{ fontSize: 11, color: C.green, fontWeight: 600 }}>En ligne</span>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={clearHistory} style={{padding:"6px 12px",border:`1px solid ${C.border}`,borderRadius:8,background:"transparent",color:C.dim,fontSize:11,fontWeight:600,cursor:"pointer"}}>🗑️ Effacer</button>
+          <a href="/" style={{padding:"6px 14px",border:`1px solid ${C.border}`,borderRadius:8,color:C.muted,fontSize:11,textDecoration:"none"}}>← Retour</a>
         </div>
       </div>
+    </header>
 
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-        {messages.length === 0 && (
-          <div style={{ textAlign: "center", padding: "40px 20px" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>{agent.icon}</div>
-            <h3 style={{ color: C.text, fontSize: 18, fontWeight: 700, margin: "0 0 8px" }}>Chat {agent.name}</h3>
-            <p style={{ color: C.muted, fontSize: 13, margin: "0 0 8px", lineHeight: 1.6 }}>Votre {agent.title} dédié à HandConnect.</p>
-            <p style={{ color: C.dim, fontSize: 11, margin: "0 0 24px", padding: "6px 14px", background: `${C.primary}08`, borderRadius: 8, display: "inline-block", border: `1px solid ${C.primary}12` }}>📋 Vous pouvez coller des captures d'écran avec <strong style={{ color: C.primaryLight }}>Ctrl+V</strong></p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 400, margin: "0 auto" }}>
-              {(suggestions[agent.id] || []).map(s => (
-                <button key={s} onClick={() => { setInput(s); inputRef.current?.focus(); }} style={{ padding: "10px 16px", background: `${agent.color}10`, border: `1px solid ${agent.color}20`, borderRadius: 10, color: agent.color, fontSize: 12, fontWeight: 500, cursor: "pointer", textAlign: "left", transition: "all .2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = `${agent.color}20`; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = `${agent.color}10`; }}>
-                  💬 {s}
-                </button>
-              ))}
+    <div style={{padding:"10px 20px",borderBottom:`1px solid ${C.border}`,background:C.surface}}>
+      <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+        <span style={{fontSize:11,color:C.dim,marginRight:4}}>Équipe :</span>
+        {AGENT_LIST.map(a=><div key={a.id} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:8,background:`${a.color}10`,border:`1px solid ${a.color}20`,cursor:"default"}}>
+          <span style={{fontSize:13}}>{a.icon}</span>
+          <span style={{fontSize:10,color:a.color,fontWeight:600}}>{a.name}</span>
+          <span style={{fontSize:8,color:C.dim}}>@{a.id}</span>
+          {loadingAgent===a.id&&<div style={{display:"flex",gap:2,marginLeft:4}}>{[0,1,2].map(j=><div key={j} style={{width:4,height:4,borderRadius:"50%",background:a.color,opacity:.5,animation:`pulse 1s ease ${j*.15}s infinite`}}/>)}</div>}
+        </div>)}
+      </div>
+    </div>
+
+    <div style={{flex:1,overflowY:"auto",padding:20}}>
+      <div style={{maxWidth:900,margin:"0 auto"}}>
+        {messages.length===0&&(
+          <div style={{textAlign:"center",padding:"60px 20px"}}>
+            <div style={{fontSize:48,marginBottom:16}}>🧠</div>
+            <h3 style={{color:C.text,fontSize:20,fontWeight:700,margin:"0 0 8px",fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>SALLE DE RÉUNION IA</h3>
+            <p style={{color:C.muted,fontSize:13,margin:"0 0 8px",lineHeight:1.6,maxWidth:550,marginLeft:"auto",marginRight:"auto"}}>10 agents spécialisés. Le DEV a 5 modes (archi/lead/front/back/QA). Taguez avec <strong style={{color:C.primaryLight}}>@agent</strong>. Sans @ = toute l'équipe.</p>
+            <p style={{color:C.dim,fontSize:11,margin:"0 0 24px",padding:"6px 14px",background:`${C.primary}08`,borderRadius:8,display:"inline-block",border:`1px solid ${C.primary}12`}}>📋 Ctrl+V pour images · Historique sauvegardé</p>
+            <div style={{display:"flex",flexDirection:"column",gap:8,maxWidth:520,margin:"0 auto"}}>
+              {[
+                "@dev mode architecte, organise le dossier components",
+                "@dev en lead tech, quelle est la dette technique prioritaire ?",
+                "@dev mode frontend, code la page de candidature",
+                "@dev mode backend, écris l'API de création d'annonce",
+                "@dev mode recette, checklist de validation page profil",
+                "@cto Quelle est la prochaine priorité technique ?",
+                "@ba User story pour publier une annonce",
+                "@commercial Email de prospection club N3 ARA",
+                "@juridique Vérifie le statut plateforme dans les CGU",
+                "Équipe, faisons le point sur l'avancement",
+              ].map(s=><button key={s} onClick={()=>{setInput(s);inputRef.current?.focus()}} style={{padding:"10px 16px",background:`${C.primary}08`,border:`1px solid ${C.primary}15`,borderRadius:10,color:C.primaryLight,fontSize:12,fontWeight:500,cursor:"pointer",textAlign:"left",transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.background=`${C.primary}15`}} onMouseLeave={e=>{e.currentTarget.style.background=`${C.primary}08`}}>💬 {s}</button>)}
             </div>
           </div>
         )}
 
-        {messages.map((m, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp .3s ease" }}>
-            <div style={{ maxWidth: "75%", padding: "12px 16px", borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: m.role === "user" ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : C.bgCard, border: m.role === "user" ? "none" : `1px solid ${C.border}`, color: C.text, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-              {m.role === "assistant" && <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}><span style={{ fontSize: 14 }}>{agent.icon}</span><span style={{ fontSize: 11, color: agent.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{agent.name}</span></div>}
-              {m.image && <img src={m.image} alt="Screenshot" style={{ maxWidth: "100%", borderRadius: 10, marginBottom: 8, border: `1px solid rgba(255,255,255,0.1)` }} />}
-              {m.content}
+        {messages.map((m,i)=>{
+          if(m.role==="user"){
+            return <div key={i} style={{display:"flex",justifyContent:"flex-end",marginBottom:14,animation:"fadeUp .3s ease"}}>
+              <div style={{maxWidth:"70%",padding:"12px 16px",borderRadius:"16px 16px 4px 16px",background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:C.text,fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
+                {m.image&&<img src={m.image} alt="" style={{maxWidth:"100%",borderRadius:10,marginBottom:8,border:"1px solid rgba(255,255,255,0.1)"}}/>}
+                {m.content}
+              </div>
+            </div>;
+          }
+          const agent=AGENTS[m.agent]||{name:"?",icon:"?",color:C.dim};
+          return <div key={i} style={{display:"flex",justifyContent:"flex-start",marginBottom:14,animation:"fadeUp .3s ease"}}>
+            <div style={{maxWidth:"75%"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                <span style={{fontSize:16}}>{agent.icon}</span>
+                <span style={{fontSize:11,color:agent.color,fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>{agent.name}</span>
+                <span style={{fontSize:9,color:C.dim}}>{agent.title}</span>
+              </div>
+              <div style={{padding:"12px 16px",borderRadius:"4px 16px 16px 16px",background:C.bgCard,border:`1px solid ${agent.color}20`,color:C.text,fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{m.content}</div>
             </div>
-          </div>
-        ))}
+          </div>;
+        })}
 
-        {loading && (
-          <div style={{ display: "flex", justifyContent: "flex-start" }}>
-            <div style={{ padding: "12px 20px", borderRadius: "16px 16px 16px 4px", background: C.bgCard, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 14 }}>{agent.icon}</span>
-              <div style={{ display: "flex", gap: 4 }}>{[0,1,2].map(j => <div key={j} style={{ width: 6, height: 6, borderRadius: "50%", background: agent.color, opacity: 0.4, animation: `pulse 1.2s ease-in-out ${j * 0.2}s infinite` }} />)}</div>
+        {loading&&loadingAgent&&(
+          <div style={{display:"flex",justifyContent:"flex-start",marginBottom:14}}>
+            <div style={{padding:"12px 20px",borderRadius:"4px 16px 16px 16px",background:C.bgCard,border:`1px solid ${AGENTS[loadingAgent]?.color||C.primary}20`,display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:16}}>{AGENTS[loadingAgent]?.icon}</span>
+              <span style={{fontSize:11,color:AGENTS[loadingAgent]?.color,fontWeight:700}}>{AGENTS[loadingAgent]?.name}</span>
+              <div style={{display:"flex",gap:3,marginLeft:4}}>{[0,1,2].map(j=><div key={j} style={{width:5,height:5,borderRadius:"50%",background:AGENTS[loadingAgent]?.color,opacity:.4,animation:`pulse 1.2s ease ${j*.2}s infinite`}}/>)}</div>
             </div>
           </div>
         )}
-        <div ref={messagesEnd} />
-      </div>
-
-      {/* Pasted image preview */}
-      {pastedImage && (
-        <div style={{ padding: "10px 20px", borderTop: `1px solid ${C.border}`, background: `${C.primary}06`, display: "flex", alignItems: "center", gap: 12 }}>
-          <img src={pastedImage.preview} alt="Preview" style={{ height: 60, borderRadius: 8, border: `1px solid ${C.border}` }} />
-          <div style={{ flex: 1 }}>
-            <p style={{ margin: 0, fontSize: 12, color: C.text, fontWeight: 600 }}>📷 Image collée</p>
-            <p style={{ margin: "2px 0 0", fontSize: 11, color: C.muted }}>Sera envoyée avec votre message</p>
-          </div>
-          <button onClick={removeImage} style={{ background: `${C.accent}15`, border: `1px solid ${C.accent}30`, color: C.accentLight, width: 30, height: 30, borderRadius: 8, cursor: "pointer", fontSize: 14 }}>✕</button>
-        </div>
-      )}
-
-      {/* Input */}
-      <div style={{ padding: "16px 20px", borderTop: `1px solid ${C.border}`, background: C.surface }}>
-        <div style={{ display: "flex", gap: 10, maxWidth: 800, margin: "0 auto" }}>
-          <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onPaste={handlePaste} placeholder={`Message au ${agent.name}... (Ctrl+V pour coller une image)`} rows={1} style={{ flex: 1, padding: "12px 16px", background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, fontSize: 13, outline: "none", resize: "none", fontFamily: "inherit", lineHeight: 1.5, transition: "border-color .2s" }}
-            onFocus={e => { e.target.style.borderColor = agent.color; }}
-            onBlur={e => { e.target.style.borderColor = C.border; }} />
-          <button onClick={sendMessage} disabled={(!input.trim() && !pastedImage) || loading} style={{ padding: "12px 20px", border: "none", borderRadius: 12, background: (input.trim() || pastedImage) && !loading ? `linear-gradient(135deg, ${agent.color}, ${agent.color}cc)` : C.bgCard, color: (input.trim() || pastedImage) && !loading ? "#fff" : C.dim, fontSize: 14, fontWeight: 700, cursor: (input.trim() || pastedImage) && !loading ? "pointer" : "default", transition: "all .2s", boxShadow: (input.trim() || pastedImage) && !loading ? `0 4px 14px ${agent.color}30` : "none" }}>
-            {loading ? "..." : "→"}
-          </button>
-        </div>
-        <p style={{ textAlign: "center", fontSize: 10, color: C.dim, marginTop: 8 }}>Entrée = envoyer · Shift+Entrée = saut de ligne · <strong style={{ color: C.primaryLight }}>Ctrl+V = coller une image</strong></p>
+        <div ref={messagesEnd}/>
       </div>
     </div>
-  );
-}
 
-/* ═══════ MAIN PAGE ═══════ */
-export default function AgentsPage() {
-  const [activeAgent, setActiveAgent] = useState(null);
-  const [adminOk, setAdminOk] = useState(false);
-  const [pin, setPin] = useState("");
+    {pastedImage&&<div style={{padding:"10px 20px",borderTop:`1px solid ${C.border}`,background:`${C.primary}06`,display:"flex",alignItems:"center",gap:12}}>
+      <img src={pastedImage.preview} alt="" style={{height:60,borderRadius:8,border:`1px solid ${C.border}`}}/>
+      <div style={{flex:1}}><p style={{margin:0,fontSize:12,color:C.text,fontWeight:600}}>📷 Image collée</p><p style={{margin:"2px 0 0",fontSize:11,color:C.muted}}>Sera envoyée avec votre message</p></div>
+      <button onClick={removeImage} style={{background:`${C.accent}15`,border:`1px solid ${C.accent}30`,color:C.accentLight,width:30,height:30,borderRadius:8,cursor:"pointer",fontSize:14}}>✕</button>
+    </div>}
 
-  const css = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
-*{box-sizing:border-box;margin:0;padding:0}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes pulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.8;transform:scale(1.2)}}
-textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px ${C.primary}15!important}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}`;
-
-  // Admin gate
-  if (!adminOk) {
-    return <>
-      <style>{css}</style>
-      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", animation: "fadeUp .5s ease" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔐</div>
-          <h2 style={{ color: C.text, fontSize: 22, marginBottom: 6, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 3 }}>ACCÈS ADMIN</h2>
-          <p style={{ color: C.muted, fontSize: 12, marginBottom: 20 }}>Espace réservé au fondateur</p>
-          <input type="password" value={pin} onChange={e => setPin(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && pin === "Milan021*") setAdminOk(true); }} placeholder="Code d'accès" style={{ padding: "12px 16px", background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 14, outline: "none", textAlign: "center", width: 220 }} autoFocus />
-          <br />
-          <button onClick={() => { if (pin === "Milan021*") setAdminOk(true); }} style={{ marginTop: 12, padding: "10px 28px", border: "none", borderRadius: 10, background: `linear-gradient(135deg,${C.primary},${C.primaryDark})`, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 14px ${C.primary}30` }}>Entrer</button>
-          {pin && pin !== "handball2026" && pin.length > 3 && <p style={{ color: C.accentLight, fontSize: 11, marginTop: 10 }}>Code incorrect</p>}
-        </div>
+    <div style={{padding:"16px 20px",borderTop:`1px solid ${C.border}`,background:C.surface}}>
+      <div style={{display:"flex",gap:10,maxWidth:900,margin:"0 auto"}}>
+        <textarea ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKeyDown} onPaste={handlePaste} placeholder="Écrivez à l'équipe... (@agent ou sans @ pour tous)" rows={2} style={{flex:1,padding:"12px 16px",background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:12,color:C.text,fontSize:13,outline:"none",resize:"none",fontFamily:"inherit",lineHeight:1.5,transition:"border-color .2s"}} onFocus={e=>{e.target.style.borderColor=C.primary}} onBlur={e=>{e.target.style.borderColor=C.border}}/>
+        <button onClick={sendMessage} disabled={(!input.trim()&&!pastedImage)||loading} style={{padding:"12px 20px",border:"none",borderRadius:12,background:(input.trim()||pastedImage)&&!loading?`linear-gradient(135deg,${C.primary},${C.primaryDark})`:C.bgCard,color:(input.trim()||pastedImage)&&!loading?"#fff":C.dim,fontSize:14,fontWeight:700,cursor:(input.trim()||pastedImage)&&!loading?"pointer":"default",transition:"all .2s",boxShadow:(input.trim()||pastedImage)&&!loading?`0 4px 14px ${C.primary}30`:"none",alignSelf:"flex-end"}}>{loading?"...":"→"}</button>
       </div>
-    </>;
-  }
-
-  // Agent chat view
-  if (activeAgent) {
-    const agent = AGENTS.find(a => a.id === activeAgent);
-    return <>
-      <style>{css}</style>
-      <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
-        <header style={{ background: `${C.bg}ee`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}`, padding: "0 20px", position: "sticky", top: 0, zIndex: 100 }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", height: 60, gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: `linear-gradient(135deg,${C.primary},${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤾</div>
-            <h1 style={{ fontSize: 20, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1 }}>HAND<span style={{ color: C.primary }}>CONNECT</span></h1>
-            <span style={{ fontSize: 10, color: C.muted, background: `${agent.color}15`, padding: "3px 10px", borderRadius: 6, fontWeight: 600, border: `1px solid ${agent.color}30`, marginLeft: 8 }}>{agent.icon} {agent.name}</span>
-          </div>
-        </header>
-        <AgentChat agent={agent} onBack={() => setActiveAgent(null)} />
-      </div>
-    </>;
-  }
-
-  // Dashboard view
-  return <>
-    <style>{css}</style>
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "fixed", top: -300, right: -200, width: 700, height: 700, borderRadius: "50%", background: `radial-gradient(circle,${C.primary}08,transparent 70%)`, pointerEvents: "none" }} />
-      <header style={{ background: `${C.bg}ee`, backdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}`, padding: "0 20px", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: `linear-gradient(135deg,${C.primary},${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤾</div>
-            <h1 style={{ fontSize: 20, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1 }}>HAND<span style={{ color: C.primary }}>CONNECT</span></h1>
-          </div>
-          <a href="/" style={{ fontSize: 12, color: C.muted, textDecoration: "none", padding: "7px 14px", border: `1px solid ${C.border}`, borderRadius: 8 }}>← Retour au site</a>
-        </div>
-      </header>
-
-      <main style={{ maxWidth: 900, margin: "0 auto", padding: "40px 20px" }}>
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 38, letterSpacing: 3, color: C.text, margin: "0 0 8px" }}>ÉQUIPE <span style={{ color: C.primary }}>IA</span></h2>
-          <p style={{ color: C.muted, fontSize: 14, maxWidth: 500, margin: "0 auto", lineHeight: 1.7 }}>Votre équipe virtuelle dédiée à HandConnect. Chaque agent connaît le projet et répond dans son domaine.</p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-          {AGENTS.map((a, i) => (
-            <div key={a.id} onClick={() => setActiveAgent(a.id)} style={{ background: C.bgCard, borderRadius: 18, padding: 24, border: `1px solid ${C.border}`, cursor: "pointer", transition: "all .35s cubic-bezier(0.16,1,0.3,1)", animation: `fadeUp .5s ease ${i * 0.08}s both`, position: "relative", overflow: "hidden" }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.borderColor = `${a.color}40`; e.currentTarget.style.boxShadow = `0 20px 60px ${a.color}12`; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = ""; }}>
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${a.color}, ${a.color}66)` }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 14, background: `${a.color}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, border: `1px solid ${a.color}25` }}>{a.icon}</div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: C.text, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>{a.name}</h3>
-                  <p style={{ margin: 0, fontSize: 11, color: a.color, fontWeight: 600 }}>{a.title}</p>
-                </div>
-              </div>
-              <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.6, margin: "0 0 16px" }}>{a.desc}</p>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.green, boxShadow: `0 0 6px ${C.green}60` }} />
-                  <span style={{ fontSize: 10, color: C.green, fontWeight: 600 }}>En ligne</span>
-                </div>
-                <span style={{ fontSize: 11, color: a.color, fontWeight: 600, background: `${a.color}10`, padding: "4px 12px", borderRadius: 8, border: `1px solid ${a.color}20` }}>Ouvrir le chat →</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ marginTop: 32, padding: 20, background: `${C.primary}06`, borderRadius: 14, border: `1px solid ${C.primary}10`, textAlign: "center" }}>
-          <p style={{ fontSize: 12, color: C.muted, lineHeight: 1.7 }}>
-            💡 Chaque agent connaît HandConnect. Vous pouvez <strong style={{ color: C.primaryLight }}>coller des captures d'écran</strong> (Ctrl+V) dans le chat pour obtenir une analyse visuelle de vos bugs, interfaces ou documents.
-          </p>
-        </div>
-      </main>
+      <p style={{textAlign:"center",fontSize:10,color:C.dim,marginTop:8,maxWidth:900,margin:"8px auto 0"}}>Entrée = envoyer · Shift+Entrée = saut de ligne · <strong style={{color:C.primaryLight}}>Ctrl+V = image</strong> · Sans @ = toute l'équipe</p>
     </div>
-  </>;
+  </div></>;
 }

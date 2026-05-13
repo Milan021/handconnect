@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import { getCenterById, CENTER_TYPE_META, SECTION_SPORTIVE_META } from "../lib/training-centers";
+import { REGIONS, getRegionLabel } from "../lib/regions";
 
 const C = { primary:"#1D4ED8", primaryLight:"#3B82F6", primaryDark:"#1E3A8A", accent:"#DC2626", accentLight:"#F87171", bg:"#0B1120", bgCard:"rgba(255,255,255,0.04)", bgHover:"rgba(255,255,255,0.07)", surface:"#111827", border:"rgba(255,255,255,0.08)", borderBlue:"rgba(29,78,216,0.4)", text:"#F1F5F9", muted:"rgba(255,255,255,0.5)", dim:"rgba(255,255,255,0.3)", green:"#10B981", greenBg:"rgba(16,185,129,0.12)", gold:"#FBBF24" };
 
@@ -41,6 +42,7 @@ function PlayerCard({p,onClick,i}){
       <h3 style={{margin:0,fontSize:15,fontWeight:700,color:C.text}}>{p.first_name} {p.last_name}</h3>
       <p style={{margin:"2px 0",fontSize:10,color:accent,fontWeight:700,fontFamily:"monospace",textTransform:"uppercase",letterSpacing:1.5}}>{POS[p.position]||"Non défini"}</p>
       <p style={{fontSize:10,color:C.dim}}>{center?center.label:(p.current_club||"Sans club")} · {p.city||"—"}</p>
+      {(p.region||p.mobile_other_regions)&&<p style={{fontSize:9,color:C.muted,margin:"3px 0 0",fontWeight:600}}>{p.region&&<>📍 {getRegionLabel(p.region)}</>}{p.region&&p.mobile_other_regions&&" · "}{p.mobile_other_regions&&<span style={{color:C.green}}>🌍 Mobile</span>}</p>}
       <div style={{display:"flex",justifyContent:"center",gap:16,paddingTop:10,marginTop:10,borderTop:`1px solid ${C.border}`}}>
         {[["Âge",p.age?`${p.age}a`:"—"],["Taille",p.height_cm?`${p.height_cm}cm`:"—"],["Niveau",LEVELS.find(l=>l.v===p.current_level)?.l||"—"]].map(([l,v])=><div key={l} style={{textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif"}}>{v}</div><div style={{fontSize:8,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>{l}</div></div>)}
       </div>
@@ -68,6 +70,10 @@ function PlayerModal({player:p,onClose}){
       <h2 style={{fontSize:22,fontWeight:700,margin:0,color:C.text}}>{p.first_name} {p.last_name}</h2>
       <p style={{color:headerColor,fontWeight:700,fontSize:11,fontFamily:"monospace",margin:"4px 0",textTransform:"uppercase",letterSpacing:2}}>{POS[p.position]||"Non défini"}</p>
       <p style={{color:C.dim,fontSize:12,margin:0}}>{center?center.label:(p.current_club||"Sans club")} · {p.city||"—"} · {p.age?`${p.age} ans`:""} {p.height_cm?`· ${p.height_cm}cm`:""}</p>
+      {(p.region||p.mobile_other_regions)&&<div style={{marginTop:8,display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap"}}>
+        {p.region&&<span style={{fontSize:11,padding:"4px 10px",background:"rgba(255,255,255,0.05)",color:C.muted,borderRadius:6,fontWeight:600,border:`1px solid ${C.border}`}}>📍 {getRegionLabel(p.region)}</span>}
+        {p.mobile_other_regions&&<span style={{fontSize:11,padding:"4px 10px",background:C.greenBg,color:C.green,borderRadius:6,fontWeight:700,border:`1px solid ${C.green}30`}}>🌍 Mobile vers d&apos;autres régions</span>}
+      </div>}
     </div>
     <div style={{padding:"16px 28px 28px"}}>
       <div style={{display:"flex",justifyContent:"space-around",background:`${C.primary}10`,borderRadius:14,padding:16,border:`1px solid ${C.primary}20`,marginBottom:16}}>
@@ -354,6 +360,7 @@ export default function HandConnect(){
   const [tab,setTab]=useState("annonces");
   const [search,setSearch]=useState("");
   const [posF,setPosF]=useState("");
+  const [regionF,setRegionF]=useState("");
   const [availF,setAvailF]=useState(false);
   const [aType,setAType]=useState("all");
   const [selPlayer,setSelPlayer]=useState(null);
@@ -412,9 +419,11 @@ export default function HandConnect(){
   const fPlayers=useMemo(()=>players.filter(p=>{
     if(posF&&p.position!==posF)return false;
     if(availF&&!p.is_available)return false;
+    // Filtre région : inclut les joueurs de la région OU les joueurs mobiles vers d'autres régions
+    if(regionF&&p.region!==regionF&&!p.mobile_other_regions)return false;
     if(search)return`${p.first_name||""} ${p.last_name||""} ${p.city||""} ${p.current_club||""}`.toLowerCase().includes(search.toLowerCase());
     return true;
-  }),[players,search,posF,availF]);
+  }),[players,search,posF,availF,regionF]);
 
   // Découpage joueurs en 3 sections (priorité : centre/section > mineur > sénior)
   const playerSections=useMemo(()=>{
@@ -463,7 +472,7 @@ export default function HandConnect(){
             <h1 style={{fontSize:20,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,color:"#fff",lineHeight:1,cursor:"pointer"}} onClick={()=>{setTab("annonces");setSearch("")}}>HAND<span style={{color:C.primary}}>CONNECT</span></h1>
             <span style={{fontSize:8,color:C.dim,background:C.bgCard,padding:"2px 7px",borderRadius:5,fontWeight:600,letterSpacing:1,border:`1px solid ${C.border}`}}>BETA</span>
           </div>
-          <nav style={{display:"flex",gap:2}}>{tabs.map(t=><button key={t.k} onClick={()=>{setTab(t.k);setSearch("");setPosF("");setAType("all")}} style={{padding:"7px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,transition:"all .2s",background:tab===t.k?`${C.primary}18`:"transparent",color:tab===t.k?C.primaryLight:C.dim,whiteSpace:"nowrap"}}><span style={{marginRight:4,fontSize:12}}>{t.i}</span>{t.l}</button>)}</nav>
+          <nav style={{display:"flex",gap:2}}>{tabs.map(t=><button key={t.k} onClick={()=>{setTab(t.k);setSearch("");setPosF("");setRegionF("");setAType("all")}} style={{padding:"7px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,transition:"all .2s",background:tab===t.k?`${C.primary}18`:"transparent",color:tab===t.k?C.primaryLight:C.dim,whiteSpace:"nowrap"}}><span style={{marginRight:4,fontSize:12}}>{t.i}</span>{t.l}</button>)}</nav>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             {user?(
               <>
@@ -488,6 +497,7 @@ export default function HandConnect(){
             <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
               <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." style={{...inpS,flex:"1 1 200px",width:"auto"}}/>
               {tab==="joueurs"&&<select value={posF} onChange={e=>setPosF(e.target.value)} style={{...inpS,minWidth:140,width:"auto"}}><option value="">Tous postes</option>{Object.entries(POS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select>}
+              {tab==="joueurs"&&<select value={regionF} onChange={e=>setRegionF(e.target.value)} style={{...inpS,minWidth:170,width:"auto"}} title="Inclut les joueurs mobiles vers d'autres régions"><option value="">Toutes régions</option>{REGIONS.map(r=><option key={r.id} value={r.id}>{r.label}</option>)}</select>}
               {tab==="joueurs"&&<button onClick={()=>setAvailF(!availF)} style={{padding:"11px 14px",border:`1px solid ${availF?`${C.green}40`:C.border}`,borderRadius:10,fontSize:12,fontWeight:600,cursor:"pointer",background:availF?C.greenBg:"transparent",color:availF?C.green:C.dim}}>🟢 Dispos</button>}
               {tab==="annonces"&&profile?.user_type==="club"&&<Link href="/publier-annonce" style={{padding:"11px 18px",borderRadius:10,background:`linear-gradient(135deg,${C.green},#047857)`,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",textDecoration:"none",boxShadow:`0 4px 14px ${C.green}35`,whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6,border:"none"}}>+ Publier une annonce</Link>}
             </div>

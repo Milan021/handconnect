@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import ClubDashboard from "./ClubDashboard";
 import { TRAINING_CENTERS, CENTER_TYPE_META, SECTION_SPORTIVE_META, getCenterById } from "../../lib/training-centers";
+import { REGIONS, getRegionLabel } from "../../lib/regions";
 
 const FONT_LINK = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap";
 
@@ -90,6 +91,8 @@ export default function DashboardPage() {
       city: form.city || null,
       training_center: form.training_center || null,
       is_section_sportive: !!form.is_section_sportive,
+      region: form.region || null,
+      mobile_other_regions: !!form.mobile_other_regions,
       phone: form.phone || null,
       bio: form.bio || null,
       is_available: form.is_available || false,
@@ -267,6 +270,22 @@ export default function DashboardPage() {
                     <div><label style={labelStyle}>Téléphone</label><input value={form.phone || ""} onChange={e => updateField("phone", e.target.value)} style={inpStyle} placeholder="06 12 34 56 78" /></div>
                     <div><label style={labelStyle}>Ville</label><input value={form.city || ""} onChange={e => updateField("city", e.target.value)} style={inpStyle} placeholder="Ex: Lyon" /></div>
                     <div><label style={labelStyle}>Club actuel</label><input value={form.current_club || ""} onChange={e => updateField("current_club", e.target.value)} style={inpStyle} placeholder="Ex: AS Bondy" /></div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={labelStyle}>Région</label>
+                      <select value={form.region || ""} onChange={e => updateField("region", e.target.value)} style={selStyle}>
+                        <option value="">— Choisir une région —</option>
+                        {REGIONS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: "12px 14px", background: form.mobile_other_regions ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.02)", borderRadius: 10, border: `1px solid ${form.mobile_other_regions ? "rgba(16,185,129,0.4)" : C.border}`, transition: "all .2s" }}>
+                        <input type="checkbox" checked={!!form.mobile_other_regions} onChange={e => updateField("mobile_other_regions", e.target.checked)} style={{ marginTop: 2, accentColor: C.green, width: 16, height: 16 }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>🌍 Mobile vers d&apos;autres régions</div>
+                          <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>Cochez si vous êtes prêt(e) à rejoindre un club dans une autre région</div>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -370,7 +389,7 @@ export default function DashboardPage() {
                 <div style={{ marginBottom: 18 }}>
                   <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 10, fontWeight: 600 }}>👤 Identité</h4>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-                    {[["Prénom", profile?.first_name], ["Nom", profile?.last_name], ["Âge", profile?.age ? `${profile.age} ans` : null], ["Téléphone", profile?.phone], ["Ville", profile?.city], ["Club actuel", profile?.current_club]].map(([l, v], i) => (
+                    {[["Prénom", profile?.first_name], ["Nom", profile?.last_name], ["Âge", profile?.age ? `${profile.age} ans` : null], ["Téléphone", profile?.phone], ["Ville", profile?.city], ["Club actuel", profile?.current_club], ["Région", getRegionLabel(profile?.region)], ["Mobilité", profile?.mobile_other_regions ? "🌍 Autres régions OK" : "Région actuelle"]].map(([l, v], i) => (
                       <div key={i} style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: `1px solid ${C.border}` }}>
                         <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 4 }}>{l}</div>
                         <div style={{ fontSize: 14, color: v ? C.text : C.dim, fontWeight: 600 }}>{v || "—"}</div>

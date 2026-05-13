@@ -24,3 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ────────────────────────────────────────────
+   Responsive global overrides (mobile ≤ 640px)
+   ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .hc-mobile-stack {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .hc-mobile-hide {
+    display: none !important;
+  }
+  .hc-mobile-full {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+

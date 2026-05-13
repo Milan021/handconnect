@@ -33,7 +33,7 @@ export default function LoginPage() {
       <link href={FONT_LINK} rel="stylesheet" />
       <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,107,53,0.08) 0%, transparent 70%)", top: -150, right: -100, pointerEvents: "none" }} />
       <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", bottom: -100, left: -100, pointerEvents: "none" }} />
-      <div style={{ width: 400, padding: 40, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, backdropFilter: "blur(20px)", position: "relative", zIndex: 1 }}>
+      <div style={{ width: "100%", maxWidth: 400, padding: "32px clamp(20px, 5vw, 40px)", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, backdropFilter: "blur(20px)", position: "relative", zIndex: 1, margin: "20px", boxSizing: "border-box" }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #FF6B35, #C13C00)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: 16 }}>🤾</div>
           <h1 style={{ fontSize: 32, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>HANDBALL<span style={{ color: "#FF6B35" }}>CONNECT</span></h1>

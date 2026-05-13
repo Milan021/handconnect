@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { REGIONS, getRegionLabel } from "../../lib/regions";
 import Link from "next/link";
+import useIsMobile from "../../lib/useIsMobile";
 
 const C = {
   primary: "#8B5CF6",
@@ -99,6 +100,7 @@ const labelStyle = {
 };
 
 export default function CoachDashboard({ user, profile, onProfileUpdate }) {
+  const isMobile = useIsMobile();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
@@ -186,8 +188,8 @@ export default function CoachDashboard({ user, profile, onProfileUpdate }) {
       )}
       <style>{`input:focus,select:focus,textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px rgba(139,92,246,0.15)!important}`}</style>
 
-      <header style={{ background: "rgba(10,14,26,0.9)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}`, padding: "0 24px", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+      <header style={{ background: "rgba(10,14,26,0.9)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}`, padding: isMobile ? "10px 14px" : "0 24px", position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", minHeight: isMobile ? 56 : 64 }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
             <div style={{ width: 38, height: 38, borderRadius: 12, background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: `0 4px 16px ${C.primary}30` }}>🎯</div>
             <div>
@@ -199,7 +201,7 @@ export default function CoachDashboard({ user, profile, onProfileUpdate }) {
         </div>
       </header>
 
-      <main style={{ maxWidth: 1000, margin: "0 auto", padding: "32px 24px" }}>
+      <main style={{ maxWidth: 1000, margin: "0 auto", padding: isMobile ? "20px 14px" : "32px 24px" }}>
         {/* Welcome */}
         <div style={{ background: `linear-gradient(135deg, ${C.primary}10, ${C.accent}05)`, border: `1px solid ${C.primary}20`, borderRadius: 20, padding: 28, marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>

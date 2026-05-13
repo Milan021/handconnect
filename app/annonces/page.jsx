@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { TRAINING_CENTERS, CENTER_TYPE_META, SECTION_SPORTIVE_META, getCenterById } from "../../lib/training-centers";
 import { REGIONS, getRegionLabel } from "../../lib/regions";
+import useIsMobile from "../../lib/useIsMobile";
 
 const FONT_LINK = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap";
 
@@ -58,6 +59,7 @@ const labelStyle = {
 };
 
 export default function AnnoncesPage() {
+  const isMobile = useIsMobile();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [tab, setTab] = useState("annonces");
@@ -225,35 +227,35 @@ export default function AnnoncesPage() {
 
       <div style={{ position: "relative", zIndex: 1 }}>
         {/* Header */}
-        <header style={{ background: "rgba(10,14,26,0.9)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}`, padding: "0 24px", position: "sticky", top: 0, zIndex: 100 }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: `0 4px 16px ${C.primary}30` }}>🤾</div>
+        <header style={{ background: "rgba(10,14,26,0.9)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}`, padding: isMobile ? "10px 14px" : "0 24px", position: "sticky", top: 0, zIndex: 100 }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 0, height: isMobile ? "auto" : 64 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, alignSelf: isMobile ? "flex-start" : "auto" }}>
+              <div style={{ width: 36, height: 36, borderRadius: 11, background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, boxShadow: `0 4px 16px ${C.primary}30` }}>🤾</div>
               <div>
-                <h1 style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1, margin: 0 }}>HANDBALL<span style={{ color: C.primary }}>CONNECT</span></h1>
+                <h1 style={{ fontSize: isMobile ? 18 : 22, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: isMobile ? 2 : 3, color: "#fff", lineHeight: 1, margin: 0 }}>HANDBALL<span style={{ color: C.primary }}>CONNECT</span></h1>
                 <span style={{ fontSize: 9, color: C.dim, letterSpacing: 2, fontWeight: 600 }}>ESPACE JOUEUR</span>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <nav style={{ display: "flex", gap: 4 }}>
-                {[["annonces", "📢 Annonces"], ["profil", "👤 Mon Profil"]].map(([t, label]) => (
-                  <button key={t} onClick={() => { setTab(t); setEditing(false); }} style={{ padding: "8px 14px", borderRadius: 10, border: `1px solid ${tab === t ? C.primary + "60" : C.border}`, background: tab === t ? `${C.primary}15` : "transparent", color: tab === t ? "#fff" : C.muted, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all .2s" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, width: isMobile ? "100%" : "auto" }}>
+              <nav style={{ display: "flex", gap: 4, flex: isMobile ? 1 : "none" }}>
+                {[["annonces", "📢 Annonces"], ["profil", "👤 Profil"]].map(([t, label]) => (
+                  <button key={t} onClick={() => { setTab(t); setEditing(false); }} style={{ flex: isMobile ? 1 : "none", padding: "8px 12px", borderRadius: 10, border: `1px solid ${tab === t ? C.primary + "60" : C.border}`, background: tab === t ? `${C.primary}15` : "transparent", color: tab === t ? "#fff" : C.muted, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all .2s", whiteSpace: "nowrap" }}>
                     {label}
                   </button>
                 ))}
               </nav>
-              <button onClick={handleLogout} style={{ padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.08)", color: "#EF4444", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>🚪</button>
+              <button onClick={handleLogout} style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.08)", color: "#EF4444", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>🚪</button>
             </div>
           </div>
         </header>
 
-        <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
+        <main style={{ maxWidth: 900, margin: "0 auto", padding: isMobile ? "20px 14px" : "32px 24px" }}>
 
           {/* ════════ ONGLET ANNONCES ════════ */}
           {tab === "annonces" && (
             <div>
-              <div style={{ marginBottom: 24 }}>
-                <h2 style={{ fontSize: 32, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, margin: "0 0 6px", color: "#fff" }}>📢 ANNONCES DE RECRUTEMENT</h2>
+              <div style={{ marginBottom: 20 }}>
+                <h2 style={{ fontSize: isMobile ? 24 : 32, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: isMobile ? 2 : 3, margin: "0 0 6px", color: "#fff" }}>📢 ANNONCES DE RECRUTEMENT</h2>
                 <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Toutes les offres des clubs · {annonces.length} annonce{annonces.length !== 1 ? "s" : ""}</p>
               </div>
 
@@ -379,7 +381,7 @@ export default function AnnoncesPage() {
                     {/* Identity */}
                     <div style={{ marginBottom: 20 }}>
                       <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12, fontWeight: 600, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>👤 Identité</h4>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
                         <div><label style={labelStyle}>Prénom</label><input value={form.first_name || ""} onChange={e => updateField("first_name", e.target.value)} style={inpStyle} placeholder="Votre prénom" /></div>
                         <div><label style={labelStyle}>Nom</label><input value={form.last_name || ""} onChange={e => updateField("last_name", e.target.value)} style={inpStyle} placeholder="Votre nom" /></div>
                         <div><label style={labelStyle}>Âge</label><input type="number" value={form.age || ""} onChange={e => updateField("age", e.target.value)} style={inpStyle} placeholder="Ex: 25" min="14" max="60" /></div>
@@ -405,7 +407,7 @@ export default function AnnoncesPage() {
                     {/* Physical */}
                     <div style={{ marginBottom: 20 }}>
                       <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12, fontWeight: 600, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>📏 Caractéristiques physiques</h4>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 14 }}>
                         <div><label style={labelStyle}>Taille (cm)</label><input type="number" value={form.height_cm || ""} onChange={e => updateField("height_cm", e.target.value)} style={inpStyle} placeholder="Ex: 185" /></div>
                         <div><label style={labelStyle}>Poids (kg)</label><input type="number" value={form.weight_kg || ""} onChange={e => updateField("weight_kg", e.target.value)} style={inpStyle} placeholder="Ex: 82" /></div>
                         <div><label style={labelStyle}>Main forte</label>
@@ -422,7 +424,7 @@ export default function AnnoncesPage() {
                     {/* Handball */}
                     <div style={{ marginBottom: 20 }}>
                       <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12, fontWeight: 600, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>🤾 Handball</h4>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 14 }}>
                         <div><label style={labelStyle}>Poste</label>
                           <select value={form.position || ""} onChange={e => updateField("position", e.target.value)} style={selStyle}>
                             {POSITIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
@@ -492,7 +494,7 @@ export default function AnnoncesPage() {
                   <div>
                     <div style={{ marginBottom: 18 }}>
                       <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 10, fontWeight: 600 }}>👤 Identité</h4>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 10 }}>
                         {[["Prénom", profile?.first_name], ["Nom", profile?.last_name], ["Âge", profile?.age ? `${profile.age} ans` : null], ["Téléphone", profile?.phone], ["Ville", profile?.city], ["Club actuel", profile?.current_club], ["Région", getRegionLabel(profile?.region)], ["Mobilité", profile?.mobile_other_regions ? "🌍 Autres régions OK" : "Région actuelle"]].map(([l, v], i) => (
                           <div key={i} style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: `1px solid ${C.border}` }}>
                             <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 4 }}>{l}</div>
@@ -503,7 +505,7 @@ export default function AnnoncesPage() {
                     </div>
                     <div style={{ marginBottom: 18 }}>
                       <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 10, fontWeight: 600 }}>🤾 Handball</h4>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 10 }}>
                         {[["Poste", POSITIONS.find(p => p.value === profile?.position)?.label], ["Meilleur niveau", LEVELS.find(l => l.value === profile?.best_level)?.label], ["Niveau actuel", LEVELS.find(l => l.value === profile?.current_level)?.label], ["Taille", profile?.height_cm ? `${profile.height_cm} cm` : null], ["Poids", profile?.weight_kg ? `${profile.weight_kg} kg` : null], ["Main forte", profile?.hand_side ? profile.hand_side.charAt(0).toUpperCase() + profile.hand_side.slice(1) : null]].map(([l, v], i) => (
                           <div key={i} style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: `1px solid ${C.border}` }}>
                             <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 4 }}>{l}</div>

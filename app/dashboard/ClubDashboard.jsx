@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
+import useIsMobile from "../../lib/useIsMobile";
 
 const C = {
   primary: "#1D4ED8",
@@ -72,6 +73,7 @@ const labelStyle = {
 };
 
 export default function ClubDashboard({ user, profile }) {
+  const isMobile = useIsMobile();
   const [tab, setTab] = useState("club");
   const [club, setClub] = useState(null);
   const [loadingClub, setLoadingClub] = useState(true);
@@ -395,7 +397,7 @@ export default function ClubDashboard({ user, profile }) {
             background: "rgba(10,14,26,0.9)",
             backdropFilter: "blur(20px)",
             borderBottom: `1px solid ${C.border}`,
-            padding: "0 24px",
+            padding: isMobile ? "10px 14px" : "0 24px",
             position: "sticky",
             top: 0,
             zIndex: 100,
@@ -408,7 +410,9 @@ export default function ClubDashboard({ user, profile }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              height: 64,
+              gap: 10,
+              flexWrap: "wrap",
+              minHeight: isMobile ? 56 : 64,
             }}
           >
             <Link
@@ -485,7 +489,7 @@ export default function ClubDashboard({ user, profile }) {
           </div>
         </header>
 
-        <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
+        <main style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "20px 14px" : "32px 24px" }}>
           {/* Welcome */}
           <div
             style={{
@@ -909,7 +913,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     🏷️ Identité
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr", gap: 14 }}>
                     <div>
                       <label style={labelStyle}>Nom du club *</label>
                       <input
@@ -948,7 +952,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     📍 Localisation & niveau
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
                     <div>
                       <label style={labelStyle}>Ville *</label>
                       <input
@@ -978,7 +982,7 @@ export default function ClubDashboard({ user, profile }) {
                 {/* Présentation */}
                 <div style={{ marginBottom: 20 }}>
                   <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12, fontWeight: 600, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>📋 Présentation du club</h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginBottom: 14 }}>
                     <div>
                       <label style={labelStyle}>Année de création</label>
                       <input type="number" value={form.founded_year} onChange={(e) => upd("founded_year", e.target.value)} style={inpStyle} placeholder="Ex : 1985" min="1850" max={new Date().getFullYear()} />
@@ -1062,7 +1066,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     ✉️ Contact
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
                     <div>
                       <label style={labelStyle}>Téléphone</label>
                       <input
@@ -1142,7 +1146,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     🏷️ Identité
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr", gap: 10 }}>
                     {[
                       ["Nom du club", club?.name],
                       ["Sigle", club?.short_name],
@@ -1196,7 +1200,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     📍 Localisation & niveau
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
                     {[
                       ["Ville", club?.city],
                       [
@@ -1244,7 +1248,7 @@ export default function ClubDashboard({ user, profile }) {
                   <div style={{ marginBottom: 18 }}>
                     <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 10, fontWeight: 600 }}>📋 Présentation</h4>
                     {(club?.founded_year || club?.member_count) && (
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 12 }}>
                         {[["Créé en", club?.founded_year || null], ["Licenciés", club?.member_count ? `${club.member_count}` : null]].map(([l, v], i) => (
                           <div key={i} style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: `1px solid ${C.border}` }}>
                             <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 4 }}>{l}</div>
@@ -1331,7 +1335,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     ✉️ Contact
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
                     {[
                       ["Téléphone", club?.phone],
                       ["Email", club?.email],
@@ -1372,7 +1376,7 @@ export default function ClubDashboard({ user, profile }) {
                 </div>
 
                 {/* Plan + created */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginTop: 14 }}>
                   <div
                     style={{
                       padding: "12px 16px",

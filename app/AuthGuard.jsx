@@ -30,12 +30,6 @@ export default function AuthGuard({ children }) {
         return;
       }
 
-      // "/" redirects to dashboard for authenticated users
-      if (pathname === "/") {
-        window.location.href = "/dashboard";
-        return;
-      }
-
       setStatus("ok");
     };
 

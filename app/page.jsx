@@ -292,19 +292,66 @@ function AnnonceModal({annonce:a,onClose,user,profile,onApplied}){
 }
 
 /* ═══════ CLUB CARD ═══════ */
-function ClubCard({c,i}){
+function ClubCard({c,i,onClick}){
   const seeking=Array.isArray(c.seeking_positions)?c.seeking_positions:[];
-  return <div style={{background:C.bgCard,borderRadius:16,padding:20,border:`1px solid ${C.border}`,animation:`fadeUp .5s ease ${i*.05}s both`,transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.borderBlue}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border}}>
+  return <div onClick={()=>onClick&&onClick(c)} style={{background:C.bgCard,borderRadius:16,padding:20,border:`1px solid ${C.border}`,animation:`fadeUp .5s ease ${i*.05}s both`,transition:"all .25s",cursor:onClick?"pointer":"default"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.borderBlue;if(onClick)e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="";}}>
     <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
       <div style={{width:46,height:46,borderRadius:12,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:14,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1}}>{(c.short_name||c.name||"?").slice(0,4)}</div>
       <div style={{flex:1}}>
         <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><h3 style={{margin:0,fontSize:15,fontWeight:700,color:C.text}}>{c.name}</h3>{c.plan==="premium"&&<Bdg color={C.gold}>👑</Bdg>}</div>
         <p style={{margin:"2px 0 0",fontSize:12,color:C.dim}}>{c.city} · {c.division}</p>
+        {(c.founded_year||c.member_count)&&<p style={{margin:"2px 0 0",fontSize:10,color:C.muted,fontWeight:600}}>{c.founded_year&&<>📅 Depuis {c.founded_year}</>}{c.founded_year&&c.member_count&&" · "}{c.member_count&&<>👥 {c.member_count} licenciés</>}</p>}
       </div>
     </div>
     {seeking.length>0&&<div style={{marginBottom:12}}><p style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,marginBottom:6,fontWeight:600}}>Postes recherchés</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{seeking.map(p=><Bdg key={p} color={C.primary}>{POS[p]||p}</Bdg>)}</div></div>}
+    {c.motivation&&<p style={{fontSize:12,color:C.muted,lineHeight:1.5,margin:"0 0 10px",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>💎 {c.motivation}</p>}
     {(c.phone||c.email)&&<div style={{background:"rgba(0,0,0,0.15)",borderRadius:10,padding:10}}><div style={{fontSize:12,color:C.muted,display:"flex",flexDirection:"column",gap:4}}>{c.phone&&<span>📱 <span style={{fontFamily:"monospace"}}>{c.phone}</span></span>}{c.email&&<span>✉️ <span style={{fontFamily:"monospace"}}>{c.email}</span></span>}</div></div>}
   </div>
+}
+
+/* ═══════ CLUB MODAL ═══════ */
+function ClubModal({club:c,onClose,user}){
+  if(!c)return null;
+  const seeking=Array.isArray(c.seeking_positions)?c.seeking_positions:[];
+  return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(180deg,${C.surface},${C.bg})`,borderRadius:24,maxWidth:540,width:"100%",maxHeight:"90vh",overflowY:"auto",border:`1px solid ${C.border}`,animation:"modalUp .4s cubic-bezier(0.16,1,0.3,1)"}}>
+    <div style={{padding:"24px 28px",background:`${C.primary}10`,borderBottom:`1px solid ${C.primary}20`,position:"relative"}}>
+      <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.06)",border:"none",color:C.dim,width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
+      <div style={{display:"flex",alignItems:"center",gap:14}}>
+        <div style={{width:56,height:56,borderRadius:14,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1,flexShrink:0}}>{(c.short_name||c.name||"?").slice(0,4)}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><h2 style={{margin:0,fontSize:20,fontWeight:700,color:C.text}}>{c.name}</h2>{c.plan==="premium"&&<Bdg color={C.gold}>👑</Bdg>}</div>
+          <p style={{margin:"4px 0 0",fontSize:13,color:C.primaryLight,fontWeight:600}}>{c.city} · {c.division}</p>
+        </div>
+      </div>
+    </div>
+    <div style={{padding:28}}>
+      {(c.founded_year||c.member_count)&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
+        {c.founded_year&&<div style={{padding:"14px 16px",background:"rgba(255,255,255,0.03)",borderRadius:12,border:`1px solid ${C.border}`,textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:C.primary,fontFamily:"'Bebas Neue',sans-serif"}}>{c.founded_year}</div><div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginTop:2}}>📅 Année de création</div></div>}
+        {c.member_count&&<div style={{padding:"14px 16px",background:"rgba(255,255,255,0.03)",borderRadius:12,border:`1px solid ${C.border}`,textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:C.primary,fontFamily:"'Bebas Neue',sans-serif"}}>{c.member_count}</div><div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginTop:2}}>👥 Licenciés</div></div>}
+      </div>}
+      {c.goals&&<div style={{marginBottom:14,padding:"14px 16px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
+        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:6}}>🎯 Objectifs du club</div>
+        <p style={{fontSize:13,color:C.text,lineHeight:1.7,margin:0,whiteSpace:"pre-wrap"}}>{c.goals}</p>
+      </div>}
+      {c.motivation&&<div style={{marginBottom:14,padding:"14px 16px",background:`${C.primary}08`,borderRadius:12,border:`1px solid ${C.primary}20`}}>
+        <div style={{fontSize:10,color:C.primaryLight,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:6}}>💎 Pourquoi nous rejoindre</div>
+        <p style={{fontSize:13,color:C.text,lineHeight:1.7,margin:0,whiteSpace:"pre-wrap"}}>{c.motivation}</p>
+      </div>}
+      {seeking.length>0&&<div style={{marginBottom:14}}>
+        <p style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:8,fontWeight:600}}>🎯 Postes recherchés</p>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{seeking.map(p=><span key={p} style={{padding:"6px 14px",background:`${C.primary}15`,color:C.primaryLight,borderRadius:10,fontSize:12,fontWeight:600,border:`1px solid ${C.primary}30`}}>{POS[p]||p}</span>)}</div>
+      </div>}
+      {(c.phone||c.email)&&<div style={{padding:14,background:C.bgCard,borderRadius:12,border:`1px solid ${C.border}`,marginBottom:14}}>
+        <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:8}}>Contact direct</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {c.phone&&<div style={{display:"flex",alignItems:"center",gap:10,fontSize:13}}>📱 <span style={{color:C.text,fontFamily:"monospace"}}>{c.phone}</span></div>}
+          {c.email&&<div style={{display:"flex",alignItems:"center",gap:10,fontSize:13}}>✉️ <span style={{color:C.text,fontFamily:"monospace"}}>{c.email}</span></div>}
+        </div>
+      </div>}
+      {user&&c.owner_id&&user.id!==c.owner_id&&<ConnectButton otherId={c.owner_id} user={user} labelConnect="🤝 Contacter le club" labelChat="💬 Discuter avec le club"/>}
+      {!user&&<Link href="/login" style={{display:"block",width:"100%",padding:"13px 0",borderRadius:12,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,textAlign:"center",textDecoration:"none",boxShadow:`0 6px 20px ${C.primary}30`}}>🔐 Connectez-vous pour contacter</Link>}
+    </div>
+  </div></div>
 }
 
 /* ═══════ PROFILE EDITOR ═══════ */
@@ -418,6 +465,7 @@ export default function HandConnect(){
   const [aType,setAType]=useState("all");
   const [selPlayer,setSelPlayer]=useState(null);
   const [selAnnonce,setSelAnnonce]=useState(null);
+  const [selClub,setSelClub]=useState(null);
   const [toast,setToast]=useState("");
   const [user,setUser]=useState(null);
   const [profile,setProfile]=useState(null);
@@ -596,7 +644,7 @@ export default function HandConnect(){
         {/* Clubs */}
         {tab==="clubs"&&!dataLoading&&(
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>
-            {fClubs.length>0?fClubs.map((c,i)=><ClubCard key={c.id} c={c} i={i}/>):<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:C.dim}}><div style={{fontSize:40,marginBottom:10}}>🏟️</div><p>Aucun club inscrit pour le moment</p></div>}
+            {fClubs.length>0?fClubs.map((c,i)=><ClubCard key={c.id} c={c} i={i} onClick={setSelClub}/>):<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:C.dim}}><div style={{fontSize:40,marginBottom:10}}>🏟️</div><p>Aucun club inscrit pour le moment</p></div>}
           </div>
         )}
 
@@ -625,6 +673,7 @@ export default function HandConnect(){
       {/* Modals */}
       <PlayerModal player={selPlayer} onClose={()=>setSelPlayer(null)} user={user}/>
       <AnnonceModal annonce={selAnnonce} onClose={()=>setSelAnnonce(null)} user={user} profile={profile} onApplied={id=>setAnnonces(prev=>prev.map(x=>x.id===id?{...x,candidatures_count:(x.candidatures_count||0)+1}:x))}/>
+      <ClubModal club={selClub} onClose={()=>setSelClub(null)} user={user}/>
     </div>
   </>
 }

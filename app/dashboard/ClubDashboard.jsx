@@ -85,6 +85,10 @@ export default function ClubDashboard({ user, profile }) {
     seeking_positions: [],
     phone: "",
     email: "",
+    founded_year: "",
+    member_count: "",
+    goals: "",
+    motivation: "",
   });
 
   useEffect(() => {
@@ -104,6 +108,10 @@ export default function ClubDashboard({ user, profile }) {
           seeking_positions: Array.isArray(data.seeking_positions) ? data.seeking_positions : [],
           phone: data.phone || "",
           email: data.email || "",
+          founded_year: data.founded_year || "",
+          member_count: data.member_count || "",
+          goals: data.goals || "",
+          motivation: data.motivation || "",
         });
       } else {
         setEditing(true);
@@ -199,6 +207,10 @@ export default function ClubDashboard({ user, profile }) {
       seeking_positions: form.seeking_positions,
       phone: form.phone.trim() || null,
       email: form.email.trim() || null,
+      founded_year: form.founded_year ? parseInt(form.founded_year) : null,
+      member_count: form.member_count ? parseInt(form.member_count) : null,
+      goals: form.goals.trim() || null,
+      motivation: form.motivation.trim() || null,
     };
     let result;
     if (club?.id) {
@@ -230,6 +242,10 @@ export default function ClubDashboard({ user, profile }) {
         seeking_positions: Array.isArray(club.seeking_positions) ? club.seeking_positions : [],
         phone: club.phone || "",
         email: club.email || "",
+        founded_year: club.founded_year || "",
+        member_count: club.member_count || "",
+        goals: club.goals || "",
+        motivation: club.motivation || "",
       });
       setEditing(false);
     }
@@ -839,6 +855,31 @@ export default function ClubDashboard({ user, profile }) {
                   </div>
                 </div>
 
+                {/* Présentation */}
+                <div style={{ marginBottom: 20 }}>
+                  <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12, fontWeight: 600, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>📋 Présentation du club</h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                    <div>
+                      <label style={labelStyle}>Année de création</label>
+                      <input type="number" value={form.founded_year} onChange={(e) => upd("founded_year", e.target.value)} style={inpStyle} placeholder="Ex : 1985" min="1850" max={new Date().getFullYear()} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Nombre de licenciés</label>
+                      <input type="number" value={form.member_count} onChange={(e) => upd("member_count", e.target.value)} style={inpStyle} placeholder="Ex : 250" min="0" max="10000" />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>Objectifs du club</label>
+                    <textarea value={form.goals} onChange={(e) => upd("goals", e.target.value)} placeholder="Ex : Montée en Nationale 3 d'ici 2027, structuration du centre de formation, développement du handball féminin…" rows={3} maxLength={500} style={{ ...inpStyle, resize: "vertical", lineHeight: 1.6, fontFamily: "inherit" }} />
+                    <div style={{ textAlign: "right", fontSize: 10, color: C.dim, marginTop: 4 }}>{(form.goals || "").length}/500</div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Pourquoi rejoindre votre club ?</label>
+                    <textarea value={form.motivation} onChange={(e) => upd("motivation", e.target.value)} placeholder="Ex : Ambiance familiale, infrastructures neuves, équipe technique diplômée, hébergement possible pour les joueurs venant de loin…" rows={4} maxLength={800} style={{ ...inpStyle, resize: "vertical", lineHeight: 1.6, fontFamily: "inherit" }} />
+                    <div style={{ textAlign: "right", fontSize: 10, color: C.dim, marginTop: 4 }}>{(form.motivation || "").length}/800</div>
+                  </div>
+                </div>
+
                 {/* Recrutement */}
                 <div style={{ marginBottom: 20 }}>
                   <h4
@@ -1077,6 +1118,35 @@ export default function ClubDashboard({ user, profile }) {
                     ))}
                   </div>
                 </div>
+
+                {/* Présentation (view) */}
+                {(club?.founded_year || club?.member_count || club?.goals || club?.motivation) && (
+                  <div style={{ marginBottom: 18 }}>
+                    <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 10, fontWeight: 600 }}>📋 Présentation</h4>
+                    {(club?.founded_year || club?.member_count) && (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+                        {[["Créé en", club?.founded_year || null], ["Licenciés", club?.member_count ? `${club.member_count}` : null]].map(([l, v], i) => (
+                          <div key={i} style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: `1px solid ${C.border}` }}>
+                            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 4 }}>{l}</div>
+                            <div style={{ fontSize: 14, color: v ? C.text : C.dim, fontWeight: 600 }}>{v || "—"}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {club?.goals && (
+                      <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: `1px solid ${C.border}`, marginBottom: 10 }}>
+                        <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 6 }}>🎯 Objectifs</div>
+                        <p style={{ fontSize: 13, color: C.text, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{club.goals}</p>
+                      </div>
+                    )}
+                    {club?.motivation && (
+                      <div style={{ padding: "12px 16px", background: `${C.primary}08`, borderRadius: 12, border: `1px solid ${C.primary}20` }}>
+                        <div style={{ fontSize: 10, color: C.primaryLight, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 6 }}>💎 Pourquoi nous rejoindre</div>
+                        <p style={{ fontSize: 13, color: C.text, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{club.motivation}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Recrutement */}
                 <div style={{ marginBottom: 18 }}>

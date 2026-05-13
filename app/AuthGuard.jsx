@@ -3,26 +3,36 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { usePathname } from "next/navigation";
 
-const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/cgu", "/mentions-legales", "/politique-confidentialite"];
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/cgu", "/mentions-legales", "/politique-confidentialite"];
 
 export default function AuthGuard({ children }) {
   const [status, setStatus] = useState("loading");
   const pathname = usePathname();
 
-  // Public pages don't need auth
   const isPublicPage = PUBLIC_PATHS.includes(pathname);
 
   useEffect(() => {
-    if (isPublicPage) {
-      setStatus("ok");
-      return;
-    }
-
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
 
+      if (isPublicPage) {
+        // Redirect already-authenticated users away from login/register
+        if (user && ["/login", "/register"].includes(pathname)) {
+          window.location.href = "/dashboard";
+          return;
+        }
+        setStatus("ok");
+        return;
+      }
+
       if (!user) {
         window.location.href = "/login";
+        return;
+      }
+
+      // "/" redirects to dashboard for authenticated users
+      if (pathname === "/") {
+        window.location.href = "/dashboard";
         return;
       }
 
@@ -41,7 +51,7 @@ export default function AuthGuard({ children }) {
     return () => subscription.unsubscribe();
   }, [pathname, isPublicPage]);
 
-  if (status === "loading" && !isPublicPage) {
+  if (status === "loading") {
     return (
       <div style={{
         minHeight: "100vh",

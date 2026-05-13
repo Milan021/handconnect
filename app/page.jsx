@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
+import { getCenterById, CENTER_TYPE_META } from "../lib/training-centers";
 
 const C = { primary:"#1D4ED8", primaryLight:"#3B82F6", primaryDark:"#1E3A8A", accent:"#DC2626", accentLight:"#F87171", bg:"#0B1120", bgCard:"rgba(255,255,255,0.04)", bgHover:"rgba(255,255,255,0.07)", surface:"#111827", border:"rgba(255,255,255,0.08)", borderBlue:"rgba(29,78,216,0.4)", text:"#F1F5F9", muted:"rgba(255,255,255,0.5)", dim:"rgba(255,255,255,0.3)", green:"#10B981", greenBg:"rgba(16,185,129,0.12)", gold:"#FBBF24" };
 
@@ -22,13 +23,20 @@ function Toast({msg,onClose}){if(!msg)return null;const isErr=msg.startsWith("�
 
 /* ═══════ PLAYER CARD ═══════ */
 function PlayerCard({p,onClick,i}){
-  return <div onClick={()=>onClick(p)} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",cursor:"pointer",border:`1px solid ${C.border}`,transition:"all .35s cubic-bezier(0.16,1,0.3,1)",position:"relative",animation:`fadeUp .5s ease ${i*.05}s both`}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=C.borderBlue;e.currentTarget.style.boxShadow=`0 16px 48px ${C.primary}15`}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow=""}}>
+  const center=getCenterById(p.training_center);
+  const centerMeta=center?CENTER_TYPE_META[center.type]:null;
+  const isMinor=p.age&&p.age<18;
+  const headerColor=center?centerMeta.color:C.primary;
+  const headerDark=center?centerMeta.color:C.primaryDark;
+  return <div onClick={()=>onClick(p)} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",cursor:"pointer",border:`1px solid ${center?`${centerMeta.color}30`:C.border}`,transition:"all .35s cubic-bezier(0.16,1,0.3,1)",position:"relative",animation:`fadeUp .5s ease ${i*.05}s both`}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=center?centerMeta.color:C.borderBlue;e.currentTarget.style.boxShadow=`0 16px 48px ${headerColor}15`}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=center?`${centerMeta.color}30`:C.border;e.currentTarget.style.boxShadow=""}}>
     {p.is_available&&<div style={{position:"absolute",top:12,left:12,zIndex:2}}><Dot/></div>}
-    <div style={{height:80,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,position:"relative"}}><div style={{width:56,height:56,borderRadius:"50%",background:C.bg,border:`3px solid ${C.primary}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:800,color:C.primaryLight,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-24,left:"50%",transform:"translateX(-50%)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div></div>
+    {center&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:centerMeta.color,border:`1px solid ${centerMeta.color}50`}}>{centerMeta.icon} {centerMeta.label}</div>}
+    {!center&&isMinor&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:"#FBBF24",border:"1px solid rgba(251,191,36,0.4)"}}>-18</div>}
+    <div style={{height:80,background:`linear-gradient(135deg,${headerColor},${headerDark})`,position:"relative"}}><div style={{width:56,height:56,borderRadius:"50%",background:C.bg,border:`3px solid ${headerColor}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:800,color:center?centerMeta.color:C.primaryLight,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-24,left:"50%",transform:"translateX(-50%)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div></div>
     <div style={{padding:"30px 16px 16px",textAlign:"center"}}>
       <h3 style={{margin:0,fontSize:15,fontWeight:700,color:C.text}}>{p.first_name} {p.last_name}</h3>
-      <p style={{margin:"2px 0",fontSize:10,color:C.primary,fontWeight:700,fontFamily:"monospace",textTransform:"uppercase",letterSpacing:1.5}}>{POS[p.position]||"Non défini"}</p>
-      <p style={{fontSize:10,color:C.dim}}>{p.current_club||"Sans club"} · {p.city||"—"}</p>
+      <p style={{margin:"2px 0",fontSize:10,color:headerColor,fontWeight:700,fontFamily:"monospace",textTransform:"uppercase",letterSpacing:1.5}}>{POS[p.position]||"Non défini"}</p>
+      <p style={{fontSize:10,color:C.dim}}>{center?center.label:(p.current_club||"Sans club")} · {p.city||"—"}</p>
       <div style={{display:"flex",justifyContent:"center",gap:16,paddingTop:10,marginTop:10,borderTop:`1px solid ${C.border}`}}>
         {[["Âge",p.age?`${p.age}a`:"—"],["Taille",p.height_cm?`${p.height_cm}cm`:"—"],["Niveau",LEVELS.find(l=>l.v===p.current_level)?.l||"—"]].map(([l,v])=><div key={l} style={{textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif"}}>{v}</div><div style={{fontSize:8,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>{l}</div></div>)}
       </div>
@@ -39,15 +47,20 @@ function PlayerCard({p,onClick,i}){
 /* ═══════ PLAYER MODAL ═══════ */
 function PlayerModal({player:p,onClose}){
   if(!p)return null;
+  const center=getCenterById(p.training_center);
+  const centerMeta=center?CENTER_TYPE_META[center.type]:null;
+  const headerColor=center?centerMeta.color:C.primary;
+  const headerDark=center?centerMeta.color:C.primaryDark;
   return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(180deg,${C.surface},${C.bg})`,borderRadius:24,maxWidth:500,width:"100%",overflow:"hidden",maxHeight:"90vh",overflowY:"auto",border:`1px solid ${C.border}`,animation:"modalUp .4s cubic-bezier(0.16,1,0.3,1)"}}>
-    <div style={{height:120,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,position:"relative"}}>
+    <div style={{height:120,background:`linear-gradient(135deg,${headerColor},${headerDark})`,position:"relative"}}>
       <button onClick={onClose} style={{position:"absolute",top:12,right:12,background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
-      <div style={{width:76,height:76,borderRadius:"50%",background:C.bg,border:`4px solid ${C.primary}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:800,color:C.primaryLight,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-34,left:"50%",transform:"translateX(-50%)",boxShadow:"0 10px 30px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div>
+      {center&&<div style={{position:"absolute",top:12,left:12,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)",padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:700,color:"#fff",border:`1px solid ${centerMeta.color}80`}}>{centerMeta.icon} {centerMeta.label}</div>}
+      <div style={{width:76,height:76,borderRadius:"50%",background:C.bg,border:`4px solid ${headerColor}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:800,color:center?centerMeta.color:C.primaryLight,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-34,left:"50%",transform:"translateX(-50%)",boxShadow:"0 10px 30px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div>
     </div>
     <div style={{padding:"44px 28px 0",textAlign:"center"}}>
       <h2 style={{fontSize:22,fontWeight:700,margin:0,color:C.text}}>{p.first_name} {p.last_name}</h2>
-      <p style={{color:C.primary,fontWeight:700,fontSize:11,fontFamily:"monospace",margin:"4px 0",textTransform:"uppercase",letterSpacing:2}}>{POS[p.position]||"Non défini"}</p>
-      <p style={{color:C.dim,fontSize:12,margin:0}}>{p.current_club||"Sans club"} · {p.city||"—"} · {p.age?`${p.age} ans`:""} {p.height_cm?`· ${p.height_cm}cm`:""}</p>
+      <p style={{color:headerColor,fontWeight:700,fontSize:11,fontFamily:"monospace",margin:"4px 0",textTransform:"uppercase",letterSpacing:2}}>{POS[p.position]||"Non défini"}</p>
+      <p style={{color:C.dim,fontSize:12,margin:0}}>{center?center.label:(p.current_club||"Sans club")} · {p.city||"—"} · {p.age?`${p.age} ans`:""} {p.height_cm?`· ${p.height_cm}cm`:""}</p>
     </div>
     <div style={{padding:"16px 28px 28px"}}>
       <div style={{display:"flex",justifyContent:"space-around",background:`${C.primary}10`,borderRadius:14,padding:16,border:`1px solid ${C.primary}20`,marginBottom:16}}>
@@ -299,6 +312,17 @@ export default function HandConnect(){
     return true;
   }),[players,search,posF,availF]);
 
+  // Découpage joueurs en 3 sections (priorité : centre > mineur > sénior)
+  const playerSections=useMemo(()=>{
+    const center=[],young=[],senior=[];
+    for(const p of fPlayers){
+      if(p.training_center) center.push(p);
+      else if(p.age&&p.age<18) young.push(p);
+      else senior.push(p);
+    }
+    return {center,young,senior};
+  },[fPlayers]);
+
   const fAnnonces=useMemo(()=>annonces.filter(a=>{
     if(aType!=="all"&&a.type!==aType)return false;
     if(search)return`${a.title} ${a.club_name||""} ${a.city||""}`.toLowerCase().includes(search.toLowerCase());
@@ -377,12 +401,30 @@ export default function HandConnect(){
           </div>
         )}
 
-        {/* Joueurs */}
-        {tab==="joueurs"&&!dataLoading&&(
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>
-            {fPlayers.length>0?fPlayers.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>):<div style={{gridColumn:"1/-1",textAlign:"center",padding:50,color:C.dim}}><div style={{fontSize:40,marginBottom:10}}>🤾</div><p>Aucun joueur inscrit pour le moment</p>{!user&&<p style={{fontSize:12,color:C.primary,marginTop:8}}><a href="/register" style={{color:C.primaryLight,textDecoration:"underline"}}>Inscrivez-vous</a> pour être le premier !</p>}</div>}
-          </div>
-        )}
+        {/* Joueurs — 3 sections : Centres / -18 / Tous */}
+        {tab==="joueurs"&&!dataLoading&&(()=>{
+          const sectionHeader=(icon,title,subtitle,color,count)=><div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:14,padding:"0 4px"}}>
+            <h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:24,letterSpacing:3,color:C.text}}>{icon} <span style={{color}}>{title}</span></h2>
+            <span style={{fontSize:11,color:C.dim,fontWeight:600}}>· {count} {count>1?"joueurs":"joueur"}</span>
+            <span style={{fontSize:11,color:C.muted,fontStyle:"italic",marginLeft:"auto"}}>{subtitle}</span>
+          </div>;
+          const emptyAll=playerSections.center.length===0&&playerSections.young.length===0&&playerSections.senior.length===0;
+          if(emptyAll) return <div style={{textAlign:"center",padding:50,color:C.dim}}><div style={{fontSize:40,marginBottom:10}}>🤾</div><p>Aucun joueur inscrit pour le moment</p>{!user&&<p style={{fontSize:12,color:C.primary,marginTop:8}}><Link href="/register" style={{color:C.primaryLight,textDecoration:"underline"}}>Inscrivez-vous</Link> pour être le premier !</p>}</div>;
+          return <div style={{display:"flex",flexDirection:"column",gap:36}}>
+            {playerSections.center.length>0&&<section>
+              {sectionHeader("🏆","CENTRES DE FORMATION","Pôles Espoirs · Centres pro · Sections sportives",C.gold,playerSections.center.length)}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.center.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
+            </section>}
+            {playerSections.young.length>0&&<section>
+              {sectionHeader("👶","-18 ANS","Cadets · Juniors · Espoirs",C.accent,playerSections.young.length)}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.young.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
+            </section>}
+            {playerSections.senior.length>0&&<section>
+              {sectionHeader("🤾","JOUEURS","Tous les profils séniors",C.primary,playerSections.senior.length)}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.senior.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
+            </section>}
+          </div>;
+        })()}
 
         {/* Clubs */}
         {tab==="clubs"&&!dataLoading&&(

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import ClubDashboard from "./ClubDashboard";
+import { TRAINING_CENTERS, CENTER_TYPE_META, getCenterById } from "../../lib/training-centers";
 
 const FONT_LINK = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap";
 
@@ -87,6 +88,7 @@ export default function DashboardPage() {
       current_level: form.current_level || null,
       current_club: form.current_club || null,
       city: form.city || null,
+      training_center: form.training_center || null,
       phone: form.phone || null,
       bio: form.bio || null,
       is_available: form.is_available || false,
@@ -271,6 +273,32 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
+                {/* Centre de formation */}
+                <div style={{ marginBottom: 20 }}>
+                  <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12, fontWeight: 600, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>🏆 Centre de formation / Section sportive</h4>
+                  <div>
+                    <label style={labelStyle}>Êtes-vous dans un pôle, un centre de formation ou une section sportive ?</label>
+                    <select value={form.training_center || ""} onChange={e => updateField("training_center", e.target.value)} style={selStyle}>
+                      <option value="">— Aucun —</option>
+                      <optgroup label="Pôles Espoirs FFHB">
+                        {TRAINING_CENTERS.filter(c => c.type === "pole").map(c => <option key={c.id} value={c.id}>{c.label} ({c.city})</option>)}
+                      </optgroup>
+                      <optgroup label="Centres de formation masculins">
+                        {TRAINING_CENTERS.filter(c => c.type === "pro_m").map(c => <option key={c.id} value={c.id}>{c.label} ({c.city})</option>)}
+                      </optgroup>
+                      <optgroup label="Centres de formation féminins">
+                        {TRAINING_CENTERS.filter(c => c.type === "pro_f").map(c => <option key={c.id} value={c.id}>{c.label} ({c.city})</option>)}
+                      </optgroup>
+                      {TRAINING_CENTERS.some(c => c.type === "section") && (
+                        <optgroup label="Sections sportives">
+                          {TRAINING_CENTERS.filter(c => c.type === "section").map(c => <option key={c.id} value={c.id}>{c.label} ({c.city})</option>)}
+                        </optgroup>
+                      )}
+                    </select>
+                    <p style={{ fontSize: 11, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>Votre profil apparaîtra dans la rubrique « Centres de formation » en haut de la liste des joueurs.</p>
+                  </div>
+                </div>
+
                 {/* Availability */}
                 <div style={{ marginBottom: 20 }}>
                   <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12, fontWeight: 600, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>📡 Disponibilité</h4>
@@ -338,6 +366,20 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </div>
+
+                {/* Centre de formation (view) */}
+                {profile?.training_center && (() => {
+                  const ctr = getCenterById(profile.training_center);
+                  const meta = ctr ? CENTER_TYPE_META[ctr.type] : null;
+                  if (!ctr || !meta) return null;
+                  return (
+                    <div style={{ marginBottom: 18, padding: "14px 18px", background: `${meta.color}10`, borderRadius: 12, border: `1px solid ${meta.color}30` }}>
+                      <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 6 }}>{meta.icon} {meta.label}</div>
+                      <div style={{ fontSize: 14, color: C.text, fontWeight: 700 }}>{ctr.label}</div>
+                      <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{ctr.city}</div>
+                    </div>
+                  );
+                })()}
 
                 {/* Availability */}
                 <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: profile?.is_available ? "rgba(16,185,129,0.06)" : "rgba(255,255,255,0.02)", borderRadius: 12, border: `1px solid ${profile?.is_available ? "rgba(16,185,129,0.2)" : C.border}` }}>

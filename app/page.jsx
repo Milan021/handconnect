@@ -13,9 +13,9 @@ const POS_ORDER = { gardien:0, arriere_gauche:1, demi_centre:2, arriere_droit:3,
 const LEVELS = [ {v:"",l:"—"},{v:"departemental",l:"Départemental"},{v:"regional",l:"Régional"},{v:"pre_nationale",l:"Pré-Nationale"},{v:"n3",l:"Nationale 3"},{v:"n2",l:"Nationale 2"},{v:"n1",l:"Nationale 1"},{v:"proligue",l:"Proligue"},{v:"starligue",l:"Starligue"},{v:"d2f",l:"D2F"},{v:"d1f",l:"D1F"} ];
 const BEN_ICO = { prime:"💰", logement:"🏠", job:"💼", formation:"🎓" };
 const PRICING = [
-  { key:"free", label:"Club Free", price:0, per:"", desc:"Pour découvrir", feats:["1 annonce active","10 profils visibles","Messagerie limitée"], color:C.dim },
-  { key:"standard", label:"Club Standard", price:19, per:"/mois", desc:"Pour les clubs actifs", feats:["Annonces illimitées","Tous les profils","Messagerie illimitée","Alertes candidats"], color:C.primary, pop:true },
-  { key:"premium", label:"Club Premium", price:49, per:"/mois", desc:"Pour les ambitieux", feats:["Tout Standard +","Annonces en avant","Stats avancées","Support prioritaire"], color:C.gold },
+  { key:"free",     label:"Club Free",     price:25,  per:"/an", desc:"Pour démarrer",          feats:["2 annonces / an","20 profils consultables / mois","10 candidatures consultables / mois","Messagerie de base"], color:C.dim },
+  { key:"standard", label:"Club Standard", price:100, per:"/an", desc:"Pour les clubs actifs", feats:["10 annonces / an","Profils consultables illimités","100 candidatures consultables / mois","Messagerie illimitée","Alertes candidats"], color:C.primary, pop:true },
+  { key:"premium",  label:"Club Premium",  price:250, per:"/an", desc:"Pour les ambitieux",    feats:["Annonces illimitées","Profils & candidatures illimités","Annonces mises en avant","Statistiques avancées","Support prioritaire"], color:C.gold },
 ];
 
 /* ═══════ MICRO COMPONENTS ═══════ */
@@ -438,7 +438,7 @@ function ProfileEditor({profile,user,onSave,onToast}){
 /* ═══════ PRICING TAB ═══════ */
 function PricingTab(){
   return <div>
-    <div style={{textAlign:"center",marginBottom:28}}><h2 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:3,color:C.text,margin:"0 0 6px"}}>NOS <span style={{color:C.primary}}>OFFRES</span></h2><p style={{color:C.muted,fontSize:13}}>Sans commission · Sans engagement</p></div>
+    <div style={{textAlign:"center",marginBottom:28}}><h2 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:3,color:C.text,margin:"0 0 6px"}}>NOS <span style={{color:C.primary}}>OFFRES</span></h2><p style={{color:C.muted,fontSize:13}}>Tarifs annuels · Sans commission de transfert · Sans engagement</p></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:16,marginBottom:24}}>
       {PRICING.map((p,i)=><div key={p.key} style={{background:p.pop?`${C.primary}08`:C.bgCard,borderRadius:20,padding:24,border:`1px solid ${p.pop?`${C.primary}30`:C.border}`,position:"relative",animation:`fadeUp .5s ease ${i*.08}s both`,transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}>
         {p.pop&&<div style={{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:9,fontWeight:800,padding:"4px 14px",borderRadius:12,letterSpacing:1.5,textTransform:"uppercase"}}>★ Populaire</div>}

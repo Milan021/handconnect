@@ -292,6 +292,11 @@ export default function ClubDashboard({ user, profile }) {
   const currentPlan = club?.subscription_plan || club?.plan || "free";
   const planMeta = PLAN_META[currentPlan] || PLAN_META.free;
 
+  const pendingCount = myAnnonces.reduce(
+    (sum, a) => sum + (a.applications || []).filter((app) => app.status === "pending").length,
+    0
+  );
+
   // Essai gratuit : calcul des jours restants
   const trialInfo = (() => {
     if (!club?.trial_ends_at) return null;
@@ -356,7 +361,7 @@ export default function ClubDashboard({ user, profile }) {
         </div>
       )}
 
-      <style>{`input:focus,select:focus,textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px rgba(29,78,216,0.15)!important}`}</style>
+      <style>{`input:focus,select:focus,textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px rgba(29,78,216,0.15)!important}@keyframes pulse-badge{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,0.5)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(220,38,38,0)}}`}</style>
 
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
         <div
@@ -596,11 +601,14 @@ export default function ClubDashboard({ user, profile }) {
           {/* Tab bar */}
           <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}`, borderRadius: 14, padding: 4 }}>
             {[
-              ["club", "🏟️ Mon Club"],
-              ["annonces", `📢 Annonces${myAnnonces.length > 0 ? ` (${myAnnonces.length})` : ""}`],
-            ].map(([t, label]) => (
-              <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "10px 16px", borderRadius: 10, border: "none", background: tab === t ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : "transparent", color: tab === t ? "#fff" : C.muted, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all .2s", boxShadow: tab === t ? `0 4px 14px ${C.primary}30` : "none" }}>
-                {label}
+              ["club", "🏟️ Mon Club", null],
+              ["annonces", "📢 Annonces", pendingCount],
+            ].map(([t, label, badge]) => (
+              <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "10px 16px", borderRadius: 10, border: "none", background: tab === t ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : "transparent", color: tab === t ? "#fff" : C.muted, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all .2s", boxShadow: tab === t ? `0 4px 14px ${C.primary}30` : "none", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <span>{label}</span>
+                {badge > 0 && (
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 22, height: 22, padding: "0 6px", borderRadius: 11, background: tab === t ? "rgba(255,255,255,0.2)" : C.accent, color: "#fff", fontSize: 11, fontWeight: 800, animation: tab !== t ? "pulse-badge 1.6s ease-in-out infinite" : "none" }}>{badge}</span>
+                )}
               </button>
             ))}
           </div>
@@ -1457,13 +1465,26 @@ export default function ClubDashboard({ user, profile }) {
                   const ac = isTr ? C.accent : C.primary;
                   const isOpen = expanded === a.id;
                   const apps = a.applications || [];
+                  const pending = apps.filter(x => x.status === "pending").length;
                   return (
-                    <div key={a.id} style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}`, borderLeft: `3px solid ${ac}`, borderRadius: 12, overflow: "hidden" }}>
-                      <div onClick={() => setExpanded(isOpen ? null : a.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "14px 18px", cursor: "pointer", transition: "background .2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <div key={a.id} style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${pending > 0 ? C.accent + "40" : C.border}`, borderLeft: `3px solid ${ac}`, borderRadius: 12, overflow: "hidden" }}>
+                      <div onClick={async () => {
+                        const opening = !isOpen;
+                        setExpanded(opening ? a.id : null);
+                        if (opening && pending > 0) {
+                          const pendingIds = apps.filter(x => x.status === "pending").map(x => x.id);
+                          await supabase.from("applications").update({ status: "seen" }).in("id", pendingIds);
+                          setMyAnnonces(prev => prev.map(x => x.id !== a.id ? x : ({
+                            ...x,
+                            applications: x.applications.map(app => app.status === "pending" ? { ...app, status: "seen" } : app),
+                          })));
+                        }
+                      }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "14px 18px", cursor: "pointer", transition: "background .2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                             <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${ac}15`, color: ac, fontWeight: 700, border: `1px solid ${ac}30` }}>{isTr ? "🎯 Coach" : "🤾 Joueur"}</span>
                             {a.is_urgent && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: C.accent, color: "#fff", fontWeight: 700 }}>Urgent</span>}
+                            {pending > 0 && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: C.accent, color: "#fff", fontWeight: 700, animation: "pulse-badge 1.6s ease-in-out infinite" }}>🔔 {pending} nouveau{pending > 1 ? "x" : ""}</span>}
                           </div>
                           <h4 style={{ margin: 0, fontSize: 14, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</h4>
                           <p style={{ margin: "2px 0 0", fontSize: 11, color: C.dim }}>{a.city || "—"} · {new Date(a.created_at).toLocaleDateString("fr-FR")}</p>

@@ -122,6 +122,11 @@ export default function AnnoncesPage() {
       setApplying(null);
       setApplyMsg("");
       showToast("✅ Candidature envoyée !");
+      fetch("/api/notify-application", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ annonce_id: annonceId, applicant_id: user.id }),
+      }).catch(err => console.warn("Notification email non envoyée:", err));
     }
     setApplyLoading(false);
   };

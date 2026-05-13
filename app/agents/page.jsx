@@ -115,14 +115,35 @@ export default function AgentsTeam(){
 
   const buildContext=(agentId,userText,img)=>{
     const recent=messages.slice(-30);
-    const ctxMessages=recent.map(m=>{
-      if(m.role==="user")return{role:"user",content:m.content||"."};
-      return{role:"assistant",content:`[${(AGENTS[m.agent]?.name||"AGENT")}]: ${m.content}`};
-    });
+    // Filtrer les messages vides et garantir l'alternance user/assistant
+    const ctxMessages=[];
+    let lastRole=null;
+    for(const m of recent){
+      const content=m.content?.trim();
+      if(!content)continue;
+      const role=m.role==="user"?"user":"assistant";
+      const text=role==="assistant"?`[${(AGENTS[m.agent]?.name||"AGENT")}]: ${content}`:content;
+      // Éviter deux messages consécutifs du même rôle
+      if(role===lastRole&&ctxMessages.length>0){
+        ctxMessages[ctxMessages.length-1].content+="\n"+text;
+      }else{
+        ctxMessages.push({role,content:text});
+      }
+      lastRole=role;
+    }
+    // Le dernier message doit être "user" pour l'API
     const userContent=[];
     if(img){userContent.push({type:"image",source:{type:"base64",media_type:img.mediaType,data:img.base64}})}
     userContent.push({type:"text",text:userText||"Analyse cette image."});
-    ctxMessages.push({role:"user",content:userContent.length===1&&!img?userContent[0].text:userContent});
+    // Si le dernier message est déjà "user", fusionner
+    if(lastRole==="user"&&ctxMessages.length>0){
+      ctxMessages[ctxMessages.length-1].content+="\n"+(userText||"Analyse cette image.");
+      if(img){
+        ctxMessages[ctxMessages.length-1].content=userContent;
+      }
+    }else{
+      ctxMessages.push({role:"user",content:userContent.length===1&&!img?userContent[0].text:userContent});
+    }
     return ctxMessages;
   };
 

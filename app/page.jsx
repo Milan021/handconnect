@@ -8,6 +8,8 @@ import { REGIONS, getRegionLabel } from "../lib/regions";
 const C = { primary:"#1D4ED8", primaryLight:"#3B82F6", primaryDark:"#1E3A8A", accent:"#DC2626", accentLight:"#F87171", bg:"#0B1120", bgCard:"rgba(255,255,255,0.04)", bgHover:"rgba(255,255,255,0.07)", surface:"#111827", border:"rgba(255,255,255,0.08)", borderBlue:"rgba(29,78,216,0.4)", text:"#F1F5F9", muted:"rgba(255,255,255,0.5)", dim:"rgba(255,255,255,0.3)", green:"#10B981", greenBg:"rgba(16,185,129,0.12)", gold:"#FBBF24" };
 
 const POS = { gardien:"Gardien", ailier_gauche:"Ailier G.", ailier_droit:"Ailier D.", arriere_gauche:"Arrière G.", arriere_droit:"Arrière D.", demi_centre:"Demi-centre", pivot:"Pivot" };
+// Ordre tactique handball (du gardien aux ailiers, par lignes)
+const POS_ORDER = { gardien:0, arriere_gauche:1, demi_centre:2, arriere_droit:3, ailier_gauche:4, ailier_droit:5, pivot:6 };
 const LEVELS = [ {v:"",l:"—"},{v:"departemental",l:"Départemental"},{v:"regional",l:"Régional"},{v:"pre_nationale",l:"Pré-Nationale"},{v:"n3",l:"Nationale 3"},{v:"n2",l:"Nationale 2"},{v:"n1",l:"Nationale 1"},{v:"proligue",l:"Proligue"},{v:"starligue",l:"Starligue"},{v:"d2f",l:"D2F"},{v:"d1f",l:"D1F"} ];
 const BEN_ICO = { prime:"💰", logement:"🏠", job:"💼", formation:"🎓" };
 const PRICING = [
@@ -423,7 +425,7 @@ export default function HandConnect(){
     if(regionF&&p.region!==regionF&&!p.mobile_other_regions)return false;
     if(search)return`${p.first_name||""} ${p.last_name||""} ${p.city||""} ${p.current_club||""}`.toLowerCase().includes(search.toLowerCase());
     return true;
-  }),[players,search,posF,availF,regionF]);
+  }).sort((a,b)=>(POS_ORDER[a.position]??99)-(POS_ORDER[b.position]??99)),[players,search,posF,availF,regionF]);
 
   // Découpage joueurs en 3 sections (priorité : centre/section > mineur > sénior)
   const playerSections=useMemo(()=>{

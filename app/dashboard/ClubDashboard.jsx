@@ -124,6 +124,55 @@ export default function ClubDashboard({ user, profile }) {
     setTimeout(() => setToast(""), 3500);
   };
 
+  // Annonces + candidatures
+  const [myAnnonces, setMyAnnonces] = useState([]);
+  const [annoncesLoading, setAnnoncesLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null);
+
+  useEffect(() => {
+    const fetchAnnoncesAndApps = async () => {
+      setAnnoncesLoading(true);
+      const { data: annoncesData } = await supabase
+        .from("annonces")
+        .select("*")
+        .eq("author_id", user.id)
+        .order("created_at", { ascending: false });
+      if (!annoncesData || annoncesData.length === 0) { setMyAnnonces([]); setAnnoncesLoading(false); return; }
+      const ids = annoncesData.map(a => a.id);
+      const { data: appsData } = await supabase
+        .from("applications")
+        .select("*")
+        .in("annonce_id", ids)
+        .order("created_at", { ascending: false });
+      const applicantIds = [...new Set((appsData || []).map(a => a.applicant_id))];
+      let profMap = {};
+      if (applicantIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, position, current_club, city, age, height_cm, phone, email, cv_url, cv_filename")
+          .in("id", applicantIds);
+        profMap = Object.fromEntries((profilesData || []).map(p => [p.id, p]));
+      }
+      const grouped = annoncesData.map(a => ({
+        ...a,
+        applications: (appsData || []).filter(x => x.annonce_id === a.id).map(app => ({ ...app, applicant: profMap[app.applicant_id] })),
+      }));
+      setMyAnnonces(grouped);
+      setAnnoncesLoading(false);
+    };
+    fetchAnnoncesAndApps();
+  }, [user]);
+
+  const updateAppStatus = async (appId, newStatus, annonceId) => {
+    const { error } = await supabase.from("applications").update({ status: newStatus }).eq("id", appId);
+    if (error) { showToast("❌ " + error.message); return; }
+    setMyAnnonces(prev => prev.map(a => a.id !== annonceId ? a : ({
+      ...a,
+      applications: a.applications.map(x => x.id === appId ? { ...x, status: newStatus } : x),
+    })));
+    showToast("✅ Statut mis à jour");
+  };
+
   const upd = (k, v) => setForm((p) => ({ ...p, [k]: v }));
   const togglePosition = (v) =>
     setForm((p) => ({
@@ -1204,6 +1253,112 @@ export default function ClubDashboard({ user, profile }) {
             }}
           >
             HAND CONNECT — Espace Club — {new Date().getFullYear()}
+          </div>
+
+          {/* ═══════ MES ANNONCES & CANDIDATURES ═══════ */}
+          <div style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${C.border}`, borderRadius: 18, padding: 28, marginBottom: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+              <h3 style={{ fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, color: C.primary, margin: 0 }}>📨 MES ANNONCES & CANDIDATURES</h3>
+              <Link href="/publier-annonce" style={{ padding: "8px 16px", border: `1px solid ${C.primary}30`, borderRadius: 10, background: `${C.primary}10`, color: C.primaryLight, fontSize: 11, fontWeight: 600, textDecoration: "none" }}>+ Nouvelle annonce</Link>
+            </div>
+
+            {annoncesLoading ? (
+              <div style={{ textAlign: "center", padding: 40, color: C.dim, fontSize: 13 }}>Chargement…</div>
+            ) : myAnnonces.length === 0 ? (
+              <div style={{ textAlign: "center", padding: 40, color: C.dim }}>
+                <div style={{ fontSize: 32, marginBottom: 10 }}>📭</div>
+                <p style={{ margin: 0, fontSize: 13 }}>Aucune annonce publiée pour le moment.</p>
+                <Link href="/publier-annonce" style={{ display: "inline-block", marginTop: 12, padding: "10px 20px", background: `linear-gradient(135deg,${C.primary},${C.primaryDark})`, color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Publier ma première annonce</Link>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {myAnnonces.map(a => {
+                  const isTr = a.type === "trainer";
+                  const ac = isTr ? C.accent : C.primary;
+                  const isOpen = expanded === a.id;
+                  const apps = a.applications || [];
+                  return (
+                    <div key={a.id} style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}`, borderLeft: `3px solid ${ac}`, borderRadius: 12, overflow: "hidden" }}>
+                      <div onClick={() => setExpanded(isOpen ? null : a.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "14px 18px", cursor: "pointer", transition: "background .2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${ac}15`, color: ac, fontWeight: 700, border: `1px solid ${ac}30` }}>{isTr ? "🎯 Coach" : "🤾 Joueur"}</span>
+                            {a.is_urgent && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: C.accent, color: "#fff", fontWeight: 700 }}>Urgent</span>}
+                          </div>
+                          <h4 style={{ margin: 0, fontSize: 14, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</h4>
+                          <p style={{ margin: "2px 0 0", fontSize: 11, color: C.dim }}>{a.city || "—"} · {new Date(a.created_at).toLocaleDateString("fr-FR")}</p>
+                        </div>
+                        <div style={{ textAlign: "center", padding: "6px 14px", background: apps.length > 0 ? `${C.primary}15` : "rgba(255,255,255,0.04)", borderRadius: 10, border: `1px solid ${apps.length > 0 ? C.primary + "30" : C.border}`, minWidth: 70 }}>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: apps.length > 0 ? C.primaryLight : C.dim, fontFamily: "'Bebas Neue', sans-serif" }}>{apps.length}</div>
+                          <div style={{ fontSize: 9, color: C.dim, textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>candidat{apps.length > 1 ? "s" : ""}</div>
+                        </div>
+                        <span style={{ fontSize: 14, color: C.dim, transform: isOpen ? "rotate(180deg)" : "", transition: "transform .2s" }}>▼</span>
+                      </div>
+
+                      {isOpen && (
+                        <div style={{ borderTop: `1px solid ${C.border}`, background: "rgba(0,0,0,0.2)" }}>
+                          {apps.length === 0 ? (
+                            <div style={{ padding: 24, textAlign: "center", color: C.dim, fontSize: 12 }}>Aucune candidature reçue pour cette annonce.</div>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                              {apps.map(app => {
+                                const ap = app.applicant;
+                                const statusMeta = {
+                                  pending: { label: "Nouveau", color: C.gold, bg: "rgba(251,191,36,0.1)" },
+                                  seen: { label: "Vu", color: C.dim, bg: "rgba(255,255,255,0.05)" },
+                                  accepted: { label: "Accepté", color: C.green, bg: "rgba(16,185,129,0.1)" },
+                                  rejected: { label: "Refusé", color: C.accent, bg: "rgba(220,38,38,0.1)" },
+                                }[app.status || "pending"];
+                                return (
+                                  <div key={app.id} style={{ padding: "16px 18px", borderBottom: `1px solid ${C.border}` }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+                                      <div style={{ width: 38, height: 38, borderRadius: "50%", background: `linear-gradient(135deg,${C.primary},${C.primaryDark})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, fontWeight: 800, fontFamily: "'Bebas Neue', sans-serif" }}>
+                                        {(ap?.first_name || "?")[0]}{(ap?.last_name || "?")[0]}
+                                      </div>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: 13, color: C.text, fontWeight: 700 }}>{ap ? `${ap.first_name || ""} ${ap.last_name || ""}` : "Candidat inconnu"}</div>
+                                        <div style={{ fontSize: 11, color: C.dim }}>
+                                          {ap?.position && `${ap.position} · `}{ap?.current_club || "Sans club"}{ap?.city && ` · ${ap.city}`}{ap?.age && ` · ${ap.age} ans`}
+                                        </div>
+                                      </div>
+                                      <span style={{ fontSize: 10, padding: "4px 10px", borderRadius: 6, background: statusMeta.bg, color: statusMeta.color, fontWeight: 700, border: `1px solid ${statusMeta.color}30` }}>{statusMeta.label}</span>
+                                      <span style={{ fontSize: 10, color: C.dim }}>{new Date(app.created_at).toLocaleDateString("fr-FR")}</span>
+                                    </div>
+
+                                    {app.message && (
+                                      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "10px 14px", marginBottom: 10, fontSize: 12, color: C.text, lineHeight: 1.6, fontStyle: "italic", borderLeft: `2px solid ${C.primary}40` }}>
+                                        « {app.message} »
+                                      </div>
+                                    )}
+
+                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                                      {app.cv_url && (
+                                        <a href={app.cv_url} target="_blank" rel="noopener noreferrer" style={{ padding: "6px 12px", background: `${C.primary}15`, color: C.primaryLight, borderRadius: 6, fontSize: 11, fontWeight: 600, textDecoration: "none", border: `1px solid ${C.primary}30` }}>📄 Télécharger CV</a>
+                                      )}
+                                      {ap?.email && (
+                                        <a href={`mailto:${ap.email}`} style={{ padding: "6px 12px", background: "rgba(255,255,255,0.05)", color: C.text, borderRadius: 6, fontSize: 11, fontWeight: 600, textDecoration: "none", border: `1px solid ${C.border}` }}>✉️ {ap.email}</a>
+                                      )}
+                                      {ap?.phone && (
+                                        <a href={`tel:${ap.phone}`} style={{ padding: "6px 12px", background: "rgba(255,255,255,0.05)", color: C.text, borderRadius: 6, fontSize: 11, fontWeight: 600, textDecoration: "none", border: `1px solid ${C.border}`, fontFamily: "monospace" }}>📱 {ap.phone}</a>
+                                      )}
+                                      <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+                                        {app.status !== "accepted" && <button onClick={() => updateAppStatus(app.id, "accepted", a.id)} style={{ padding: "6px 10px", background: `${C.green}15`, color: C.green, border: `1px solid ${C.green}30`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>✓ Accepter</button>}
+                                        {app.status !== "rejected" && <button onClick={() => updateAppStatus(app.id, "rejected", a.id)} style={{ padding: "6px 10px", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}30`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>✕ Refuser</button>}
+                                        {app.status === "pending" && <button onClick={() => updateAppStatus(app.id, "seen", a.id)} style={{ padding: "6px 10px", background: "rgba(255,255,255,0.05)", color: C.muted, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>👁️ Vu</button>}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </main>
       </div>

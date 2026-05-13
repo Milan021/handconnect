@@ -5,13 +5,16 @@
 -- ============================================================
 
 -- ───────────────────────────────────────────────────
--- 1) Centre de formation (pôle, centre pro, section sportive)
+-- 1) Centre de formation (Pôle ou centre de formation pro)
 -- ───────────────────────────────────────────────────
 ALTER TABLE profiles
-  ADD COLUMN IF NOT EXISTS training_center TEXT;
+  ADD COLUMN IF NOT EXISTS training_center      TEXT,
+  ADD COLUMN IF NOT EXISTS is_section_sportive  BOOLEAN DEFAULT FALSE;
 
 COMMENT ON COLUMN profiles.training_center IS
   'ID du centre de formation (voir lib/training-centers.js). NULL si aucun.';
+COMMENT ON COLUMN profiles.is_section_sportive IS
+  'TRUE si le joueur est inscrit en section sportive scolaire (collège / lycée).';
 
 -- ───────────────────────────────────────────────────
 -- 2) Représentant légal — obligatoire si le joueur est mineur

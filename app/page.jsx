@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
-import { getCenterById, CENTER_TYPE_META } from "../lib/training-centers";
+import { getCenterById, CENTER_TYPE_META, SECTION_SPORTIVE_META } from "../lib/training-centers";
 
 const C = { primary:"#1D4ED8", primaryLight:"#3B82F6", primaryDark:"#1E3A8A", accent:"#DC2626", accentLight:"#F87171", bg:"#0B1120", bgCard:"rgba(255,255,255,0.04)", bgHover:"rgba(255,255,255,0.07)", surface:"#111827", border:"rgba(255,255,255,0.08)", borderBlue:"rgba(29,78,216,0.4)", text:"#F1F5F9", muted:"rgba(255,255,255,0.5)", dim:"rgba(255,255,255,0.3)", green:"#10B981", greenBg:"rgba(16,185,129,0.12)", gold:"#FBBF24" };
 
@@ -25,17 +25,21 @@ function Toast({msg,onClose}){if(!msg)return null;const isErr=msg.startsWith("�
 function PlayerCard({p,onClick,i}){
   const center=getCenterById(p.training_center);
   const centerMeta=center?CENTER_TYPE_META[center.type]:null;
+  const isSection=!center&&p.is_section_sportive;
   const isMinor=p.age&&p.age<18;
-  const headerColor=center?centerMeta.color:C.primary;
-  const headerDark=center?centerMeta.color:C.primaryDark;
-  return <div onClick={()=>onClick(p)} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",cursor:"pointer",border:`1px solid ${center?`${centerMeta.color}30`:C.border}`,transition:"all .35s cubic-bezier(0.16,1,0.3,1)",position:"relative",animation:`fadeUp .5s ease ${i*.05}s both`}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=center?centerMeta.color:C.borderBlue;e.currentTarget.style.boxShadow=`0 16px 48px ${headerColor}15`}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=center?`${centerMeta.color}30`:C.border;e.currentTarget.style.boxShadow=""}}>
+  const accent=center?centerMeta.color:(isSection?SECTION_SPORTIVE_META.color:C.primary);
+  const accentDark=center?centerMeta.color:(isSection?SECTION_SPORTIVE_META.color:C.primaryDark);
+  const badgeColor=center?centerMeta.color:(isSection?SECTION_SPORTIVE_META.color:null);
+  const badgeIcon=center?centerMeta.icon:(isSection?SECTION_SPORTIVE_META.icon:null);
+  const badgeLabel=center?centerMeta.label:(isSection?SECTION_SPORTIVE_META.label:null);
+  return <div onClick={()=>onClick(p)} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",cursor:"pointer",border:`1px solid ${badgeColor?`${badgeColor}30`:C.border}`,transition:"all .35s cubic-bezier(0.16,1,0.3,1)",position:"relative",animation:`fadeUp .5s ease ${i*.05}s both`}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=badgeColor||C.borderBlue;e.currentTarget.style.boxShadow=`0 16px 48px ${accent}15`}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=badgeColor?`${badgeColor}30`:C.border;e.currentTarget.style.boxShadow=""}}>
     {p.is_available&&<div style={{position:"absolute",top:12,left:12,zIndex:2}}><Dot/></div>}
-    {center&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:centerMeta.color,border:`1px solid ${centerMeta.color}50`}}>{centerMeta.icon} {centerMeta.label}</div>}
-    {!center&&isMinor&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:"#FBBF24",border:"1px solid rgba(251,191,36,0.4)"}}>-18</div>}
-    <div style={{height:80,background:`linear-gradient(135deg,${headerColor},${headerDark})`,position:"relative"}}><div style={{width:56,height:56,borderRadius:"50%",background:C.bg,border:`3px solid ${headerColor}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:800,color:center?centerMeta.color:C.primaryLight,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-24,left:"50%",transform:"translateX(-50%)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div></div>
+    {badgeColor&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:badgeColor,border:`1px solid ${badgeColor}50`}}>{badgeIcon} {badgeLabel}</div>}
+    {!badgeColor&&isMinor&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:"#FBBF24",border:"1px solid rgba(251,191,36,0.4)"}}>-18</div>}
+    <div style={{height:80,background:`linear-gradient(135deg,${accent},${accentDark})`,position:"relative"}}><div style={{width:56,height:56,borderRadius:"50%",background:C.bg,border:`3px solid ${accent}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:800,color:accent,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-24,left:"50%",transform:"translateX(-50%)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div></div>
     <div style={{padding:"30px 16px 16px",textAlign:"center"}}>
       <h3 style={{margin:0,fontSize:15,fontWeight:700,color:C.text}}>{p.first_name} {p.last_name}</h3>
-      <p style={{margin:"2px 0",fontSize:10,color:headerColor,fontWeight:700,fontFamily:"monospace",textTransform:"uppercase",letterSpacing:1.5}}>{POS[p.position]||"Non défini"}</p>
+      <p style={{margin:"2px 0",fontSize:10,color:accent,fontWeight:700,fontFamily:"monospace",textTransform:"uppercase",letterSpacing:1.5}}>{POS[p.position]||"Non défini"}</p>
       <p style={{fontSize:10,color:C.dim}}>{center?center.label:(p.current_club||"Sans club")} · {p.city||"—"}</p>
       <div style={{display:"flex",justifyContent:"center",gap:16,paddingTop:10,marginTop:10,borderTop:`1px solid ${C.border}`}}>
         {[["Âge",p.age?`${p.age}a`:"—"],["Taille",p.height_cm?`${p.height_cm}cm`:"—"],["Niveau",LEVELS.find(l=>l.v===p.current_level)?.l||"—"]].map(([l,v])=><div key={l} style={{textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif"}}>{v}</div><div style={{fontSize:8,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>{l}</div></div>)}
@@ -49,13 +53,16 @@ function PlayerModal({player:p,onClose}){
   if(!p)return null;
   const center=getCenterById(p.training_center);
   const centerMeta=center?CENTER_TYPE_META[center.type]:null;
-  const headerColor=center?centerMeta.color:C.primary;
-  const headerDark=center?centerMeta.color:C.primaryDark;
+  const isSection=!center&&p.is_section_sportive;
+  const headerColor=center?centerMeta.color:(isSection?SECTION_SPORTIVE_META.color:C.primary);
+  const headerDark=center?centerMeta.color:(isSection?SECTION_SPORTIVE_META.color:C.primaryDark);
+  const badgeIcon=center?centerMeta.icon:(isSection?SECTION_SPORTIVE_META.icon:null);
+  const badgeLabel=center?centerMeta.label:(isSection?SECTION_SPORTIVE_META.label:null);
   return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(180deg,${C.surface},${C.bg})`,borderRadius:24,maxWidth:500,width:"100%",overflow:"hidden",maxHeight:"90vh",overflowY:"auto",border:`1px solid ${C.border}`,animation:"modalUp .4s cubic-bezier(0.16,1,0.3,1)"}}>
     <div style={{height:120,background:`linear-gradient(135deg,${headerColor},${headerDark})`,position:"relative"}}>
       <button onClick={onClose} style={{position:"absolute",top:12,right:12,background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
-      {center&&<div style={{position:"absolute",top:12,left:12,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)",padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:700,color:"#fff",border:`1px solid ${centerMeta.color}80`}}>{centerMeta.icon} {centerMeta.label}</div>}
-      <div style={{width:76,height:76,borderRadius:"50%",background:C.bg,border:`4px solid ${headerColor}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:800,color:center?centerMeta.color:C.primaryLight,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-34,left:"50%",transform:"translateX(-50%)",boxShadow:"0 10px 30px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div>
+      {badgeLabel&&<div style={{position:"absolute",top:12,left:12,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)",padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:700,color:"#fff",border:`1px solid ${headerColor}80`}}>{badgeIcon} {badgeLabel}</div>}
+      <div style={{width:76,height:76,borderRadius:"50%",background:C.bg,border:`4px solid ${headerColor}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:800,color:headerColor,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-34,left:"50%",transform:"translateX(-50%)",boxShadow:"0 10px 30px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div>
     </div>
     <div style={{padding:"44px 28px 0",textAlign:"center"}}>
       <h2 style={{fontSize:22,fontWeight:700,margin:0,color:C.text}}>{p.first_name} {p.last_name}</h2>
@@ -104,27 +111,124 @@ function AnnonceCard({a,i,onClick}){
 }
 
 /* ═══════ ANNONCE MODAL ═══════ */
-function AnnonceModal({annonce:a,onClose}){
-  if(!a)return null;const isTr=a.type==="trainer";const ac=isTr?C.accent:C.primary;
+function AnnonceModal({annonce:a,onClose,user,profile,onApplied}){
+  const [view,setView]=useState("details"); // "details" | "apply" | "done"
+  const [hasApplied,setHasApplied]=useState(false);
+  const [appLoading,setAppLoading]=useState(false);
+  const [message,setMessage]=useState("");
+  const [useProfileCv,setUseProfileCv]=useState(true);
+  const [customCv,setCustomCv]=useState(null);
+  const [submitting,setSubmitting]=useState(false);
+  const [errMsg,setErrMsg]=useState("");
+
+  useEffect(()=>{
+    if(!a){ setView("details"); setHasApplied(false); setMessage(""); setCustomCv(null); setErrMsg(""); return; }
+    if(!user) return;
+    setAppLoading(true);
+    supabase.from("applications").select("id").eq("annonce_id",a.id).eq("applicant_id",user.id).maybeSingle().then(({data})=>{ setHasApplied(!!data); setAppLoading(false); });
+  },[a,user]);
+
+  if(!a)return null;
+  const isTr=a.type==="trainer";const ac=isTr?C.accent:C.primary;
   const bens=Array.isArray(a.benefits)?a.benefits:[];
+
+  const submit=async()=>{
+    setErrMsg("");
+    setSubmitting(true);
+    let cv_url=null,cv_filename=null;
+    if(useProfileCv&&profile?.cv_url){ cv_url=profile.cv_url; cv_filename=profile.cv_filename||"cv.pdf"; }
+    else if(customCv){
+      if(customCv.type!=="application/pdf"){ setErrMsg("PDF uniquement"); setSubmitting(false); return; }
+      if(customCv.size>5*1024*1024){ setErrMsg("Max 5 Mo"); setSubmitting(false); return; }
+      const path=`${user.id}/apply-${a.id}-${Date.now()}.pdf`;
+      const{error:upErr}=await supabase.storage.from("cvs").upload(path,customCv,{contentType:"application/pdf",upsert:false});
+      if(upErr){ setErrMsg("Upload : "+upErr.message); setSubmitting(false); return; }
+      const{data:pub}=supabase.storage.from("cvs").getPublicUrl(path);
+      cv_url=pub?.publicUrl; cv_filename=customCv.name;
+    }
+    const{error:dbErr}=await supabase.from("applications").insert({
+      annonce_id:a.id, applicant_id:user.id,
+      message:message.trim()||null, cv_url, cv_filename,
+    });
+    if(dbErr){ setErrMsg(dbErr.message); setSubmitting(false); return; }
+    setHasApplied(true); setView("done");
+    onApplied&&onApplied(a.id);
+    setSubmitting(false);
+  };
+
   return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(180deg,${C.surface},${C.bg})`,borderRadius:24,maxWidth:520,width:"100%",maxHeight:"90vh",overflowY:"auto",border:`1px solid ${C.border}`,animation:"modalUp .4s cubic-bezier(0.16,1,0.3,1)"}}>
     <div style={{padding:"24px 28px",background:`${ac}10`,borderBottom:`1px solid ${ac}20`,position:"relative"}}>
       <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.06)",border:"none",color:C.dim,width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
-      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,flexWrap:"wrap"}}>
-        <Bdg color={ac}>{isTr?"🎯 Coach":"🤾 Joueur"}</Bdg>
-        {!isTr&&a.position&&<Bdg color={C.primary}>{POS[a.position]||a.position}</Bdg>}
-        {a.is_urgent&&<Bdg color={C.accent} filled>Urgent</Bdg>}
+      {view==="apply"&&<button onClick={()=>setView("details")} style={{position:"absolute",top:16,left:16,background:"rgba(255,255,255,0.06)",border:"none",color:C.dim,padding:"6px 12px",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600}}>← Retour</button>}
+      <div style={{paddingLeft:view==="apply"?70:0,transition:"padding .2s"}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+          <Bdg color={ac}>{isTr?"🎯 Coach":"🤾 Joueur"}</Bdg>
+          {!isTr&&a.position&&<Bdg color={C.primary}>{POS[a.position]||a.position}</Bdg>}
+          {a.is_urgent&&<Bdg color={C.accent} filled>Urgent</Bdg>}
+        </div>
+        <h2 style={{margin:"0 0 4px",fontSize:20,fontWeight:700,color:C.text}}>{a.title}</h2>
+        <p style={{margin:0,fontSize:13,color:ac,fontWeight:600}}>{a.club_name} · {a.division} · {a.city}</p>
       </div>
-      <h2 style={{margin:"0 0 4px",fontSize:20,fontWeight:700,color:C.text}}>{a.title}</h2>
-      <p style={{margin:0,fontSize:13,color:ac,fontWeight:600}}>{a.club_name} · {a.division} · {a.city}</p>
     </div>
-    <div style={{padding:28}}>
+
+    {/* ── VIEW DETAILS ── */}
+    {view==="details"&&<div style={{padding:28}}>
       <p style={{fontSize:14,color:C.muted,lineHeight:1.7,margin:"0 0 20px"}}>{a.description}</p>
       {isTr&&a.salary_range&&<div style={{background:`${C.accent}08`,borderRadius:12,padding:14,border:`1px solid ${C.accent}15`,marginBottom:18,textAlign:"center"}}><span style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:1.5}}>Rémunération</span><div style={{fontSize:20,color:C.accent,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",marginTop:4}}>{a.salary_range}</div></div>}
       {bens.length>0&&<div style={{marginBottom:20}}><p style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:8,fontWeight:600}}>Avantages</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{bens.map(b=><span key={b} style={{padding:"6px 14px",background:`${ac}10`,color:ac,borderRadius:10,fontSize:12,fontWeight:600,border:`1px solid ${ac}18`}}>{BEN_ICO[b]||"•"} {b.charAt(0).toUpperCase()+b.slice(1)}</span>)}</div></div>}
       <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 16px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>ℹ️ HandConnect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
-      <button style={{width:"100%",padding:"14px 0",border:"none",borderRadius:12,background:`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${ac}30`}}>✉️ Postuler</button>
-    </div>
+      {!user&&<Link href="/login" style={{display:"block",width:"100%",padding:"14px 0",borderRadius:12,background:`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,textAlign:"center",textDecoration:"none",boxShadow:`0 6px 20px ${ac}30`}}>🔐 Connectez-vous pour postuler</Link>}
+      {user&&appLoading&&<div style={{textAlign:"center",padding:14,color:C.dim,fontSize:12}}>Chargement…</div>}
+      {user&&!appLoading&&hasApplied&&<div style={{padding:"14px 16px",background:`${C.green}10`,border:`1px solid ${C.green}30`,borderRadius:12,textAlign:"center",color:C.green,fontSize:13,fontWeight:600}}>✓ Vous avez déjà postulé à cette annonce</div>}
+      {user&&!appLoading&&!hasApplied&&<button onClick={()=>setView("apply")} style={{width:"100%",padding:"14px 0",border:"none",borderRadius:12,background:`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${ac}30`}}>✉️ Postuler à cette annonce</button>}
+    </div>}
+
+    {/* ── VIEW APPLY (formulaire) ── */}
+    {view==="apply"&&<div style={{padding:28}}>
+      <h3 style={{margin:"0 0 4px",fontSize:16,fontWeight:700,color:C.text}}>Votre candidature</h3>
+      <p style={{fontSize:12,color:C.dim,marginBottom:20}}>Le club recevra votre message, votre CV et un lien vers votre profil.</p>
+
+      {/* Message */}
+      <div style={{marginBottom:18}}>
+        <label style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:6,display:"block"}}>Message au club (optionnel)</label>
+        <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder={isTr?"Présentez votre parcours d'entraîneur, vos diplômes, votre approche…":"Présentez-vous, expliquez votre motivation, votre disponibilité…"} rows={5} maxLength={1000} style={{width:"100%",padding:"12px 14px",background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,borderRadius:10,color:C.text,fontSize:13,outline:"none",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,boxSizing:"border-box"}}/>
+        <div style={{textAlign:"right",fontSize:10,color:C.dim,marginTop:4}}>{message.length}/1000</div>
+      </div>
+
+      {/* CV */}
+      <div style={{marginBottom:18}}>
+        <label style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:6,display:"block"}}>📄 CV joint</label>
+        {profile?.cv_url&&<label style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:useProfileCv?`${C.primary}10`:"rgba(255,255,255,0.02)",border:`1px solid ${useProfileCv?C.primary+"40":C.border}`,borderRadius:10,cursor:"pointer",marginBottom:8,transition:"all .2s"}}>
+          <input type="radio" checked={useProfileCv} onChange={()=>{setUseProfileCv(true);setCustomCv(null);}} style={{accentColor:C.primary}}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,color:C.text,fontWeight:600}}>Mon CV enregistré</div>
+            <div style={{fontSize:10,color:C.dim,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.cv_filename||"cv.pdf"}</div>
+          </div>
+        </label>}
+        <label style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:!useProfileCv?`${C.primary}10`:"rgba(255,255,255,0.02)",border:`1px solid ${!useProfileCv?C.primary+"40":C.border}`,borderRadius:10,cursor:"pointer",transition:"all .2s"}}>
+          {profile?.cv_url&&<input type="radio" checked={!useProfileCv} onChange={()=>setUseProfileCv(false)} style={{accentColor:C.primary}}/>}
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,color:C.text,fontWeight:600}}>{profile?.cv_url?"Utiliser un autre CV (PDF)":"Joindre un CV (PDF, max 5 Mo)"}</div>
+            {!useProfileCv&&customCv&&<div style={{fontSize:10,color:C.green,marginTop:2}}>✓ {customCv.name}</div>}
+          </div>
+          {!useProfileCv&&<span style={{padding:"6px 12px",background:`${C.primary}20`,color:C.primaryLight,borderRadius:6,fontSize:11,fontWeight:600,border:`1px solid ${C.primary}30`}}>📎 Choisir</span>}
+          <input type="file" accept="application/pdf" onChange={e=>{const f=e.target.files?.[0];if(f){setCustomCv(f);setUseProfileCv(false);}}} style={{display:"none"}}/>
+        </label>
+        {!profile?.cv_url&&!customCv&&<p style={{fontSize:11,color:C.dim,marginTop:8,lineHeight:1.5}}>💡 Astuce : enregistrez un CV sur votre profil pour le pré-remplir automatiquement à chaque candidature.</p>}
+      </div>
+
+      {errMsg&&<div style={{padding:"10px 14px",background:`${C.accent}10`,border:`1px solid ${C.accent}30`,borderRadius:10,color:C.accent,fontSize:12,marginBottom:14}}>❌ {errMsg}</div>}
+
+      <button onClick={submit} disabled={submitting||(!useProfileCv&&customCv&&customCv.size>5*1024*1024)} style={{width:"100%",padding:"14px 0",border:"none",borderRadius:12,background:submitting?"rgba(255,255,255,0.08)":`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:submitting?"wait":"pointer",boxShadow:submitting?"none":`0 6px 20px ${ac}30`,opacity:submitting?0.6:1}}>{submitting?"Envoi…":"📨 Envoyer ma candidature"}</button>
+    </div>}
+
+    {/* ── VIEW DONE (confirmation) ── */}
+    {view==="done"&&<div style={{padding:"40px 28px",textAlign:"center"}}>
+      <div style={{fontSize:64,marginBottom:14}}>🎉</div>
+      <h3 style={{margin:"0 0 8px",fontSize:18,fontWeight:700,color:C.text}}>Candidature envoyée !</h3>
+      <p style={{fontSize:13,color:C.muted,lineHeight:1.6,margin:"0 0 24px"}}>{a.club_name} recevra votre candidature et pourra la consulter dans son espace. Bonne chance !</p>
+      <button onClick={onClose} style={{padding:"12px 28px",border:`1px solid ${C.border}`,borderRadius:10,background:"transparent",color:C.text,fontSize:13,fontWeight:600,cursor:"pointer"}}>Fermer</button>
+    </div>}
   </div></div>
 }
 
@@ -312,11 +416,11 @@ export default function HandConnect(){
     return true;
   }),[players,search,posF,availF]);
 
-  // Découpage joueurs en 3 sections (priorité : centre > mineur > sénior)
+  // Découpage joueurs en 3 sections (priorité : centre/section > mineur > sénior)
   const playerSections=useMemo(()=>{
     const center=[],young=[],senior=[];
     for(const p of fPlayers){
-      if(p.training_center) center.push(p);
+      if(p.training_center||p.is_section_sportive) center.push(p);
       else if(p.age&&p.age<18) young.push(p);
       else senior.push(p);
     }
@@ -457,7 +561,7 @@ export default function HandConnect(){
 
       {/* Modals */}
       <PlayerModal player={selPlayer} onClose={()=>setSelPlayer(null)}/>
-      <AnnonceModal annonce={selAnnonce} onClose={()=>setSelAnnonce(null)}/>
+      <AnnonceModal annonce={selAnnonce} onClose={()=>setSelAnnonce(null)} user={user} profile={profile} onApplied={id=>setAnnonces(prev=>prev.map(x=>x.id===id?{...x,candidatures_count:(x.candidatures_count||0)+1}:x))}/>
     </div>
   </>
 }

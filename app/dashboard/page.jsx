@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import ClubDashboard from "./ClubDashboard";
-import { TRAINING_CENTERS, CENTER_TYPE_META, getCenterById } from "../../lib/training-centers";
+import { TRAINING_CENTERS, CENTER_TYPE_META, SECTION_SPORTIVE_META, getCenterById } from "../../lib/training-centers";
 
 const FONT_LINK = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap";
 
@@ -89,6 +89,7 @@ export default function DashboardPage() {
       current_club: form.current_club || null,
       city: form.city || null,
       training_center: form.training_center || null,
+      is_section_sportive: !!form.is_section_sportive,
       phone: form.phone || null,
       bio: form.bio || null,
       is_available: form.is_available || false,
@@ -102,6 +103,41 @@ export default function DashboardPage() {
       showToast("✅ Profil mis à jour !");
     }
     setSaving(false);
+  };
+
+  const [cvUploading, setCvUploading] = useState(false);
+
+  const uploadCV = async (file) => {
+    if (!file) return;
+    if (file.type !== "application/pdf") { showToast("❌ Format PDF uniquement"); return; }
+    if (file.size > 5 * 1024 * 1024) { showToast("❌ Fichier trop volumineux (max 5 Mo)"); return; }
+    setCvUploading(true);
+    const path = `${user.id}/cv-${Date.now()}.pdf`;
+    const { error: upErr } = await supabase.storage.from("cvs").upload(path, file, { contentType: "application/pdf", upsert: false });
+    if (upErr) { showToast("❌ Upload : " + upErr.message); setCvUploading(false); return; }
+    const { data: pub } = supabase.storage.from("cvs").getPublicUrl(path);
+    const cv_url = pub?.publicUrl;
+    const cv_filename = file.name;
+    const cv_uploaded_at = new Date().toISOString();
+    const { error: dbErr } = await supabase.from("profiles").update({ cv_url, cv_filename, cv_uploaded_at }).eq("id", user.id);
+    if (dbErr) { showToast("❌ DB : " + dbErr.message); setCvUploading(false); return; }
+    setProfile({ ...profile, cv_url, cv_filename, cv_uploaded_at });
+    showToast("✅ CV enregistré !");
+    setCvUploading(false);
+  };
+
+  const deleteCV = async () => {
+    if (!profile?.cv_url) return;
+    if (!confirm("Supprimer votre CV ?")) return;
+    setCvUploading(true);
+    // Extraire le chemin depuis l'URL publique
+    const match = profile.cv_url.match(/\/cvs\/(.+)$/);
+    if (match) await supabase.storage.from("cvs").remove([match[1]]);
+    const { error: dbErr } = await supabase.from("profiles").update({ cv_url: null, cv_filename: null, cv_uploaded_at: null }).eq("id", user.id);
+    if (dbErr) { showToast("❌ " + dbErr.message); setCvUploading(false); return; }
+    setProfile({ ...profile, cv_url: null, cv_filename: null, cv_uploaded_at: null });
+    showToast("🗑️ CV supprimé");
+    setCvUploading(false);
   };
 
   const getCompletionPercent = () => {
@@ -276,8 +312,8 @@ export default function DashboardPage() {
                 {/* Centre de formation */}
                 <div style={{ marginBottom: 20 }}>
                   <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12, fontWeight: 600, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>🏆 Centre de formation / Section sportive</h4>
-                  <div>
-                    <label style={labelStyle}>Êtes-vous dans un pôle, un centre de formation ou une section sportive ?</label>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>Êtes-vous dans un pôle ou un centre de formation ?</label>
                     <select value={form.training_center || ""} onChange={e => updateField("training_center", e.target.value)} style={selStyle}>
                       <option value="">— Aucun —</option>
                       <optgroup label="Pôles Espoirs FFHB">
@@ -289,14 +325,16 @@ export default function DashboardPage() {
                       <optgroup label="Centres de formation féminins">
                         {TRAINING_CENTERS.filter(c => c.type === "pro_f").map(c => <option key={c.id} value={c.id}>{c.label} ({c.city})</option>)}
                       </optgroup>
-                      {TRAINING_CENTERS.some(c => c.type === "section") && (
-                        <optgroup label="Sections sportives">
-                          {TRAINING_CENTERS.filter(c => c.type === "section").map(c => <option key={c.id} value={c.id}>{c.label} ({c.city})</option>)}
-                        </optgroup>
-                      )}
                     </select>
-                    <p style={{ fontSize: 11, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>Votre profil apparaîtra dans la rubrique « Centres de formation » en haut de la liste des joueurs.</p>
                   </div>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: "12px 14px", background: form.is_section_sportive ? `${SECTION_SPORTIVE_META.color}10` : "rgba(255,255,255,0.02)", borderRadius: 10, border: `1px solid ${form.is_section_sportive ? SECTION_SPORTIVE_META.color + "40" : C.border}`, transition: "all .2s" }}>
+                    <input type="checkbox" checked={!!form.is_section_sportive} onChange={e => updateField("is_section_sportive", e.target.checked)} style={{ marginTop: 2, accentColor: SECTION_SPORTIVE_META.color, width: 16, height: 16 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{SECTION_SPORTIVE_META.icon} Je suis en section sportive scolaire</div>
+                      <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>Collège ou lycée avec section sportive handball</div>
+                    </div>
+                  </label>
+                  <p style={{ fontSize: 11, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>Votre profil apparaîtra dans la rubrique « Centres de formation » en haut de la liste des joueurs.</p>
                 </div>
 
                 {/* Availability */}
@@ -373,13 +411,21 @@ export default function DashboardPage() {
                   const meta = ctr ? CENTER_TYPE_META[ctr.type] : null;
                   if (!ctr || !meta) return null;
                   return (
-                    <div style={{ marginBottom: 18, padding: "14px 18px", background: `${meta.color}10`, borderRadius: 12, border: `1px solid ${meta.color}30` }}>
+                    <div style={{ marginBottom: 12, padding: "14px 18px", background: `${meta.color}10`, borderRadius: 12, border: `1px solid ${meta.color}30` }}>
                       <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 6 }}>{meta.icon} {meta.label}</div>
                       <div style={{ fontSize: 14, color: C.text, fontWeight: 700 }}>{ctr.label}</div>
                       <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{ctr.city}</div>
                     </div>
                   );
                 })()}
+
+                {/* Section sportive (view) */}
+                {profile?.is_section_sportive && (
+                  <div style={{ marginBottom: 18, padding: "12px 16px", background: `${SECTION_SPORTIVE_META.color}10`, borderRadius: 12, border: `1px solid ${SECTION_SPORTIVE_META.color}30`, display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 18 }}>{SECTION_SPORTIVE_META.icon}</span>
+                    <span style={{ fontSize: 13, color: SECTION_SPORTIVE_META.color, fontWeight: 700 }}>{SECTION_SPORTIVE_META.label}</span>
+                  </div>
+                )}
 
                 {/* Availability */}
                 <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: profile?.is_available ? "rgba(16,185,129,0.06)" : "rgba(255,255,255,0.02)", borderRadius: 12, border: `1px solid ${profile?.is_available ? "rgba(16,185,129,0.2)" : C.border}` }}>
@@ -407,6 +453,38 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* ═══════ MON CV ═══════ */}
+          <div style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${C.border}`, borderRadius: 18, padding: 28, marginBottom: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, color: C.primary, margin: 0 }}>📄 MON CV</h3>
+              {profile?.cv_url && <span style={{ fontSize: 10, color: C.green, fontWeight: 700, background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: 20, border: "1px solid rgba(16,185,129,0.3)" }}>● Disponible</span>}
+            </div>
+            <p style={{ fontSize: 12, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>Votre CV (PDF, max 5 Mo) sera proposé par défaut à chaque candidature. Vous pourrez aussi en uploader un spécifique pour chaque annonce.</p>
+
+            {profile?.cv_url ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", background: `${C.primary}08`, borderRadius: 12, border: `1px solid ${C.primary}20` }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: `${C.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>📄</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, color: C.text, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{profile.cv_filename || "Mon CV.pdf"}</div>
+                  {profile.cv_uploaded_at && <div style={{ fontSize: 10, color: C.dim, marginTop: 2 }}>Envoyé le {new Date(profile.cv_uploaded_at).toLocaleDateString("fr-FR")}</div>}
+                </div>
+                <a href={profile.cv_url} target="_blank" rel="noopener noreferrer" style={{ padding: "8px 14px", background: `${C.primary}20`, color: C.primaryLight, borderRadius: 8, fontSize: 11, fontWeight: 600, textDecoration: "none", border: `1px solid ${C.primary}30` }}>👁️ Voir</a>
+                <label style={{ padding: "8px 14px", background: "rgba(255,255,255,0.06)", color: C.text, borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: cvUploading ? "wait" : "pointer", border: `1px solid ${C.border}` }}>
+                  {cvUploading ? "..." : "🔄 Remplacer"}
+                  <input type="file" accept="application/pdf" onChange={e => uploadCV(e.target.files?.[0])} disabled={cvUploading} style={{ display: "none" }} />
+                </label>
+                <button onClick={deleteCV} disabled={cvUploading} style={{ padding: "8px 12px", background: `${C.accent}15`, color: C.accent, borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: cvUploading ? "wait" : "pointer", border: `1px solid ${C.accent}30` }}>🗑️</button>
+              </div>
+            ) : (
+              <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 20px", background: "rgba(255,255,255,0.02)", border: `2px dashed ${C.border}`, borderRadius: 14, cursor: cvUploading ? "wait" : "pointer", transition: "all .2s" }} onMouseEnter={e => { if (!cvUploading) e.currentTarget.style.borderColor = `${C.primary}50`; }} onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; }}>
+                <div style={{ fontSize: 36, marginBottom: 10 }}>{cvUploading ? "⏳" : "📤"}</div>
+                <div style={{ fontSize: 13, color: C.text, fontWeight: 600, marginBottom: 4 }}>{cvUploading ? "Envoi en cours…" : "Cliquez pour ajouter votre CV"}</div>
+                <div style={{ fontSize: 11, color: C.dim }}>PDF uniquement, 5 Mo max</div>
+                <input type="file" accept="application/pdf" onChange={e => uploadCV(e.target.files?.[0])} disabled={cvUploading} style={{ display: "none" }} />
+              </label>
             )}
           </div>
 

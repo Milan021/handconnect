@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import ClubDashboard from "./ClubDashboard";
+import CoachDashboard from "./CoachDashboard";
 import { TRAINING_CENTERS, CENTER_TYPE_META, SECTION_SPORTIVE_META, getCenterById } from "../../lib/training-centers";
 import { REGIONS, getRegionLabel } from "../../lib/regions";
 
@@ -163,6 +164,15 @@ export default function DashboardPage() {
       <>
         <link href={FONT_LINK} rel="stylesheet" />
         <ClubDashboard user={user} profile={profile} />
+      </>
+    );
+  }
+
+  if (profile?.user_type === "entraineur") {
+    return (
+      <>
+        <link href={FONT_LINK} rel="stylesheet" />
+        <CoachDashboard user={user} profile={profile} onProfileUpdate={(p) => setProfile(p)} />
       </>
     );
   }

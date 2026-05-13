@@ -17,6 +17,15 @@ const PRICING = [
   { key:"standard", label:"Club Standard", price:100, per:"/an", desc:"Pour les clubs actifs", feats:["10 annonces / an","Profils consultables illimités","100 candidatures consultables / mois","Messagerie illimitée","Alertes candidats"], color:C.primary, pop:true },
   { key:"premium",  label:"Club Premium",  price:250, per:"/an", desc:"Pour les ambitieux",    feats:["Annonces illimitées","Profils & candidatures illimités","Annonces mises en avant","Statistiques avancées","Support prioritaire"], color:C.gold },
 ];
+const PRICING_INDIVIDUAL = [
+  { key:"joueur_boost", label:"Joueur Boost",   price:5,  per:"/mois", desc:"Boostez votre visibilité", target:"joueur",     feats:["Profil mis en avant","Apparaît en haut des recherches","Badge ⭐ Boost","Stats de vues"], color:"#FF6B35" },
+  { key:"coach_pro",    label:"Entraîneur Pro", price:10, per:"/mois", desc:"Pour entraîneurs ambitieux", target:"entraineur", feats:["Profil détaillé Titre IV/V","Mise en avant dans les annonces","Candidatures illimitées","Stats de vues"], color:"#8B5CF6" },
+];
+const PRICING_SPONSORS = [
+  { key:"sponsor_bronze", label:"Sponsor Bronze", price:500,  per:"/an", desc:"Visibilité régionale",  feats:["Logo dans le footer","Mention sur 5 annonces","1 publication mise en avant / mois"], color:"#CD7F32" },
+  { key:"sponsor_silver", label:"Sponsor Argent", price:1000, per:"/an", desc:"Visibilité étendue",    feats:["Logo header + footer","Mention sur toutes annonces region","Publications mises en avant","Pack média","Accès statistiques"], color:"#94A3B8", pop:true },
+  { key:"sponsor_gold",   label:"Sponsor Or",     price:2000, per:"/an", desc:"Partenaire principal",  feats:["Logo header national","Mention illimitée","Publications prioritaires","Pack média complet","Page dédiée sponsor","Évènements exclusifs"], color:C.gold },
+];
 
 /* ═══════ ANONYMIZATION ═══════ */
 // Les joueurs sont anonymisés publiquement : nom, prénom, téléphone, email masqués.
@@ -495,6 +504,49 @@ function PricingTab({user,profile}){
         </div>;
       })}
     </div>
+
+    {/* Offres individuelles : joueurs & entraîneurs */}
+    <div style={{textAlign:"center",margin:"32px 0 16px"}}>
+      <h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:2,color:C.text,margin:"0 0 4px"}}>OFFRES <span style={{color:"#FF6B35"}}>INDIVIDUELLES</span></h3>
+      <p style={{color:C.dim,fontSize:11}}>Joueurs & entraîneurs · Boostez votre visibilité</p>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:16,marginBottom:24}}>
+      {PRICING_INDIVIDUAL.map((p,i)=>{
+        const isOwnType=profile?.user_type===p.target;
+        const ctaHref=isLogged?(isOwnType?`/dashboard?plan=${p.key}`:"/dashboard"):`/register?type=${p.target}&plan=${p.key}`;
+        const ctaLabel=isLogged?(isOwnType?"Activer →":"Réservé "+(p.target==="joueur"?"joueurs":"entraîneurs")):"Démarrer";
+        const disabled=isLogged&&!isOwnType;
+        return <div key={p.key} style={{background:C.bgCard,borderRadius:20,padding:24,border:`1px solid ${p.color}30`,position:"relative",animation:`fadeUp .5s ease ${i*.08}s both`,transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}>
+          <h3 style={{margin:"0 0 4px",fontSize:16,color:p.color,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{p.label.toUpperCase()}</h3>
+          <p style={{margin:0,fontSize:12,color:C.dim}}>{p.desc}</p>
+          <div style={{margin:"18px 0 14px",display:"flex",alignItems:"baseline",gap:4}}><span style={{fontSize:34,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif",lineHeight:1}}>{p.price}€</span><span style={{fontSize:12,color:C.dim}}>{p.per}</span></div>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18,minHeight:96}}>{p.feats.map(f=><div key={f} style={{display:"flex",alignItems:"flex-start",gap:8,fontSize:12}}><span style={{color:p.color,fontSize:12,marginTop:1}}>✓</span><span style={{color:C.muted}}>{f}</span></div>)}</div>
+          {disabled
+            ? <div style={{width:"100%",padding:"11px 0",borderRadius:12,background:C.bgHover,color:C.dim,fontSize:11,fontWeight:700,textAlign:"center"}}>{ctaLabel}</div>
+            : <Link href={ctaHref} style={{display:"block",width:"100%",padding:"11px 0",borderRadius:12,background:`linear-gradient(135deg,${p.color}90,${p.color}60)`,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center",textDecoration:"none",boxSizing:"border-box"}}>{ctaLabel}</Link>
+          }
+        </div>;
+      })}
+    </div>
+
+    {/* Sponsors */}
+    <div style={{textAlign:"center",margin:"32px 0 16px"}}>
+      <h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:2,color:C.text,margin:"0 0 4px"}}>SPONSORS <span style={{color:C.gold}}>& PARTENAIRES</span></h3>
+      <p style={{color:C.dim,fontSize:11}}>Entreprises : associez votre marque au handball amateur</p>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:16,marginBottom:24}}>
+      {PRICING_SPONSORS.map((p,i)=>(
+        <div key={p.key} style={{background:p.pop?`${p.color}08`:C.bgCard,borderRadius:20,padding:24,border:`1px solid ${p.color}30`,position:"relative",animation:`fadeUp .5s ease ${i*.08}s both`,transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}>
+          {p.pop&&<div style={{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",background:`linear-gradient(135deg,${p.color},${p.color}aa)`,color:"#fff",fontSize:9,fontWeight:800,padding:"4px 14px",borderRadius:12,letterSpacing:1.5,textTransform:"uppercase"}}>★ Recommandé</div>}
+          <h3 style={{margin:"0 0 4px",fontSize:16,color:p.color,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{p.label.toUpperCase()}</h3>
+          <p style={{margin:0,fontSize:12,color:C.dim}}>{p.desc}</p>
+          <div style={{margin:"18px 0 14px",display:"flex",alignItems:"baseline",gap:4}}><span style={{fontSize:34,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif",lineHeight:1}}>{p.price}€</span><span style={{fontSize:12,color:C.dim}}>{p.per}</span></div>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18,minHeight:120}}>{p.feats.map(f=><div key={f} style={{display:"flex",alignItems:"flex-start",gap:8,fontSize:12}}><span style={{color:p.color,fontSize:12,marginTop:1}}>✓</span><span style={{color:C.muted}}>{f}</span></div>)}</div>
+          <a href="mailto:contact@handballconnect.fr?subject=Sponsoring%20HandballConnect" style={{display:"block",width:"100%",padding:"11px 0",borderRadius:12,background:`linear-gradient(135deg,${p.color}90,${p.color}60)`,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center",textDecoration:"none",boxSizing:"border-box"}}>📩 Nous contacter</a>
+        </div>
+      ))}
+    </div>
+
     <p style={{fontSize:10,color:C.dim,textAlign:"center",padding:"12px 16px",background:`${C.primary}06`,borderRadius:10,border:`1px solid ${C.primary}10`,lineHeight:1.7}}>ℹ️ HandballConnect est une plateforme de mise en relation. Aucune commission sur les recrutements.</p>
   </div>
 }
@@ -715,6 +767,19 @@ export default function HandballConnect(){
         {/* Tarifs */}
         {tab==="tarifs"&&<PricingTab user={user} profile={profile}/>}
       </main>
+
+      {/* Footer */}
+      <footer style={{borderTop:`1px solid ${C.border}`,marginTop:40,padding:"24px 20px",background:"rgba(0,0,0,0.2)"}}>
+        <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}>
+          <p style={{fontSize:11,color:C.dim,margin:0}}>HandballConnect © {new Date().getFullYear()} · SASU JOKER TEAM</p>
+          <nav style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+            <Link href="/cgu" style={{fontSize:11,color:C.muted,textDecoration:"none",fontWeight:600}}>CGU</Link>
+            <Link href="/mentions-legales" style={{fontSize:11,color:C.muted,textDecoration:"none",fontWeight:600}}>Mentions légales</Link>
+            <Link href="/politique-confidentialite" style={{fontSize:11,color:C.muted,textDecoration:"none",fontWeight:600}}>RGPD</Link>
+            <a href="mailto:contact@handballconnect.fr" style={{fontSize:11,color:C.muted,textDecoration:"none",fontWeight:600}}>Contact</a>
+          </nav>
+        </div>
+      </footer>
 
       {/* Modals */}
       <PlayerModal player={selPlayer} onClose={()=>setSelPlayer(null)} user={user}/>

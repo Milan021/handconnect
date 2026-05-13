@@ -24,6 +24,56 @@ function Dot(){return <div style={{display:"inline-flex",alignItems:"center",gap
 function Stars({r}){const rating=Number(r)||0;return <span style={{display:"inline-flex",alignItems:"center",gap:1}}>{[1,2,3,4,5].map(i=><span key={i} style={{color:i<=Math.round(rating)?C.gold:"rgba(255,255,255,0.1)",fontSize:12}}>★</span>)}</span>}
 function Toast({msg,onClose}){if(!msg)return null;const isErr=msg.startsWith("❌");return <div style={{position:"fixed",top:24,right:24,padding:"14px 22px",borderRadius:14,zIndex:9999,background:isErr?"rgba(239,68,68,0.15)":"rgba(16,185,129,0.15)",backdropFilter:"blur(20px)",border:`1px solid ${isErr?"rgba(239,68,68,0.3)":"rgba(16,185,129,0.3)"}`,color:isErr?"#FCA5A5":"#6EE7B7",fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,0.3)",animation:"slideDown .4s cubic-bezier(0.16,1,0.3,1)",display:"flex",alignItems:"center",gap:10}}>{msg}<span onClick={onClose} style={{cursor:"pointer",opacity:.5,fontSize:16,marginLeft:8}}>✕</span></div>}
 
+/* ═══════ CONNECT BUTTON ═══════ */
+function ConnectButton({otherId,user,fullWidth=true,labelConnect="🤝 Demander à se connecter",labelChat="💬 Discuter"}){
+  const [status,setStatus]=useState("loading");
+  const [connId,setConnId]=useState(null);
+
+  useEffect(()=>{
+    if(!user||!otherId||user.id===otherId){ setStatus("hidden"); return; }
+    setStatus("loading");
+    const a=user.id<otherId?user.id:otherId;
+    const b=user.id<otherId?otherId:user.id;
+    supabase.from("connections").select("*").eq("participant_a",a).eq("participant_b",b).maybeSingle().then(({data})=>{
+      if(!data){ setStatus("none"); return; }
+      setConnId(data.id);
+      if(data.status==="accepted") setStatus("accepted");
+      else if(data.status==="rejected") setStatus(data.requester_id===user.id?"rejected-mine":"none");
+      else setStatus(data.requester_id===user.id?"pending-mine":"pending-theirs");
+    });
+  },[user,otherId]);
+
+  if(status==="hidden") return null;
+  const baseBtn={width:fullWidth?"100%":"auto",padding:"12px 18px",border:"none",borderRadius:12,fontSize:13,fontWeight:700,cursor:"pointer"};
+
+  const request=async()=>{
+    setStatus("loading");
+    const{error}=await supabase.rpc("request_connection",{other_user_id:otherId});
+    setStatus(error?"none":"pending-mine");
+  };
+  const accept=async()=>{
+    if(!connId)return; setStatus("loading");
+    const{error}=await supabase.from("connections").update({status:"accepted",responded_at:new Date().toISOString()}).eq("id",connId);
+    setStatus(error?"pending-theirs":"accepted");
+  };
+  const reject=async()=>{
+    if(!connId)return; setStatus("loading");
+    const{error}=await supabase.from("connections").update({status:"rejected",responded_at:new Date().toISOString()}).eq("id",connId);
+    if(!error) setStatus("hidden");
+  };
+  const openChat=()=>window.dispatchEvent(new CustomEvent("hc-open-chat",{detail:{otherUserId:otherId}}));
+
+  if(status==="loading") return <button disabled style={{...baseBtn,background:"rgba(255,255,255,0.06)",color:C.dim}}>Chargement…</button>;
+  if(status==="accepted") return <button onClick={openChat} style={{...baseBtn,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",boxShadow:`0 6px 20px ${C.primary}30`}}>{labelChat}</button>;
+  if(status==="pending-mine") return <button disabled style={{...baseBtn,background:`${C.gold}10`,color:C.gold,border:`1px solid ${C.gold}40`,cursor:"default"}}>⏳ Demande envoyée</button>;
+  if(status==="rejected-mine") return <button disabled style={{...baseBtn,background:"rgba(255,255,255,0.04)",color:C.dim,border:`1px solid ${C.border}`,cursor:"default"}}>Demande refusée</button>;
+  if(status==="pending-theirs") return <div style={{display:"flex",gap:8}}>
+    <button onClick={accept} style={{...baseBtn,flex:1,background:`linear-gradient(135deg,${C.green},#059669)`,color:"#fff"}}>✓ Accepter la demande</button>
+    <button onClick={reject} style={{...baseBtn,flex:1,background:`${C.accent}10`,color:C.accent,border:`1px solid ${C.accent}30`}}>✕ Refuser</button>
+  </div>;
+  return <button onClick={request} style={{...baseBtn,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",boxShadow:`0 6px 20px ${C.primary}30`}}>{labelConnect}</button>;
+}
+
 /* ═══════ PLAYER CARD ═══════ */
 function PlayerCard({p,onClick,i}){
   const center=getCenterById(p.training_center);
@@ -53,7 +103,7 @@ function PlayerCard({p,onClick,i}){
 }
 
 /* ═══════ PLAYER MODAL ═══════ */
-function PlayerModal({player:p,onClose}){
+function PlayerModal({player:p,onClose,user}){
   if(!p)return null;
   const center=getCenterById(p.training_center);
   const centerMeta=center?CENTER_TYPE_META[center.type]:null;
@@ -90,7 +140,7 @@ function PlayerModal({player:p,onClose}){
         </div>
       </div>
       <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 14px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>ℹ️ HandConnect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
-      <button style={{width:"100%",padding:"13px 0",border:"none",borderRadius:12,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${C.primary}30`}}>💬 Contacter</button>
+      {user?<ConnectButton otherId={p.id} user={user}/>:<Link href="/login" style={{display:"block",width:"100%",padding:"13px 0",borderRadius:12,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,textAlign:"center",textDecoration:"none",boxShadow:`0 6px 20px ${C.primary}30`}}>🔐 Connectez-vous pour contacter</Link>}
     </div>
   </div></div>
 }
@@ -187,8 +237,9 @@ function AnnonceModal({annonce:a,onClose,user,profile,onApplied}){
       <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 16px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>ℹ️ HandConnect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
       {!user&&<Link href="/login" style={{display:"block",width:"100%",padding:"14px 0",borderRadius:12,background:`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,textAlign:"center",textDecoration:"none",boxShadow:`0 6px 20px ${ac}30`}}>🔐 Connectez-vous pour postuler</Link>}
       {user&&appLoading&&<div style={{textAlign:"center",padding:14,color:C.dim,fontSize:12}}>Chargement…</div>}
-      {user&&!appLoading&&hasApplied&&<div style={{padding:"14px 16px",background:`${C.green}10`,border:`1px solid ${C.green}30`,borderRadius:12,textAlign:"center",color:C.green,fontSize:13,fontWeight:600}}>✓ Vous avez déjà postulé à cette annonce</div>}
-      {user&&!appLoading&&!hasApplied&&<button onClick={()=>setView("apply")} style={{width:"100%",padding:"14px 0",border:"none",borderRadius:12,background:`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${ac}30`}}>✉️ Postuler à cette annonce</button>}
+      {user&&!appLoading&&hasApplied&&<div style={{padding:"14px 16px",background:`${C.green}10`,border:`1px solid ${C.green}30`,borderRadius:12,textAlign:"center",color:C.green,fontSize:13,fontWeight:600,marginBottom:10}}>✓ Vous avez déjà postulé à cette annonce</div>}
+      {user&&!appLoading&&!hasApplied&&<button onClick={()=>setView("apply")} style={{width:"100%",padding:"14px 0",border:"none",borderRadius:12,background:`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${ac}30`,marginBottom:10}}>✉️ Postuler à cette annonce</button>}
+      {user&&a.author_id&&user.id!==a.author_id&&<ConnectButton otherId={a.author_id} user={user} labelConnect="🤝 Contacter le club" labelChat="💬 Discuter avec le club"/>}
     </div>}
 
     {/* ── VIEW APPLY (formulaire) ── */}
@@ -572,7 +623,7 @@ export default function HandConnect(){
       </main>
 
       {/* Modals */}
-      <PlayerModal player={selPlayer} onClose={()=>setSelPlayer(null)}/>
+      <PlayerModal player={selPlayer} onClose={()=>setSelPlayer(null)} user={user}/>
       <AnnonceModal annonce={selAnnonce} onClose={()=>setSelAnnonce(null)} user={user} profile={profile} onApplied={id=>setAnnonces(prev=>prev.map(x=>x.id===id?{...x,candidatures_count:(x.candidatures_count||0)+1}:x))}/>
     </div>
   </>

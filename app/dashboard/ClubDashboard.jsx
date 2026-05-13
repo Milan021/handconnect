@@ -1341,6 +1341,9 @@ export default function ClubDashboard({ user, profile }) {
                                       {ap?.phone && (
                                         <a href={`tel:${ap.phone}`} style={{ padding: "6px 12px", background: "rgba(255,255,255,0.05)", color: C.text, borderRadius: 6, fontSize: 11, fontWeight: 600, textDecoration: "none", border: `1px solid ${C.border}`, fontFamily: "monospace" }}>📱 {ap.phone}</a>
                                       )}
+                                      {ap?.id && (
+                                        <button onClick={() => window.dispatchEvent(new CustomEvent("hc-open-chat", { detail: { otherUserId: ap.id } }))} style={{ padding: "6px 12px", background: `${C.primary}15`, color: C.primaryLight, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer", border: `1px solid ${C.primary}30` }}>💬 Discuter</button>
+                                      )}
                                       <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
                                         {app.status !== "accepted" && <button onClick={() => updateAppStatus(app.id, "accepted", a.id)} style={{ padding: "6px 10px", background: `${C.green}15`, color: C.green, border: `1px solid ${C.green}30`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>✓ Accepter</button>}
                                         {app.status !== "rejected" && <button onClick={() => updateAppStatus(app.id, "rejected", a.id)} style={{ padding: "6px 10px", background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}30`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>✕ Refuser</button>}

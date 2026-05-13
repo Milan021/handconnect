@@ -72,6 +72,7 @@ const labelStyle = {
 };
 
 export default function ClubDashboard({ user, profile }) {
+  const [tab, setTab] = useState("club");
   const [club, setClub] = useState(null);
   const [loadingClub, setLoadingClub] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -591,6 +592,21 @@ export default function ClubDashboard({ user, profile }) {
               </Link>
             </div>
           )}
+
+          {/* Tab bar */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}`, borderRadius: 14, padding: 4 }}>
+            {[
+              ["club", "🏟️ Mon Club"],
+              ["annonces", `📢 Annonces${myAnnonces.length > 0 ? ` (${myAnnonces.length})` : ""}`],
+            ].map(([t, label]) => (
+              <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "10px 16px", borderRadius: 10, border: "none", background: tab === t ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : "transparent", color: tab === t ? "#fff" : C.muted, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all .2s", boxShadow: tab === t ? `0 4px 14px ${C.primary}30` : "none" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── ONGLET MON CLUB ── */}
+          {tab === "club" && (<>
 
           {/* Completion bar */}
           <div
@@ -1410,16 +1426,14 @@ export default function ClubDashboard({ user, profile }) {
             )}
           </div>
 
-          <div
-            style={{
-              textAlign: "center",
-              padding: "32px 0 16px",
-              fontSize: 10,
-              color: "rgba(255,255,255,0.12)",
-            }}
-          >
+          <div style={{ textAlign: "center", padding: "32px 0 16px", fontSize: 10, color: "rgba(255,255,255,0.12)" }}>
             HANDBALL CONNECT — Espace Club — {new Date().getFullYear()}
           </div>
+
+          </>)}
+
+          {/* ── ONGLET ANNONCES ── */}
+          {tab === "annonces" && (<>
 
           {/* ═══════ MES ANNONCES & CANDIDATURES ═══════ */}
           <div style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${C.border}`, borderRadius: 18, padding: 28, marginBottom: 24 }}>
@@ -1529,6 +1543,9 @@ export default function ClubDashboard({ user, profile }) {
               </div>
             )}
           </div>
+
+          </>)}
+
         </main>
       </div>
     </div>

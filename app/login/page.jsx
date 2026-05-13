@@ -22,8 +22,9 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+    const { data: profile } = await supabase.from("profiles").select("role, user_type").eq("id", data.user.id).single();
     if (profile?.role === "admin") { window.location.href = "/agents"; }
+    else if (profile?.user_type === "joueur") { window.location.href = "/annonces"; }
     else { window.location.href = "/dashboard"; }
   };
 

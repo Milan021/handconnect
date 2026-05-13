@@ -63,6 +63,7 @@ export default function DashboardPage() {
       setUser(user);
       const { data: profileData } = await supabase.from("profiles").select("*").eq("id", user.id).single();
       if (profileData?.role === "admin") { window.location.href = "/agents"; return; }
+      if (profileData?.user_type === "joueur") { window.location.href = "/annonces"; return; }
       setProfile(profileData);
       setForm(profileData || {});
       setLoading(false);

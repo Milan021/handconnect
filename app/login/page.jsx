@@ -35,7 +35,7 @@ export default function LoginPage() {
       <div style={{ width: 400, padding: 40, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, backdropFilter: "blur(20px)", position: "relative", zIndex: 1 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #FF6B35, #C13C00)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: 16 }}>🤾</div>
-          <h1 style={{ fontSize: 32, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>HAND<span style={{ color: "#FF6B35" }}>CONNECT</span></h1>
+          <h1 style={{ fontSize: 32, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>HANDBALL<span style={{ color: "#FF6B35" }}>CONNECT</span></h1>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", margin: 0 }}>Connectez-vous à votre espace</p>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -56,7 +56,7 @@ export default function LoginPage() {
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Pas encore de compte ? <Link href="/register" style={{ color: "#FF6B35", fontWeight: 600, textDecoration: "none" }}>S'inscrire gratuitement</Link></p>
         </div>
-        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.15)", marginTop: 20, marginBottom: 0 }}>Hand Connect © {new Date().getFullYear()}</p>
+        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.15)", marginTop: 20, marginBottom: 0 }}>Handball Connect © {new Date().getFullYear()}</p>
       </div>
     </div>
   );

@@ -18,6 +18,26 @@ const PRICING = [
   { key:"premium",  label:"Club Premium",  price:250, per:"/an", desc:"Pour les ambitieux",    feats:["Annonces illimitées","Profils & candidatures illimités","Annonces mises en avant","Statistiques avancées","Support prioritaire"], color:C.gold },
 ];
 
+/* ═══════ ANONYMIZATION ═══════ */
+// Les joueurs sont anonymisés publiquement : nom, prénom, téléphone, email masqués.
+// Seuls le joueur lui-même voit ses propres informations.
+function getPlayerDisplay(p, currentUser) {
+  const isOwn = currentUser?.id === p?.id;
+  if (isOwn) {
+    return {
+      displayName: `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Mon profil",
+      initials: `${(p.first_name || "?")[0]}${(p.last_name || "?")[0]}`.toUpperCase(),
+      isAnonymous: false,
+    };
+  }
+  const anonId = (p?.id || "xxxx").replace(/-/g, "").slice(-4).toUpperCase();
+  return {
+    displayName: `Joueur #${anonId}`,
+    initials: "🤾",
+    isAnonymous: true,
+  };
+}
+
 /* ═══════ MICRO COMPONENTS ═══════ */
 function Bdg({children,color=C.primary,filled}){return <span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"3px 10px",background:filled?color:`${color}18`,color:filled?"#fff":color,borderRadius:6,fontSize:10,fontWeight:700,border:`1px solid ${color}30`,letterSpacing:.8,textTransform:"uppercase",whiteSpace:"nowrap"}}>{children}</span>}
 function Dot(){return <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 10px",background:C.greenBg,borderRadius:20,border:`1px solid ${C.green}30`}}><div style={{width:6,height:6,borderRadius:"50%",background:C.green,boxShadow:`0 0 8px ${C.green}60`}}/><span style={{color:C.green,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Dispo</span></div>}
@@ -75,7 +95,7 @@ function ConnectButton({otherId,user,fullWidth=true,labelConnect="🤝 Demander 
 }
 
 /* ═══════ PLAYER CARD ═══════ */
-function PlayerCard({p,onClick,i}){
+function PlayerCard({p,onClick,i,user}){
   const center=getCenterById(p.training_center);
   const centerMeta=center?CENTER_TYPE_META[center.type]:null;
   const isSection=!center&&p.is_section_sportive;
@@ -85,15 +105,16 @@ function PlayerCard({p,onClick,i}){
   const badgeColor=center?centerMeta.color:(isSection?SECTION_SPORTIVE_META.color:null);
   const badgeIcon=center?centerMeta.icon:(isSection?SECTION_SPORTIVE_META.icon:null);
   const badgeLabel=center?centerMeta.label:(isSection?SECTION_SPORTIVE_META.label:null);
+  const disp=getPlayerDisplay(p,user);
   return <div onClick={()=>onClick(p)} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",cursor:"pointer",border:`1px solid ${badgeColor?`${badgeColor}30`:C.border}`,transition:"all .35s cubic-bezier(0.16,1,0.3,1)",position:"relative",animation:`fadeUp .5s ease ${i*.05}s both`}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=badgeColor||C.borderBlue;e.currentTarget.style.boxShadow=`0 16px 48px ${accent}15`}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=badgeColor?`${badgeColor}30`:C.border;e.currentTarget.style.boxShadow=""}}>
     {p.is_available&&<div style={{position:"absolute",top:12,left:12,zIndex:2}}><Dot/></div>}
     {badgeColor&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:badgeColor,border:`1px solid ${badgeColor}50`}}>{badgeIcon} {badgeLabel}</div>}
     {!badgeColor&&isMinor&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:"#FBBF24",border:"1px solid rgba(251,191,36,0.4)"}}>-18</div>}
-    <div style={{height:80,background:`linear-gradient(135deg,${accent},${accentDark})`,position:"relative"}}><div style={{width:56,height:56,borderRadius:"50%",background:C.bg,border:`3px solid ${accent}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:800,color:accent,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-24,left:"50%",transform:"translateX(-50%)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div></div>
+    <div style={{height:80,background:`linear-gradient(135deg,${accent},${accentDark})`,position:"relative"}}><div style={{width:56,height:56,borderRadius:"50%",background:C.bg,border:`3px solid ${accent}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:800,color:accent,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-24,left:"50%",transform:"translateX(-50%)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>{disp.initials}</div></div>
     <div style={{padding:"30px 16px 16px",textAlign:"center"}}>
-      <h3 style={{margin:0,fontSize:15,fontWeight:700,color:C.text}}>{p.first_name} {p.last_name}</h3>
+      <h3 style={{margin:0,fontSize:15,fontWeight:700,color:C.text}}>{disp.displayName}</h3>
       <p style={{margin:"2px 0",fontSize:10,color:accent,fontWeight:700,fontFamily:"monospace",textTransform:"uppercase",letterSpacing:1.5}}>{POS[p.position]||"Non défini"}</p>
-      <p style={{fontSize:10,color:C.dim}}>{center?center.label:(p.current_club||"Sans club")} · {p.city||"—"}</p>
+      <p style={{fontSize:10,color:C.dim}}>{center?center.label:(disp.isAnonymous?"Club masqué":(p.current_club||"Sans club"))} · {p.city||"—"}</p>
       {(p.region||p.mobile_other_regions)&&<p style={{fontSize:9,color:C.muted,margin:"3px 0 0",fontWeight:600}}>{p.region&&<>📍 {getRegionLabel(p.region)}</>}{p.region&&p.mobile_other_regions&&" · "}{p.mobile_other_regions&&<span style={{color:C.green}}>🌍 Mobile</span>}</p>}
       <div style={{display:"flex",justifyContent:"center",gap:16,paddingTop:10,marginTop:10,borderTop:`1px solid ${C.border}`}}>
         {[["Âge",p.age?`${p.age}a`:"—"],["Taille",p.height_cm?`${p.height_cm}cm`:"—"],["Niveau",LEVELS.find(l=>l.v===p.current_level)?.l||"—"]].map(([l,v])=><div key={l} style={{textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif"}}>{v}</div><div style={{fontSize:8,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>{l}</div></div>)}
@@ -112,16 +133,17 @@ function PlayerModal({player:p,onClose,user}){
   const headerDark=center?centerMeta.color:(isSection?SECTION_SPORTIVE_META.color:C.primaryDark);
   const badgeIcon=center?centerMeta.icon:(isSection?SECTION_SPORTIVE_META.icon:null);
   const badgeLabel=center?centerMeta.label:(isSection?SECTION_SPORTIVE_META.label:null);
+  const disp=getPlayerDisplay(p,user);
   return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(180deg,${C.surface},${C.bg})`,borderRadius:24,maxWidth:500,width:"100%",overflow:"hidden",maxHeight:"90vh",overflowY:"auto",border:`1px solid ${C.border}`,animation:"modalUp .4s cubic-bezier(0.16,1,0.3,1)"}}>
     <div style={{height:120,background:`linear-gradient(135deg,${headerColor},${headerDark})`,position:"relative"}}>
       <button onClick={onClose} style={{position:"absolute",top:12,right:12,background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
       {badgeLabel&&<div style={{position:"absolute",top:12,left:12,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)",padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:700,color:"#fff",border:`1px solid ${headerColor}80`}}>{badgeIcon} {badgeLabel}</div>}
-      <div style={{width:76,height:76,borderRadius:"50%",background:C.bg,border:`4px solid ${headerColor}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:800,color:headerColor,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-34,left:"50%",transform:"translateX(-50%)",boxShadow:"0 10px 30px rgba(0,0,0,0.4)"}}>{(p.first_name||"?")[0]}{(p.last_name||"?")[0]}</div>
+      <div style={{width:76,height:76,borderRadius:"50%",background:C.bg,border:`4px solid ${headerColor}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:800,color:headerColor,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-34,left:"50%",transform:"translateX(-50%)",boxShadow:"0 10px 30px rgba(0,0,0,0.4)"}}>{disp.initials}</div>
     </div>
     <div style={{padding:"44px 28px 0",textAlign:"center"}}>
-      <h2 style={{fontSize:22,fontWeight:700,margin:0,color:C.text}}>{p.first_name} {p.last_name}</h2>
+      <h2 style={{fontSize:22,fontWeight:700,margin:0,color:C.text}}>{disp.displayName}</h2>
       <p style={{color:headerColor,fontWeight:700,fontSize:11,fontFamily:"monospace",margin:"4px 0",textTransform:"uppercase",letterSpacing:2}}>{POS[p.position]||"Non défini"}</p>
-      <p style={{color:C.dim,fontSize:12,margin:0}}>{center?center.label:(p.current_club||"Sans club")} · {p.city||"—"} · {p.age?`${p.age} ans`:""} {p.height_cm?`· ${p.height_cm}cm`:""}</p>
+      <p style={{color:C.dim,fontSize:12,margin:0}}>{center?center.label:(disp.isAnonymous?"Club masqué":(p.current_club||"Sans club"))} · {p.city||"—"} · {p.age?`${p.age} ans`:""} {p.height_cm?`· ${p.height_cm}cm`:""}</p>
       {(p.region||p.mobile_other_regions)&&<div style={{marginTop:8,display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap"}}>
         {p.region&&<span style={{fontSize:11,padding:"4px 10px",background:"rgba(255,255,255,0.05)",color:C.muted,borderRadius:6,fontWeight:600,border:`1px solid ${C.border}`}}>📍 {getRegionLabel(p.region)}</span>}
         {p.mobile_other_regions&&<span style={{fontSize:11,padding:"4px 10px",background:C.greenBg,color:C.green,borderRadius:6,fontWeight:700,border:`1px solid ${C.green}30`}}>🌍 Mobile vers d&apos;autres régions</span>}
@@ -133,13 +155,16 @@ function PlayerModal({player:p,onClose,user}){
       </div>
       {p.bio&&<p style={{fontSize:13,color:C.muted,lineHeight:1.7,margin:"0 0 14px"}}>{p.bio}</p>}
       {p.is_available&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:C.greenBg,borderRadius:10,border:`1px solid ${C.green}30`,marginBottom:14}}><div style={{width:8,height:8,borderRadius:"50%",background:C.green}}/><span style={{fontSize:12,color:C.green,fontWeight:600}}>Disponible pour un transfert</span></div>}
-      <div style={{background:C.bgCard,borderRadius:12,padding:14,border:`1px solid ${C.border}`,marginBottom:14}}>
-        <div style={{display:"flex",flexDirection:"column",gap:6}}>
-          {p.phone&&<div style={{display:"flex",alignItems:"center",gap:10,fontSize:13}}>📱 <span style={{color:C.text,fontFamily:"monospace"}}>{p.phone}</span></div>}
-          <div style={{display:"flex",alignItems:"center",gap:10,fontSize:13}}>✉️ <span style={{color:C.text,fontFamily:"monospace"}}>{p.email}</span></div>
-        </div>
-      </div>
-      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 14px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>ℹ️ HandConnect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
+      {disp.isAnonymous
+        ? <div style={{background:`${C.primary}08`,borderRadius:12,padding:"14px 16px",border:`1px dashed ${C.primary}30`,marginBottom:14,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:20}}>🔒</span><div><div style={{fontSize:12,color:C.text,fontWeight:600,marginBottom:2}}>Identité protégée</div><div style={{fontSize:11,color:C.muted,lineHeight:1.5}}>Nom & coordonnées révélés après acceptation de la demande de connexion.</div></div></div>
+        : <div style={{background:C.bgCard,borderRadius:12,padding:14,border:`1px solid ${C.border}`,marginBottom:14}}>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {p.phone&&<div style={{display:"flex",alignItems:"center",gap:10,fontSize:13}}>📱 <span style={{color:C.text,fontFamily:"monospace"}}>{p.phone}</span></div>}
+              <div style={{display:"flex",alignItems:"center",gap:10,fontSize:13}}>✉️ <span style={{color:C.text,fontFamily:"monospace"}}>{p.email}</span></div>
+            </div>
+          </div>
+      }
+      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 14px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>ℹ️ HandballConnect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
       {user?<ConnectButton otherId={p.id} user={user}/>:<Link href="/login" style={{display:"block",width:"100%",padding:"13px 0",borderRadius:12,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,textAlign:"center",textDecoration:"none",boxShadow:`0 6px 20px ${C.primary}30`}}>🔐 Connectez-vous pour contacter</Link>}
     </div>
   </div></div>
@@ -234,7 +259,7 @@ function AnnonceModal({annonce:a,onClose,user,profile,onApplied}){
       <p style={{fontSize:14,color:C.muted,lineHeight:1.7,margin:"0 0 20px"}}>{a.description}</p>
       {isTr&&a.salary_range&&<div style={{background:`${C.accent}08`,borderRadius:12,padding:14,border:`1px solid ${C.accent}15`,marginBottom:18,textAlign:"center"}}><span style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:1.5}}>Rémunération</span><div style={{fontSize:20,color:C.accent,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",marginTop:4}}>{a.salary_range}</div></div>}
       {bens.length>0&&<div style={{marginBottom:20}}><p style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:8,fontWeight:600}}>Avantages</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{bens.map(b=><span key={b} style={{padding:"6px 14px",background:`${ac}10`,color:ac,borderRadius:10,fontSize:12,fontWeight:600,border:`1px solid ${ac}18`}}>{BEN_ICO[b]||"•"} {b.charAt(0).toUpperCase()+b.slice(1)}</span>)}</div></div>}
-      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 16px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>ℹ️ HandConnect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
+      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 16px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>ℹ️ HandballConnect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
       {!user&&<Link href="/login" style={{display:"block",width:"100%",padding:"14px 0",borderRadius:12,background:`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,textAlign:"center",textDecoration:"none",boxShadow:`0 6px 20px ${ac}30`}}>🔐 Connectez-vous pour postuler</Link>}
       {user&&appLoading&&<div style={{textAlign:"center",padding:14,color:C.dim,fontSize:12}}>Chargement…</div>}
       {user&&!appLoading&&hasApplied&&<div style={{padding:"14px 16px",background:`${C.green}10`,border:`1px solid ${C.green}30`,borderRadius:12,textAlign:"center",color:C.green,fontSize:13,fontWeight:600,marginBottom:10}}>✓ Vous avez déjà postulé à cette annonce</div>}
@@ -436,27 +461,48 @@ function ProfileEditor({profile,user,onSave,onToast}){
 }
 
 /* ═══════ PRICING TAB ═══════ */
-function PricingTab(){
+function PricingTab({user,profile}){
+  const isClub = profile?.user_type === "club";
+  const isLogged = !!user;
   return <div>
-    <div style={{textAlign:"center",marginBottom:28}}><h2 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:3,color:C.text,margin:"0 0 6px"}}>NOS <span style={{color:C.primary}}>OFFRES</span></h2><p style={{color:C.muted,fontSize:13}}>Tarifs annuels · Sans commission de transfert · Sans engagement</p></div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:16,marginBottom:24}}>
-      {PRICING.map((p,i)=><div key={p.key} style={{background:p.pop?`${C.primary}08`:C.bgCard,borderRadius:20,padding:24,border:`1px solid ${p.pop?`${C.primary}30`:C.border}`,position:"relative",animation:`fadeUp .5s ease ${i*.08}s both`,transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}>
-        {p.pop&&<div style={{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:9,fontWeight:800,padding:"4px 14px",borderRadius:12,letterSpacing:1.5,textTransform:"uppercase"}}>★ Populaire</div>}
-        <h3 style={{margin:"0 0 4px",fontSize:16,color:p.color,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{p.label.toUpperCase()}</h3>
-        <p style={{margin:0,fontSize:12,color:C.dim}}>{p.desc}</p>
-        <div style={{margin:"18px 0",display:"flex",alignItems:"baseline",gap:4}}><span style={{fontSize:42,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif",lineHeight:1}}>{p.price}€</span><span style={{fontSize:13,color:C.dim}}>{p.per}</span></div>
-        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18,minHeight:120}}>{p.feats.map(f=><div key={f} style={{display:"flex",alignItems:"flex-start",gap:8,fontSize:12}}><span style={{color:p.color||C.green,fontSize:12,marginTop:1}}>✓</span><span style={{color:C.muted}}>{f}</span></div>)}</div>
-        <button style={{width:"100%",padding:"12px 0",border:"none",borderRadius:12,background:p.pop?`linear-gradient(135deg,${C.primary},${C.primaryDark})`:C.bgHover,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>{p.price===0?"Commencer":"Choisir →"}</button>
-      </div>)}
+    <div style={{textAlign:"center",marginBottom:20}}>
+      <h2 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,letterSpacing:3,color:C.text,margin:"0 0 6px"}}>NOS <span style={{color:C.primary}}>OFFRES</span></h2>
+      <p style={{color:C.muted,fontSize:13,margin:"0 0 14px"}}>Tarifs annuels · Sans commission de transfert · Sans engagement</p>
+      <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 18px",borderRadius:20,background:`${C.green}12`,border:`1px solid ${C.green}30`,fontSize:12,fontWeight:700,color:C.green,letterSpacing:.5}}>
+        <span style={{fontSize:14}}>🎁</span> 7 jours d'essai gratuit · Sans carte bancaire · Annulable à tout moment
+      </div>
     </div>
-    <p style={{fontSize:10,color:C.dim,textAlign:"center",padding:"12px 16px",background:`${C.primary}06`,borderRadius:10,border:`1px solid ${C.primary}10`,lineHeight:1.7}}>ℹ️ HandConnect est une plateforme de mise en relation. Aucune commission sur les recrutements.</p>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:16,marginBottom:24}}>
+      {PRICING.map((p,i)=>{
+        const ctaHref = isLogged
+          ? (isClub ? `/dashboard?plan=${p.key}` : "/dashboard")
+          : `/register?type=club&plan=${p.key}`;
+        const ctaLabel = isLogged
+          ? (isClub ? "Choisir ce plan →" : "Compte non-club")
+          : "🎁 Démarrer 7 jours gratuits";
+        const disabled = isLogged && !isClub;
+        return <div key={p.key} style={{background:p.pop?`${C.primary}08`:C.bgCard,borderRadius:20,padding:24,border:`1px solid ${p.pop?`${C.primary}30`:C.border}`,position:"relative",animation:`fadeUp .5s ease ${i*.08}s both`,transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}>
+          {p.pop&&<div style={{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:9,fontWeight:800,padding:"4px 14px",borderRadius:12,letterSpacing:1.5,textTransform:"uppercase"}}>★ Populaire</div>}
+          <h3 style={{margin:"0 0 4px",fontSize:16,color:p.color,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{p.label.toUpperCase()}</h3>
+          <p style={{margin:0,fontSize:12,color:C.dim}}>{p.desc}</p>
+          <div style={{margin:"18px 0 6px",display:"flex",alignItems:"baseline",gap:4}}><span style={{fontSize:42,fontWeight:800,color:C.text,fontFamily:"'Bebas Neue',sans-serif",lineHeight:1}}>{p.price}€</span><span style={{fontSize:13,color:C.dim}}>{p.per}</span></div>
+          <div style={{fontSize:10,color:C.green,fontWeight:700,letterSpacing:.5,marginBottom:14,textTransform:"uppercase"}}>✓ 7 jours d'essai inclus</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18,minHeight:120}}>{p.feats.map(f=><div key={f} style={{display:"flex",alignItems:"flex-start",gap:8,fontSize:12}}><span style={{color:p.color||C.green,fontSize:12,marginTop:1}}>✓</span><span style={{color:C.muted}}>{f}</span></div>)}</div>
+          {disabled
+            ? <div style={{width:"100%",padding:"12px 0",borderRadius:12,background:C.bgHover,color:C.dim,fontSize:12,fontWeight:700,textAlign:"center"}}>Réservé aux clubs</div>
+            : <Link href={ctaHref} style={{display:"block",width:"100%",padding:"12px 0",border:"none",borderRadius:12,background:p.pop?`linear-gradient(135deg,${C.primary},${C.primaryDark})`:`linear-gradient(135deg,${p.color||C.primary}80,${p.color||C.primary}60)`,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center",textDecoration:"none",boxSizing:"border-box"}}>{ctaLabel}</Link>
+          }
+        </div>;
+      })}
+    </div>
+    <p style={{fontSize:10,color:C.dim,textAlign:"center",padding:"12px 16px",background:`${C.primary}06`,borderRadius:10,border:`1px solid ${C.primary}10`,lineHeight:1.7}}>ℹ️ HandballConnect est une plateforme de mise en relation. Aucune commission sur les recrutements.</p>
   </div>
 }
 
 /* ═══════════════════════════════════════════════════════════ */
 /* ═══════════════════════ MAIN APP ═════════════════════════ */
 /* ═══════════════════════════════════════════════════════════ */
-export default function HandConnect(){
+export default function HandballConnect(){
   const [tab,setTab]=useState("annonces");
   const [search,setSearch]=useState("");
   const [posF,setPosF]=useState("");
@@ -570,7 +616,7 @@ export default function HandConnect(){
         <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:60}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{width:36,height:36,borderRadius:10,background:`linear-gradient(135deg,${C.primary},${C.accent})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:`0 4px 14px ${C.primary}30`}}>🤾</div>
-            <h1 style={{fontSize:20,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,color:"#fff",lineHeight:1,cursor:"pointer"}} onClick={()=>{setTab("annonces");setSearch("")}}>HAND<span style={{color:C.primary}}>CONNECT</span></h1>
+            <h1 style={{fontSize:20,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,color:"#fff",lineHeight:1,cursor:"pointer"}} onClick={()=>{setTab("annonces");setSearch("")}}>HANDBALL<span style={{color:C.primary}}>CONNECT</span></h1>
             <span style={{fontSize:8,color:C.dim,background:C.bgCard,padding:"2px 7px",borderRadius:5,fontWeight:600,letterSpacing:1,border:`1px solid ${C.border}`}}>BETA</span>
           </div>
           <nav style={{display:"flex",gap:2}}>{tabs.map(t=><button key={t.k} onClick={()=>{setTab(t.k);setSearch("");setPosF("");setRegionF("");setAType("all")}} style={{padding:"7px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,transition:"all .2s",background:tab===t.k?`${C.primary}18`:"transparent",color:tab===t.k?C.primaryLight:C.dim,whiteSpace:"nowrap"}}><span style={{marginRight:4,fontSize:12}}>{t.i}</span>{t.l}</button>)}</nav>
@@ -628,15 +674,15 @@ export default function HandConnect(){
           return <div style={{display:"flex",flexDirection:"column",gap:36}}>
             {playerSections.center.length>0&&<section>
               {sectionHeader("🏆","CENTRES DE FORMATION","Pôles Espoirs · Centres pro · Sections sportives",C.gold,playerSections.center.length)}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.center.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.center.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer} user={user}/>)}</div>
             </section>}
             {playerSections.young.length>0&&<section>
               {sectionHeader("👶","-18 ANS","Cadets · Juniors · Espoirs",C.accent,playerSections.young.length)}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.young.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.young.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer} user={user}/>)}</div>
             </section>}
             {playerSections.senior.length>0&&<section>
               {sectionHeader("🤾","JOUEURS","Tous les profils séniors",C.primary,playerSections.senior.length)}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.senior.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.senior.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer} user={user}/>)}</div>
             </section>}
           </div>;
         })()}
@@ -667,7 +713,7 @@ export default function HandConnect(){
         )}
 
         {/* Tarifs */}
-        {tab==="tarifs"&&<PricingTab/>}
+        {tab==="tarifs"&&<PricingTab user={user} profile={profile}/>}
       </main>
 
       {/* Modals */}

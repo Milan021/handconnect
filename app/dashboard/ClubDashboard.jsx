@@ -127,6 +127,18 @@ export default function ClubDashboard({ user, profile }) {
     fetchClub();
   }, [user, profile]);
 
+  // Lit le plan choisi à l'inscription (depuis register page) pour l'appliquer à la création
+  const [pendingPlan, setPendingPlan] = useState(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const planFromUrl = url.searchParams.get("plan");
+    const planFromStorage = window.localStorage.getItem("hc_pending_plan");
+    const valid = ["free", "standard", "premium"];
+    const plan = valid.includes(planFromUrl) ? planFromUrl : (valid.includes(planFromStorage) ? planFromStorage : null);
+    if (plan) setPendingPlan(plan);
+  }, []);
+
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(""), 3500);
@@ -216,9 +228,19 @@ export default function ClubDashboard({ user, profile }) {
     if (club?.id) {
       result = await supabase.from("clubs").update(payload).eq("id", club.id).select().single();
     } else {
+      // Création : applique le plan choisi + démarre l'essai 7 jours
+      const now = new Date();
+      const trialEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       result = await supabase
         .from("clubs")
-        .insert({ ...payload, plan: "free" })
+        .insert({
+          ...payload,
+          plan: "free", // ancien champ : conservé pour compat
+          subscription_plan: pendingPlan || "free",
+          subscription_status: "trial",
+          trial_started_at: now.toISOString(),
+          trial_ends_at: trialEnd.toISOString(),
+        })
         .select()
         .single();
     }
@@ -227,9 +249,12 @@ export default function ClubDashboard({ user, profile }) {
       showToast("❌ Erreur : " + result.error.message);
       return;
     }
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("hc_pending_plan");
+    }
     setClub(result.data);
     setEditing(false);
-    showToast("✅ Club mis à jour !");
+    showToast(club?.id ? "✅ Club mis à jour !" : "🎁 Essai 7 jours démarré !");
   };
 
   const cancel = () => {
@@ -263,7 +288,20 @@ export default function ClubDashboard({ user, profile }) {
     return Math.round((filled / fields.length) * 100);
   })();
 
-  const planMeta = PLAN_META[club?.plan] || PLAN_META.free;
+  const currentPlan = club?.subscription_plan || club?.plan || "free";
+  const planMeta = PLAN_META[currentPlan] || PLAN_META.free;
+
+  // Essai gratuit : calcul des jours restants
+  const trialInfo = (() => {
+    if (!club?.trial_ends_at) return null;
+    const end = new Date(club.trial_ends_at);
+    const now = new Date();
+    const diffMs = end - now;
+    const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const isActive = club.subscription_status === "trial" && diffMs > 0;
+    const isExpired = club.subscription_status === "trial" && diffMs <= 0;
+    return { daysLeft: Math.max(0, daysLeft), isActive, isExpired, endDate: end };
+  })();
 
   if (loadingClub) {
     return (
@@ -397,7 +435,7 @@ export default function ClubDashboard({ user, profile }) {
                     margin: 0,
                   }}
                 >
-                  HAND<span style={{ color: C.primary }}>CONNECT</span>
+                  HANDBALL<span style={{ color: C.primary }}>CONNECT</span>
                 </h1>
                 <span style={{ fontSize: 9, color: C.dim, letterSpacing: 2, fontWeight: 600 }}>
                   ESPACE CLUB
@@ -495,6 +533,64 @@ export default function ClubDashboard({ user, profile }) {
               </div>
             </div>
           </div>
+
+          {/* Trial banner */}
+          {trialInfo && (trialInfo.isActive || trialInfo.isExpired) && (
+            <div
+              style={{
+                background: trialInfo.isExpired
+                  ? "linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04))"
+                  : `linear-gradient(135deg, ${C.green}15, ${C.green}05)`,
+                border: `1px solid ${trialInfo.isExpired ? "rgba(239,68,68,0.3)" : `${C.green}30`}`,
+                borderRadius: 16,
+                padding: "16px 20px",
+                marginBottom: 20,
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ fontSize: 28 }}>{trialInfo.isExpired ? "⏰" : "🎁"}</div>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: trialInfo.isExpired ? "#EF4444" : C.green,
+                    marginBottom: 2,
+                  }}
+                >
+                  {trialInfo.isExpired
+                    ? "Période d'essai expirée"
+                    : `Essai gratuit · ${trialInfo.daysLeft} jour${trialInfo.daysLeft > 1 ? "s" : ""} restant${trialInfo.daysLeft > 1 ? "s" : ""}`}
+                </div>
+                <div style={{ fontSize: 12, color: C.muted }}>
+                  {trialInfo.isExpired
+                    ? `Souscrivez à ${planMeta.label} pour continuer à utiliser HandballConnect.`
+                    : `Plan ${planMeta.label} actif jusqu'au ${trialInfo.endDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`}
+                </div>
+              </div>
+              <Link
+                href="/?tab=tarifs"
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: 10,
+                  background: trialInfo.isExpired
+                    ? "linear-gradient(135deg,#EF4444,#DC2626)"
+                    : `linear-gradient(135deg,${C.primary},${C.primaryDark})`,
+                  color: "#fff",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  letterSpacing: 0.5,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {trialInfo.isExpired ? "Souscrire maintenant" : "Gérer l'abonnement"}
+              </Link>
+            </div>
+          )}
 
           {/* Completion bar */}
           <div
@@ -1322,7 +1418,7 @@ export default function ClubDashboard({ user, profile }) {
               color: "rgba(255,255,255,0.12)",
             }}
           >
-            HAND CONNECT — Espace Club — {new Date().getFullYear()}
+            HANDBALL CONNECT — Espace Club — {new Date().getFullYear()}
           </div>
 
           {/* ═══════ MES ANNONCES & CANDIDATURES ═══════ */}

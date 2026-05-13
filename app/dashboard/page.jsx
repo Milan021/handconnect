@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
+import ClubDashboard from "./ClubDashboard";
 
 const FONT_LINK = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap";
 
@@ -113,6 +114,15 @@ export default function DashboardPage() {
         <link href={FONT_LINK} rel="stylesheet" />
         <div style={{ color: C.dim, fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Chargement...</div>
       </div>
+    );
+  }
+
+  if (profile?.user_type === "club") {
+    return (
+      <>
+        <link href={FONT_LINK} rel="stylesheet" />
+        <ClubDashboard user={user} profile={profile} />
+      </>
     );
   }
 

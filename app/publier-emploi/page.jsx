@@ -239,7 +239,7 @@ export default function PublierEmploiPage() {
           <div>
             <label style={lblS}>EMAIL DE CONTACT (optionnel)</label>
             <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="rh@entreprise.fr" style={inpS} />
-            <p style={{ fontSize: 10, color: C.dim, marginTop: 4, lineHeight: 1.5 }}>💡 Si renseigné, les candidats pourront postuler directement par email. Sinon, ils passeront par la messagerie Handball Connection.</p>
+            <p style={{ fontSize: 10, color: C.dim, marginTop: 4, lineHeight: 1.5 }}>💡 Si renseigné, les candidats pourront postuler directement par email. Sinon, ils passeront par la messagerie Handball Connect.</p>
           </div>
 
           {/* Error */}
@@ -256,7 +256,7 @@ export default function PublierEmploiPage() {
           </div>
         </div>
 
-        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.15)", marginTop: 20, marginBottom: 0 }}>Handball Connection © {new Date().getFullYear()}</p>
+        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.15)", marginTop: 20, marginBottom: 0 }}>Handball Connect © {new Date().getFullYear()}</p>
       </div>
     </div>
   );

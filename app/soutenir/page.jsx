@@ -13,13 +13,9 @@ export default function SoutenirPage() {
 
   const amount = isCustom ? (parseInt(custom) || 0) : (selected || 0);
 
-  const handleDonate = () => {
+  const handleContribute = () => {
     if (amount < 1) return;
-    // Pour l'instant, rediriger vers un lien de paiement Stripe (à configurer)
-    // En attendant Stripe, on peut utiliser un simple lien PayPal ou afficher un message
-    alert(`Merci pour votre don de ${amount}€ ! L'intégration Stripe arrive bientôt.`);
-    // Quand Stripe sera configuré :
-    // window.location.href = `/api/create-donation?amount=${amount * 100}`;
+    alert(`Merci pour votre contribution de ${amount} euros ! L'integration Stripe arrive bientot.`);
   };
 
   return (
@@ -29,16 +25,14 @@ export default function SoutenirPage() {
       <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(29,78,216,0.04) 0%, transparent 70%)", bottom: -100, left: -100, pointerEvents: "none" }} />
 
       <div style={{ width: 480, padding: "40px 36px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, backdropFilter: "blur(20px)", position: "relative", zIndex: 1 }}>
-        {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <img src="/logo.png" alt="Handball Connection" style={{ width: 64, height: 64, borderRadius: 16, objectFit: "cover", marginBottom: 12 }}/>
-          <h1 style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>SOUTENIR <span style={{ color: "#FF6B35" }}>HANDBALL CONNECTION</span></h1>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.6, maxWidth: 360, marginLeft: "auto", marginRight: "auto" }}>
-            Handball Connection est gratuit pour tous. Votre don nous aide à maintenir et améliorer la plateforme pour le handball amateur français.
+          <img src="/logo.png" alt="Handball Connect" style={{ width: 80, height: 80, borderRadius: 16, objectFit: "cover", marginBottom: 16, display: "block", marginLeft: "auto", marginRight: "auto" }}/>
+          <h1 style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 8px" }}>SOUTENIR <span style={{ color: "#FF6B35" }}>LE PROJET</span></h1>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.7, maxWidth: 380, marginLeft: "auto", marginRight: "auto" }}>
+            Handball Connect est gratuit et accessible a tous. Si la plateforme vous a ete utile, vous pouvez contribuer librement au developpement du projet.
           </p>
         </div>
 
-        {/* Montants prédéfinis */}
         <div style={{ marginBottom: 20 }}>
           <label style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 10 }}>Choisir un montant</label>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
@@ -60,7 +54,6 @@ export default function SoutenirPage() {
           </div>
         </div>
 
-        {/* Montant libre */}
         <div style={{ marginBottom: 24 }}>
           <label style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Ou montant libre</label>
           <div style={{ position: "relative" }}>
@@ -83,16 +76,15 @@ export default function SoutenirPage() {
           </div>
         </div>
 
-        {/* Récap + bouton */}
         {amount > 0 && (
           <div style={{ padding: "16px 20px", background: "rgba(255,107,53,0.06)", border: "1px solid rgba(255,107,53,0.15)", borderRadius: 14, marginBottom: 20, textAlign: "center" }}>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Votre don</span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Votre contribution</span>
             <div style={{ fontSize: 36, fontWeight: 800, color: "#FF6B35", fontFamily: "'Bebas Neue', sans-serif", marginTop: 4 }}>{amount}€</div>
           </div>
         )}
 
         <button
-          onClick={handleDonate}
+          onClick={handleContribute}
           disabled={amount < 1}
           style={{
             width: "100%", padding: "16px 0", borderRadius: 14, border: "none",
@@ -104,23 +96,20 @@ export default function SoutenirPage() {
             transition: "all 0.3s",
           }}
         >
-          {amount > 0 ? ` Donner ${amount}€` : "Choisissez un montant"}
+          {amount > 0 ? `Contribuer ${amount}€` : "Choisissez un montant"}
         </button>
 
-        {/* Info */}
         <div style={{ marginTop: 20, padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12 }}>
           <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.7, margin: 0, textAlign: "center" }}>
-            Paiement sécurisé par Stripe. Votre don est unique (pas d'abonnement). 
-            Handball Connection est une SASU française — votre soutien finance directement le développement de la plateforme.
+            Paiement securise par Stripe. Contribution unique, sans abonnement. Handball Connect est edite par Joker Team SAS. Votre soutien finance directement le developpement de la plateforme.
           </p>
         </div>
 
-        {/* Retour */}
         <div style={{ textAlign: "center", marginTop: 20 }}>
           <Link href="/dashboard" style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", textDecoration: "none" }}>← Retour au dashboard</Link>
         </div>
 
-        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.1)", marginTop: 16, marginBottom: 0 }}>Handball Connection © {new Date().getFullYear()}</p>
+        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.1)", marginTop: 16, marginBottom: 0 }}>Handball Connect — Joker Team SAS © {new Date().getFullYear()}</p>
       </div>
     </div>
   );

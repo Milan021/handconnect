@@ -16,6 +16,8 @@ function RegisterContent() {
   const [userType, setUserType] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [clubName, setClubName] = useState("");
+  const [clubWebsite, setClubWebsite] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,12 +30,18 @@ function RegisterContent() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+    if (userType === "club" && !clubName.trim()) { setError("Le nom du club est requis"); return; }
     if (password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caractères"); return; }
     if (password !== confirmPassword) { setError("Les mots de passe ne correspondent pas"); return; }
     setLoading(true);
+    const metadata = { first_name: firstName, last_name: lastName, user_type: userType };
+    if (userType === "club") {
+      metadata.club_name = clubName.trim();
+      metadata.club_website = clubWebsite.trim() || null;
+    }
     const { data, error: authError } = await supabase.auth.signUp({
       email, password,
-      options: { data: { first_name: firstName, last_name: lastName, user_type: userType } },
+      options: { data: metadata },
     });
     if (authError) {
       setError(authError.message.includes("already registered") ? "Cet email est déjà utilisé." : authError.message);
@@ -50,8 +58,8 @@ function RegisterContent() {
       <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)", bottom: -100, left: -100, pointerEvents: "none" }} />
       <div style={{ width: step === 1 ? 520 : 420, padding: step === 1 ? "36px 32px" : 40, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, backdropFilter: "blur(20px)", position: "relative", zIndex: 1, transition: "width 0.3s ease" }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <img src="/logo.png" alt="Handball Connection" style={{ width: 56, height: 56, borderRadius: 14, objectFit: "cover", boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: 14 }}/>
-          <h1 style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>HANDBALL <span style={{ color: "#FF6B35" }}>CONNECTION</span></h1>
+          <img src="/logo.png" alt="Handball Connect" style={{ width: 56, height: 56, borderRadius: 14, objectFit: "cover", boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: 14 }}/>
+          <h1 style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>HANDBALL <span style={{ color: "#FF6B35" }}>CONNECT</span></h1>
           <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", margin: 0 }}>{step === 1 ? "Choisissez votre profil pour commencer" : `Inscription ${selectedType?.label}`}</p>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, padding: "4px 12px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 8 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: "#10B981" }}>100% gratuit</span>
@@ -96,6 +104,18 @@ function RegisterContent() {
                 <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nom" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
               </div>
             </div>
+            {userType === "club" && (
+              <>
+                <div>
+                  <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>NOM DU CLUB *</label>
+                  <input type="text" value={clubName} onChange={(e) => setClubName(e.target.value)} placeholder="Ex: Handball Club de Lyon" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>SITE WEB DU CLUB</label>
+                  <input type="url" value={clubWebsite} onChange={(e) => setClubWebsite(e.target.value)} placeholder="https://www.monclub.fr" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
+                </div>
+              </>
+            )}
             <div>
               <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>EMAIL</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="votre@email.com" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
@@ -112,14 +132,14 @@ function RegisterContent() {
               <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Retapez votre mot de passe" onKeyDown={(e) => { if (e.key === "Enter") handleRegister(e); }} style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
             </div>
             {error && (<div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#EF4444", fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}><span></span> {error}</div>)}
-            <button onClick={handleRegister} disabled={loading || !email || !password || !firstName || !lastName} style={{ padding: "14px 20px", borderRadius: 12, border: "none", background: loading || !email || !password ? "rgba(255,107,53,0.2)" : "linear-gradient(135deg, #FF6B35, #C13C00)", color: loading || !email || !password ? "rgba(255,255,255,0.3)" : "#fff", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.3s", boxShadow: loading || !email || !password ? "none" : "0 4px 20px rgba(255,107,53,0.3)", marginTop: 4 }}>{loading ? "Création du compte..." : "CRÉER MON COMPTE"}</button>
+            <button onClick={handleRegister} disabled={loading || !email || !password || !firstName || !lastName || (userType === "club" && !clubName)} style={{ padding: "14px 20px", borderRadius: 12, border: "none", background: loading || !email || !password ? "rgba(255,107,53,0.2)" : "linear-gradient(135deg, #FF6B35, #C13C00)", color: loading || !email || !password ? "rgba(255,255,255,0.3)" : "#fff", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.3s", boxShadow: loading || !email || !password ? "none" : "0 4px 20px rgba(255,107,53,0.3)", marginTop: 4 }}>{loading ? "Création du compte..." : "CRÉER MON COMPTE"}</button>
           </div>
         )}
 
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Déjà un compte ? <Link href="/login" style={{ color: "#FF6B35", fontWeight: 600, textDecoration: "none" }}>Se connecter</Link></p>
         </div>
-        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.15)", marginTop: 16, marginBottom: 0 }}>Handball Connection © {new Date().getFullYear()}</p>
+        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.15)", marginTop: 16, marginBottom: 0 }}>Handball Connect © {new Date().getFullYear()}</p>
       </div>
     </div>
   );

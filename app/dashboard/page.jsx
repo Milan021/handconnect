@@ -90,6 +90,7 @@ function PlayerCard({p,onClick,i}){
     {p.is_available&&<div style={{position:"absolute",top:12,left:12,zIndex:2}}><Dot/></div>}
     {badgeColor&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:badgeColor,border:`1px solid ${badgeColor}50`}}>{badgeIcon} {badgeLabel}</div>}
     {!badgeColor&&isMinor&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:"#FBBF24",border:"1px solid rgba(251,191,36,0.4)"}}>-18</div>}
+    {!badgeColor&&!isMinor&&p.formation_origin&&<div style={{position:"absolute",top:12,right:12,zIndex:2,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",padding:"3px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:C.gold,border:`1px solid ${C.gold}40`}}>{p.formation_origin==="pole_espoirs"?"Pole Espoirs":"Centre de formation"}</div>}
     <div style={{height:80,background:`linear-gradient(135deg,${accent},${accentDark})`,position:"relative"}}><div style={{width:56,height:56,borderRadius:"50%",background:C.bg,border:`3px solid ${accent}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:accent,fontFamily:"'Bebas Neue',sans-serif",position:"absolute",bottom:-24,left:"50%",transform:"translateX(-50%)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}></div></div>
     <div style={{padding:"30px 16px 16px",textAlign:"center"}}>
       <h3 style={{margin:0,fontSize:14,fontWeight:700,color:C.text}}>{POS[p.position]||"Non défini"}</h3>
@@ -135,7 +136,7 @@ function PlayerModal({player:p,onClose,user}){
       <div style={{background:C.bgCard,borderRadius:12,padding:14,border:`1px solid ${C.border}`,marginBottom:14,textAlign:"center"}}>
         <p style={{fontSize:12,color:C.muted,margin:0}}>Les coordonnées sont accessibles après mise en relation</p>
       </div>
-      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 14px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>Handball Connection est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
+      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 14px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>Handball Connect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
       {user?<ConnectButton otherId={p.id} user={user}/>:<Link href="/login" style={{display:"block",width:"100%",padding:"13px 0",borderRadius:12,background:`linear-gradient(135deg,${C.primary},${C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,textAlign:"center",textDecoration:"none",boxShadow:`0 6px 20px ${C.primary}30`}}>Connectez-vous pour contacter</Link>}
     </div>
   </div></div>
@@ -230,7 +231,7 @@ function AnnonceModal({annonce:a,onClose,user,profile,onApplied}){
       <p style={{fontSize:14,color:C.muted,lineHeight:1.7,margin:"0 0 20px"}}>{a.description}</p>
       {isTr&&a.salary_range&&<div style={{background:`${C.accent}08`,borderRadius:12,padding:14,border:`1px solid ${C.accent}15`,marginBottom:18,textAlign:"center"}}><span style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:1.5}}>Rémunération</span><div style={{fontSize:20,color:C.accent,fontWeight:800,fontFamily:"'Bebas Neue',sans-serif",marginTop:4}}>{a.salary_range}</div></div>}
       {bens.length>0&&<div style={{marginBottom:20}}><p style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:8,fontWeight:600}}>Avantages</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{bens.map(b=><span key={b} style={{padding:"6px 14px",background:`${ac}10`,color:ac,borderRadius:10,fontSize:12,fontWeight:600,border:`1px solid ${ac}18`}}>{BEN_ICO[b]||"•"} {b.charAt(0).toUpperCase()+b.slice(1)}</span>)}</div></div>}
-      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 16px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>Handball Connection est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
+      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 16px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>Handball Connect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
       {!user&&<Link href="/login" style={{display:"block",width:"100%",padding:"14px 0",borderRadius:12,background:`linear-gradient(135deg,${ac},${isTr?"#991B1B":C.primaryDark})`,color:"#fff",fontSize:13,fontWeight:700,textAlign:"center",textDecoration:"none",boxShadow:`0 6px 20px ${ac}30`}}>Connectez-vous pour postuler</Link>}
       {user&&appLoading&&<div style={{textAlign:"center",padding:14,color:C.dim,fontSize:12}}>Chargement…</div>}
       {user&&!appLoading&&hasApplied&&<div style={{padding:"14px 16px",background:`${C.green}10`,border:`1px solid ${C.green}30`,borderRadius:12,textAlign:"center",color:C.green,fontSize:13,fontWeight:600,marginBottom:10}}>✓ Vous avez déjà postulé à cette annonce</div>}
@@ -477,7 +478,7 @@ function JobModal({job:j,onClose,user,onUpdate,onDelete}){
           <div style={{fontSize:13,color:C.primaryLight,fontWeight:700}}>{j.club_name}</div>
         </div>
       </div>}
-      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 16px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>Handball Connection est une plateforme de mise en relation. Le contrat de travail est conclu directement entre le candidat et l'entreprise.</p>
+      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 16px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>Handball Connect est une plateforme de mise en relation. Le contrat de travail est conclu directement entre le candidat et l'entreprise.</p>
 
       {/* Actions pour le propriétaire */}
       {isOwner&&<div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16,padding:"16px",background:"rgba(255,255,255,0.02)",borderRadius:14,border:`1px solid ${C.border}`}}>
@@ -598,7 +599,7 @@ function CoachModal({coach:c,onClose,user}){
       <div style={{background:C.bgCard,borderRadius:12,padding:14,border:`1px solid ${C.border}`,marginBottom:14,textAlign:"center"}}>
         <p style={{fontSize:12,color:C.muted,margin:0}}>Les coordonnées sont accessibles après mise en relation</p>
       </div>
-      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 14px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>Handball Connection est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
+      <p style={{fontSize:10,color:C.dim,textAlign:"center",margin:"0 0 14px",padding:"8px 12px",background:`${C.primary}08`,borderRadius:8,border:`1px solid ${C.primary}10`,lineHeight:1.6}}>Handball Connect est une plateforme de mise en relation. Le contrat est conclu directement entre les parties.</p>
       {user?<ConnectButton otherId={c.id} user={user} labelConnect="Contacter l'entraîneur" labelChat="Discuter"/>:<Link href="/login" style={{display:"block",width:"100%",padding:"13px 0",borderRadius:12,background:`linear-gradient(135deg,${C.accent},#991B1B)`,color:"#fff",fontSize:13,fontWeight:700,textAlign:"center",textDecoration:"none",boxShadow:`0 6px 20px ${C.accent}30`}}>Connectez-vous pour contacter</Link>}
     </div>
   </div></div>
@@ -612,71 +613,139 @@ function ProfileEditor({profile,user,onSave,onToast}){
   const inpS={width:"100%",padding:"12px 16px",background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,borderRadius:12,color:C.text,fontSize:14,fontFamily:"inherit",outline:"none",boxSizing:"border-box",transition:"border-color .2s"};
   const lblS={fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:6,display:"block"};
 
+  const isClub=profile?.user_type==="club";
+  const isCoach=profile?.user_type==="entraineur";
+
   const save=async()=>{
     setSaving(true);
-    const {error}=await supabase.from("profiles").update({
+    const fields={
       first_name:form.first_name,last_name:form.last_name,
-      height_cm:form.height_cm?parseInt(form.height_cm):null,
-      weight_kg:form.weight_kg?parseInt(form.weight_kg):null,
-      age:form.age?parseInt(form.age):null,
-      position:form.position||null,hand_side:form.hand_side||null,
-      best_level:form.best_level||null,current_level:form.current_level||null,
-      current_club:form.current_club||null,city:form.city||null,
-      phone:form.phone||null,bio:form.bio||null,
+      city:form.city||null,phone:form.phone||null,bio:form.bio||null,
       is_available:form.is_available||false,
-    }).eq("id",user.id);
-    if(error){onToast(""+error.message)}else{onSave({...profile,...form});onToast("Profil mis à jour !")}
+    };
+    if(isClub){
+      fields.club_name=form.club_name||null;
+      fields.club_website=form.club_website||null;
+      fields.member_count=form.member_count?parseInt(form.member_count):null;
+      fields.division=form.division||null;
+      fields.goals=form.goals||null;
+      fields.motivation=form.motivation||null;
+    } else {
+      fields.height_cm=form.height_cm?parseInt(form.height_cm):null;
+      fields.weight_kg=form.weight_kg?parseInt(form.weight_kg):null;
+      fields.age=form.age?parseInt(form.age):null;
+      fields.position=form.position||null;
+      fields.hand_side=form.hand_side||null;
+      fields.best_level=form.best_level||null;
+      fields.current_level=form.current_level||null;
+      fields.current_club=form.current_club||null;
+      fields.formation_origin=form.formation_origin||null;
+      fields.searching_club=form.searching_club||false;
+      fields.search_description=form.search_description||null;
+      fields.search_region=form.search_region||null;
+    }
+    const {error}=await supabase.from("profiles").update(fields).eq("id",user.id);
+    if(error){onToast(""+error.message)}else{onSave({...profile,...form});onToast("Profil mis a jour !")}
     setSaving(false);
   };
 
-  const completion=(()=>{const fs=["first_name","last_name","height_cm","weight_kg","age","position","hand_side","best_level","current_level","city"];const filled=fs.filter(f=>form[f]&&form[f]!=="").length;return Math.round((filled/fs.length)*100)})();
+  const completionFields=isClub
+    ?["first_name","last_name","club_name","city","division","member_count","goals","motivation"]
+    :["first_name","last_name","height_cm","weight_kg","age","position","hand_side","best_level","current_level","city"];
+  const completion=(()=>{const filled=completionFields.filter(f=>form[f]&&form[f]!=="").length;return Math.round((filled/completionFields.length)*100)})();
 
   return <div>
     {/* Completion */}
     <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:14,padding:"14px 20px",marginBottom:20,display:"flex",alignItems:"center",gap:16}}>
       <div style={{flex:1}}>
-        <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:12,color:C.muted,fontWeight:600}}>Complétion du profil</span><span style={{fontSize:12,color:completion===100?C.green:C.primary,fontWeight:700}}>{completion}%</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:12,color:C.muted,fontWeight:600}}>Completion du profil</span><span style={{fontSize:12,color:completion===100?C.green:C.primary,fontWeight:700}}>{completion}%</span></div>
         <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${completion}%`,background:completion===100?C.green:`linear-gradient(90deg,${C.primary},${C.accent})`,borderRadius:3,transition:"width .6s ease"}}/></div>
       </div>
     </div>
 
-    {/* Identity */}
-    <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Identité</h4>
+    {/* Identity — commun a tous */}
+    <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Identite</h4>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
-      <div><label style={lblS}>Prénom</label><input value={form.first_name||""} onChange={e=>upd("first_name",e.target.value)} style={inpS} placeholder="Votre prénom"/></div>
+      <div><label style={lblS}>Prenom</label><input value={form.first_name||""} onChange={e=>upd("first_name",e.target.value)} style={inpS} placeholder="Votre prenom"/></div>
       <div><label style={lblS}>Nom</label><input value={form.last_name||""} onChange={e=>upd("last_name",e.target.value)} style={inpS} placeholder="Votre nom"/></div>
-      <div><label style={lblS}>Âge</label><input type="number" value={form.age||""} onChange={e=>upd("age",e.target.value)} style={inpS} placeholder="25" min="14" max="60"/></div>
-      <div><label style={lblS}>Téléphone</label><input value={form.phone||""} onChange={e=>upd("phone",e.target.value)} style={inpS} placeholder="06 12 34 56 78"/></div>
+      <div><label style={lblS}>Telephone</label><input value={form.phone||""} onChange={e=>upd("phone",e.target.value)} style={inpS} placeholder="06 12 34 56 78"/></div>
       <div><label style={lblS}>Ville</label><input value={form.city||""} onChange={e=>upd("city",e.target.value)} style={inpS} placeholder="Lyon"/></div>
-      <div><label style={lblS}>Club actuel</label><input value={form.current_club||""} onChange={e=>upd("current_club",e.target.value)} style={inpS} placeholder="AS Bondy"/></div>
     </div>
 
-    {/* Physical */}
-    <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Caractéristiques</h4>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:20}}>
-      <div><label style={lblS}>Taille (cm)</label><input type="number" value={form.height_cm||""} onChange={e=>upd("height_cm",e.target.value)} style={inpS} placeholder="185"/></div>
-      <div><label style={lblS}>Poids (kg)</label><input type="number" value={form.weight_kg||""} onChange={e=>upd("weight_kg",e.target.value)} style={inpS} placeholder="82"/></div>
-      <div><label style={lblS}>Main forte</label><select value={form.hand_side||""} onChange={e=>upd("hand_side",e.target.value)} style={{...inpS,cursor:"pointer"}}><option value="">— Choisir —</option><option value="droitier">Droitier</option><option value="gaucher">Gaucher</option><option value="ambidextre">Ambidextre</option></select></div>
-    </div>
+    {/* ═══ CLUB SPECIFIC ═══ */}
+    {isClub&&<>
+      <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Informations du club</h4>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+        <div><label style={lblS}>Nom du club</label><input value={form.club_name||""} onChange={e=>upd("club_name",e.target.value)} style={inpS} placeholder="Handball Club de Lyon"/></div>
+        <div><label style={lblS}>Site web</label><input value={form.club_website||""} onChange={e=>upd("club_website",e.target.value)} style={inpS} placeholder="https://www.monclub.fr"/></div>
+        <div><label style={lblS}>Division</label><select value={form.division||""} onChange={e=>upd("division",e.target.value)} style={{...inpS,cursor:"pointer"}}><option value="">-- Choisir --</option>{LEVELS.filter(l=>l.v).map(l=><option key={l.v} value={l.v}>{l.l}</option>)}</select></div>
+        <div><label style={lblS}>Nombre de licencies</label><input type="number" value={form.member_count||""} onChange={e=>upd("member_count",e.target.value)} style={inpS} placeholder="150" min="1"/></div>
+      </div>
 
-    {/* Handball */}
-    <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Handball</h4>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:20}}>
-      <div><label style={lblS}>Poste</label><select value={form.position||""} onChange={e=>upd("position",e.target.value)} style={{...inpS,cursor:"pointer"}}><option value="">— Choisir —</option>{Object.entries(POS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
-      <div><label style={lblS}>Meilleur niveau</label><select value={form.best_level||""} onChange={e=>upd("best_level",e.target.value)} style={{...inpS,cursor:"pointer"}}>{LEVELS.map(l=><option key={l.v} value={l.v}>{l.l}</option>)}</select></div>
-      <div><label style={lblS}>Niveau actuel</label><select value={form.current_level||""} onChange={e=>upd("current_level",e.target.value)} style={{...inpS,cursor:"pointer"}}>{LEVELS.map(l=><option key={l.v} value={l.v}>{l.l}</option>)}</select></div>
-    </div>
+      <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Objectifs et motivation</h4>
+      <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
+        <div><label style={lblS}>Objectifs du club</label><textarea value={form.goals||""} onChange={e=>upd("goals",e.target.value)} placeholder="Quels sont les objectifs sportifs de votre club cette saison ?" rows={3} style={{...inpS,resize:"vertical",lineHeight:1.6}}/></div>
+        <div><label style={lblS}>Pourquoi rejoindre votre club</label><textarea value={form.motivation||""} onChange={e=>upd("motivation",e.target.value)} placeholder="Qu'est-ce qui rend votre club attractif pour un joueur ou entraineur ?" rows={3} style={{...inpS,resize:"vertical",lineHeight:1.6}}/></div>
+      </div>
+    </>}
 
-    {/* Availability */}
-    <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Disponibilité</h4>
+    {/* ═══ JOUEUR SPECIFIC ═══ */}
+    {!isClub&&!isCoach&&<>
+      <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Formation</h4>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+        <div><label style={lblS}>Origine formation</label><select value={form.formation_origin||""} onChange={e=>upd("formation_origin",e.target.value)} style={{...inpS,cursor:"pointer"}}><option value="">Aucune / Classique</option><option value="pole_espoirs">Pole Espoirs</option><option value="centre_formation">Centre de formation pro</option><option value="section_sportive">Section sportive</option></select></div>
+        <div><label style={lblS}>Club actuel</label><input value={form.current_club||""} onChange={e=>upd("current_club",e.target.value)} style={inpS} placeholder="AS Bondy"/></div>
+      </div>
+
+      <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Caracteristiques</h4>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:20}}>
+        <div><label style={lblS}>Taille (cm)</label><input type="number" value={form.height_cm||""} onChange={e=>upd("height_cm",e.target.value)} style={inpS} placeholder="185"/></div>
+        <div><label style={lblS}>Poids (kg)</label><input type="number" value={form.weight_kg||""} onChange={e=>upd("weight_kg",e.target.value)} style={inpS} placeholder="82"/></div>
+        <div><label style={lblS}>Main forte</label><select value={form.hand_side||""} onChange={e=>upd("hand_side",e.target.value)} style={{...inpS,cursor:"pointer"}}><option value="">-- Choisir --</option><option value="droitier">Droitier</option><option value="gaucher">Gaucher</option><option value="ambidextre">Ambidextre</option></select></div>
+      </div>
+
+      <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Handball</h4>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:20}}>
+        <div><label style={lblS}>Poste</label><select value={form.position||""} onChange={e=>upd("position",e.target.value)} style={{...inpS,cursor:"pointer"}}><option value="">-- Choisir --</option>{Object.entries(POS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
+        <div><label style={lblS}>Meilleur niveau</label><select value={form.best_level||""} onChange={e=>upd("best_level",e.target.value)} style={{...inpS,cursor:"pointer"}}>{LEVELS.map(l=><option key={l.v} value={l.v}>{l.l}</option>)}</select></div>
+        <div><label style={lblS}>Niveau actuel</label><select value={form.current_level||""} onChange={e=>upd("current_level",e.target.value)} style={{...inpS,cursor:"pointer"}}>{LEVELS.map(l=><option key={l.v} value={l.v}>{l.l}</option>)}</select></div>
+      </div>
+      <div style={{marginBottom:20}}>
+        <label style={lblS}>Age</label><input type="number" value={form.age||""} onChange={e=>upd("age",e.target.value)} style={{...inpS,maxWidth:120}} placeholder="25" min="14" max="60"/>
+      </div>
+
+      <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Recherche de club</h4>
+      <div onClick={()=>upd("searching_club",!form.searching_club)} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px",background:form.searching_club?"rgba(16,185,129,0.08)":"rgba(255,255,255,0.02)",border:`1px solid ${form.searching_club?"rgba(16,185,129,0.3)":C.border}`,borderRadius:12,cursor:"pointer",transition:"all .25s",marginBottom:14}}>
+        <div style={{width:40,height:22,borderRadius:11,background:form.searching_club?C.green:"rgba(255,255,255,0.1)",position:"relative",transition:"background .25s"}}><div style={{width:18,height:18,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:form.searching_club?20:2,transition:"left .25s",boxShadow:"0 2px 4px rgba(0,0,0,0.2)"}}/></div>
+        <div><div style={{fontSize:13,color:C.text,fontWeight:600}}>Je recherche un club</div><div style={{fontSize:11,color:C.muted,marginTop:2}}>{form.searching_club?"Visible dans les recherches de club":"Non visible"}</div></div>
+      </div>
+      {form.searching_club&&<div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
+        <div><label style={lblS}>Description de votre recherche</label><textarea value={form.search_description||""} onChange={e=>upd("search_description",e.target.value)} placeholder="Decrivez ce que vous recherchez : type de club, niveau, ambitions..." rows={3} style={{...inpS,resize:"vertical",lineHeight:1.6}}/></div>
+        <div><label style={lblS}>Region recherchee</label><select value={form.search_region||""} onChange={e=>upd("search_region",e.target.value)} style={{...inpS,cursor:"pointer"}}><option value="">Toutes regions</option>{REGIONS.map(r=><option key={r.id} value={r.id}>{r.label}</option>)}</select></div>
+      </div>}
+    </>}
+
+    {/* ═══ COACH SPECIFIC ═══ */}
+    {isCoach&&<>
+      <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Parcours entraineur</h4>
+      <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
+        <div><label style={lblS}>Diplome</label><select value={form.coach_diploma||""} onChange={e=>upd("coach_diploma",e.target.value)} style={{...inpS,cursor:"pointer"}}><option value="">-- Choisir --</option><option value="Titre IV">Titre IV</option><option value="Titre V">Titre V</option><option value="BEF">BEF</option><option value="DEJEPS">DEJEPS</option><option value="DESJEPS">DESJEPS</option><option value="Autre">Autre</option></select></div>
+        <div><label style={lblS}>Experience</label><textarea value={form.coach_experience||""} onChange={e=>upd("coach_experience",e.target.value)} placeholder="Decrivez votre parcours, les equipes entrainees..." rows={3} style={{...inpS,resize:"vertical",lineHeight:1.6}}/></div>
+        <div><label style={lblS}>Resultats et palmares</label><textarea value={form.coach_results||""} onChange={e=>upd("coach_results",e.target.value)} placeholder="Montees, titres, performances notables..." rows={3} style={{...inpS,resize:"vertical",lineHeight:1.6}}/></div>
+        <div><label style={lblS}>Specialite</label><input value={form.coach_specialty||""} onChange={e=>upd("coach_specialty",e.target.value)} style={inpS} placeholder="Ex: Formation des gardiens, preparation physique..."/></div>
+      </div>
+    </>}
+
+    {/* Availability — commun */}
+    <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Disponibilite</h4>
     <div onClick={()=>upd("is_available",!form.is_available)} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px",background:form.is_available?"rgba(16,185,129,0.08)":"rgba(255,255,255,0.02)",border:`1px solid ${form.is_available?"rgba(16,185,129,0.3)":C.border}`,borderRadius:12,cursor:"pointer",transition:"all .25s",marginBottom:20}}>
       <div style={{width:40,height:22,borderRadius:11,background:form.is_available?C.green:"rgba(255,255,255,0.1)",position:"relative",transition:"background .25s"}}><div style={{width:18,height:18,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:form.is_available?20:2,transition:"left .25s",boxShadow:"0 2px 4px rgba(0,0,0,0.2)"}}/></div>
-      <div><div style={{fontSize:13,color:C.text,fontWeight:600}}>Je suis disponible pour un transfert</div><div style={{fontSize:11,color:C.muted,marginTop:2}}>{form.is_available?"Visible dans les recherches":"Non visible"}</div></div>
+      <div><div style={{fontSize:13,color:C.text,fontWeight:600}}>{isClub?"Nous recherchons activement des joueurs":"Je suis disponible pour un transfert"}</div><div style={{fontSize:11,color:C.muted,marginTop:2}}>{form.is_available?"Visible dans les recherches":"Non visible"}</div></div>
     </div>
 
-    {/* Bio */}
-    <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Présentation</h4>
-    <textarea value={form.bio||""} onChange={e=>upd("bio",e.target.value)} placeholder="Décrivez votre profil..." rows={4} style={{...inpS,resize:"vertical",lineHeight:1.6,marginBottom:20}}/>
+    {/* Bio — commun */}
+    <h4 style={{fontSize:11,color:C.dim,textTransform:"uppercase",letterSpacing:2,marginBottom:12,fontWeight:600,borderBottom:`1px solid ${C.border}`,paddingBottom:8}}>Presentation</h4>
+    <textarea value={form.bio||""} onChange={e=>upd("bio",e.target.value)} placeholder={isClub?"Presentez votre club...":"Decrivez votre profil..."} rows={4} style={{...inpS,resize:"vertical",lineHeight:1.6,marginBottom:20}}/>
 
     {/* Save */}
     <div style={{display:"flex",justifyContent:"flex-end"}}>
@@ -699,20 +768,21 @@ function PricingTab(){
         <button style={{width:"100%",padding:"12px 0",border:"none",borderRadius:12,background:p.pop?`linear-gradient(135deg,${C.primary},${C.primaryDark})`:C.bgHover,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>{p.price===0?"Commencer":"Choisir →"}</button>
       </div>)}
     </div>
-    <p style={{fontSize:10,color:C.dim,textAlign:"center",padding:"12px 16px",background:`${C.primary}06`,borderRadius:10,border:`1px solid ${C.primary}10`,lineHeight:1.7}}>Handball Connection est une plateforme de mise en relation. Aucune commission sur les recrutements.</p>
+    <p style={{fontSize:10,color:C.dim,textAlign:"center",padding:"12px 16px",background:`${C.primary}06`,borderRadius:10,border:`1px solid ${C.primary}10`,lineHeight:1.7}}>Handball Connect est une plateforme de mise en relation. Aucune commission sur les recrutements.</p>
   </div>
 }
 
 /* ═══════════════════════════════════════════════════════════ */
 /* ═══════════════════════ MAIN APP ═════════════════════════ */
 /* ═══════════════════════════════════════════════════════════ */
-export default function HandballConnection(){
+export default function HandballConnect(){
   const [tab,setTab]=useState("home");
   const [search,setSearch]=useState("");
   const [posF,setPosF]=useState("");
   const [regionF,setRegionF]=useState("");
   const [availF,setAvailF]=useState(false);
   const [aType,setAType]=useState("all");
+  const [joueursView,setJoueursView]=useState("profils"); // profils | recherches
   const [selPlayer,setSelPlayer]=useState(null);
   const [selAnnonce,setSelAnnonce]=useState(null);
   const [selClub,setSelClub]=useState(null);
@@ -730,8 +800,59 @@ export default function HandballConnection(){
   const [jobs,setJobs]=useState([]);
   const [annonces,setAnnonces]=useState([]);
   const [dataLoading,setDataLoading]=useState(true);
+  const [notifs,setNotifs]=useState([]);
+  const [showNotifs,setShowNotifs]=useState(false);
 
   const flash=(m)=>{setToast(m);setTimeout(()=>setToast(""),3500)};
+
+  // Fetch notifications (pending connections + unread messages)
+  const loadNotifs=useCallback(async(uid)=>{
+    if(!uid)return;
+    const items=[];
+    // Pending connection requests received
+    const{data:conns}=await supabase.from("connections").select("*").eq("status","pending").or(`participant_a.eq.${uid},participant_b.eq.${uid}`).neq("requester_id",uid);
+    if(conns){
+      const otherIds=conns.map(c=>c.participant_a===uid?c.participant_b:c.participant_a);
+      let profMap={};
+      if(otherIds.length>0){
+        const{data:profs}=await supabase.from("profiles").select("id,first_name,last_name,user_type").in("id",otherIds);
+        if(profs) profs.forEach(p=>{profMap[p.id]=p});
+      }
+      conns.forEach(c=>{
+        const otherId=c.participant_a===uid?c.participant_b:c.participant_a;
+        const p=profMap[otherId]||{};
+        items.push({type:"connection",id:c.id,connId:c.id,otherId,name:`${p.first_name||""} ${p.last_name||""}`.trim()||"Utilisateur",userType:p.user_type,created:c.created_at});
+      });
+    }
+    // Unread conversations
+    const{data:convs}=await supabase.from("conversations").select("*").or(`participant_a.eq.${uid},participant_b.eq.${uid}`);
+    if(convs){
+      convs.forEach(c=>{
+        const unread=c.participant_a===uid?c.unread_a:c.unread_b;
+        if(unread>0){
+          const otherId=c.participant_a===uid?c.participant_b:c.participant_a;
+          items.push({type:"message",id:c.id,otherId,unread,lastMsg:c.last_message,created:c.last_message_at});
+        }
+      });
+    }
+    // Applications received (for clubs)
+    const{data:prof}=await supabase.from("profiles").select("user_type").eq("id",uid).single();
+    if(prof?.user_type==="club"){
+      const{data:myAnnonces}=await supabase.from("annonces").select("id,title").eq("author_id",uid);
+      if(myAnnonces&&myAnnonces.length>0){
+        const annonceIds=myAnnonces.map(a=>a.id);
+        const{data:apps}=await supabase.from("applications").select("id,annonce_id,created_at").in("annonce_id",annonceIds).order("created_at",{ascending:false}).limit(10);
+        if(apps){
+          const titleMap={};myAnnonces.forEach(a=>{titleMap[a.id]=a.title});
+          apps.forEach(a=>{
+            items.push({type:"application",id:a.id,annonceTitle:titleMap[a.annonce_id]||"Annonce",created:a.created_at});
+          });
+        }
+      }
+    }
+    items.sort((a,b)=>new Date(b.created)-new Date(a.created));
+    setNotifs(items);
+  },[]);
 
   // Auth check
   useEffect(()=>{
@@ -751,6 +872,11 @@ export default function HandballConnection(){
     });
     return ()=>subscription.unsubscribe();
   },[]);
+
+  // Load notifications when user is available
+  useEffect(()=>{
+    if(user){loadNotifs(user.id);const iv=setInterval(()=>loadNotifs(user.id),20000);return()=>clearInterval(iv)}
+  },[user,loadNotifs]);
 
   // Fetch data
   useEffect(()=>{
@@ -784,15 +910,17 @@ export default function HandballConnection(){
     return true;
   }).sort((a,b)=>(POS_ORDER[a.position]??99)-(POS_ORDER[b.position]??99)),[players,search,posF,availF,regionF]);
 
-  // Découpage joueurs en 3 sections (priorité : centre/section > mineur > sénior)
+  // Découpage joueurs en sections
   const playerSections=useMemo(()=>{
-    const center=[],young=[],senior=[];
+    const formation=[],center=[],young=[],senior=[],searching=[];
     for(const p of fPlayers){
-      if(p.training_center||p.is_section_sportive) center.push(p);
+      if(p.searching_club) searching.push(p);
+      if(p.formation_origin==="pole_espoirs"||p.formation_origin==="centre_formation") formation.push(p);
+      else if(p.training_center||p.is_section_sportive) center.push(p);
       else if(p.age&&p.age<18) young.push(p);
       else senior.push(p);
     }
-    return {center,young,senior};
+    return {formation,center,young,senior,searching};
   },[fPlayers]);
 
   const fAnnonces=useMemo(()=>annonces.filter(a=>{
@@ -836,15 +964,52 @@ export default function HandballConnection(){
       <header style={{background:`${C.bg}ee`,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.border}`,padding:"0 20px",position:"sticky",top:0,zIndex:100}}>
         <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:60}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <img src="/logo.png" alt="Handball Connection" style={{width:36,height:36,borderRadius:8,objectFit:"cover"}}/>
-            <h1 style={{fontSize:20,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,color:"#fff",lineHeight:1,cursor:"pointer"}} onClick={()=>{setTab("home");setSearch("")}}>HANDBALL <span style={{color:C.primary}}>CONNECTION</span></h1>
+            <img src="/logo.png" alt="Handball Connect" style={{width:36,height:36,borderRadius:8,objectFit:"cover"}}/>
+            <h1 style={{fontSize:20,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,color:"#fff",lineHeight:1,cursor:"pointer"}} onClick={()=>{setTab("home");setSearch("")}}>HANDBALL <span style={{color:C.primary}}>CONNECT</span></h1>
             <span style={{fontSize:8,color:C.dim,background:C.bgCard,padding:"2px 7px",borderRadius:5,fontWeight:600,letterSpacing:1,border:`1px solid ${C.border}`}}>BETA</span>
           </div>
           <nav style={{display:"flex",gap:2}}>{tabs.map(t=><button key={t.k} onClick={()=>{setTab(t.k);setSearch("");setPosF("");setRegionF("");setAType("all")}} style={{padding:"7px 12px",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,transition:"all .2s",background:tab===t.k?`${C.primary}18`:"transparent",color:tab===t.k?C.primaryLight:C.dim,whiteSpace:"nowrap"}}>{t.l}</button>)}</nav>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             {user?(
               <>
-                <a href="/soutenir" style={{padding:"6px 14px",border:"none",borderRadius:8,background:"linear-gradient(135deg,#FF6B35,#C13C00)",color:"#fff",fontSize:11,fontWeight:700,textDecoration:"none",display:"flex",alignItems:"center",gap:5,boxShadow:"0 4px 14px rgba(255,107,53,0.3)",animation:"pulse 3s infinite",whiteSpace:"nowrap"}}>Nous soutenir</a>
+                <a href="/soutenir" style={{padding:"6px 14px",border:"none",borderRadius:8,background:"linear-gradient(135deg,#FF6B35,#C13C00)",color:"#fff",fontSize:11,fontWeight:700,textDecoration:"none",display:"flex",alignItems:"center",gap:5,boxShadow:"0 4px 14px rgba(255,107,53,0.3)",animation:"pulse 3s infinite",whiteSpace:"nowrap"}}>Soutenir le projet</a>
+                <div style={{position:"relative"}}>
+                  <button onClick={()=>setShowNotifs(!showNotifs)} style={{padding:"6px 12px",border:`1px solid ${notifs.length>0?`${C.accent}40`:C.border}`,borderRadius:8,background:showNotifs?`${C.primary}18`:notifs.length>0?`${C.accent}08`:"rgba(255,255,255,0.04)",color:showNotifs?C.primaryLight:notifs.length>0?C.accent:C.muted,fontSize:11,fontWeight:600,cursor:"pointer",position:"relative",transition:"all .2s"}}>
+                    Notifications{notifs.length>0&&<span style={{marginLeft:6,display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:"50%",background:C.accent,color:"#fff",fontSize:10,fontWeight:800}}>{notifs.length>9?"9+":notifs.length}</span>}
+                  </button>
+                  {showNotifs&&<div style={{position:"absolute",top:"100%",right:0,marginTop:8,width:360,maxHeight:440,overflowY:"auto",background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,boxShadow:"0 20px 60px rgba(0,0,0,0.5)",zIndex:200,animation:"modalUp .2s ease"}}>
+                    <div style={{padding:"14px 18px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{fontSize:14,fontWeight:700,color:C.text}}>Notifications</span>
+                      <span style={{fontSize:11,color:C.dim}}>{notifs.length} nouvelle{notifs.length>1?"s":""}</span>
+                    </div>
+                    {notifs.length===0&&<div style={{padding:"30px 18px",textAlign:"center",color:C.dim,fontSize:12}}>Aucune notification</div>}
+                    {notifs.map(n=>(
+                      <div key={`${n.type}-${n.id}`} style={{padding:"12px 18px",borderBottom:`1px solid ${C.border}`,transition:"background .15s",cursor:n.type==="message"?"pointer":"default"}}
+                        onMouseEnter={e=>{e.currentTarget.style.background=C.bgHover}}
+                        onMouseLeave={e=>{e.currentTarget.style.background="transparent"}}
+                        onClick={()=>{if(n.type==="message"){window.dispatchEvent(new CustomEvent("hc-open-chat",{detail:{otherUserId:n.otherId}}));setShowNotifs(false)}}}
+                      >
+                        {n.type==="connection"&&<div>
+                          <div style={{fontSize:12,color:C.text,fontWeight:600,marginBottom:4}}>{n.name} souhaite se connecter</div>
+                          <div style={{fontSize:10,color:C.dim,marginBottom:8}}>{n.userType==="club"?"Club":n.userType==="entraineur"?"Entraineur":"Joueur"} — {new Date(n.created).toLocaleDateString("fr-FR")}</div>
+                          <div style={{display:"flex",gap:6}}>
+                            <button onClick={async(e)=>{e.stopPropagation();await supabase.from("connections").update({status:"accepted",responded_at:new Date().toISOString()}).eq("id",n.connId);loadNotifs(user.id);flash("Connexion acceptee")}} style={{flex:1,padding:"7px 0",border:"none",borderRadius:8,background:`linear-gradient(135deg,${C.green},#059669)`,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Accepter</button>
+                            <button onClick={async(e)=>{e.stopPropagation();await supabase.from("connections").update({status:"rejected",responded_at:new Date().toISOString()}).eq("id",n.connId);loadNotifs(user.id)}} style={{flex:1,padding:"7px 0",border:`1px solid ${C.accent}30`,borderRadius:8,background:`${C.accent}10`,color:C.accent,fontSize:11,fontWeight:600,cursor:"pointer"}}>Refuser</button>
+                          </div>
+                        </div>}
+                        {n.type==="message"&&<div>
+                          <div style={{fontSize:12,color:C.text,fontWeight:600,marginBottom:2}}>Nouveau message ({n.unread})</div>
+                          <div style={{fontSize:11,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n.lastMsg||"..."}</div>
+                        </div>}
+                        {n.type==="application"&&<div>
+                          <div style={{fontSize:12,color:C.text,fontWeight:600,marginBottom:2}}>Nouvelle candidature</div>
+                          <div style={{fontSize:11,color:C.muted}}>Pour : {n.annonceTitle}</div>
+                          <div style={{fontSize:10,color:C.dim,marginTop:2}}>{new Date(n.created).toLocaleDateString("fr-FR")}</div>
+                        </div>}
+                      </div>
+                    ))}
+                  </div>}
+                </div>
                 <button onClick={()=>{setTab("profil");setSearch("")}} style={{padding:"6px 14px",border:`1px solid ${tab==="profil"?`${C.primary}50`:C.border}`,borderRadius:8,background:tab==="profil"?`${C.primary}18`:"rgba(255,255,255,0.04)",color:tab==="profil"?C.primaryLight:C.muted,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6,transition:"all .2s"}}>{profile?.first_name||"Mon profil"}</button>
                 <button onClick={handleLogout} style={{padding:"6px 12px",border:`1px solid rgba(239,68,68,0.2)`,borderRadius:8,background:"rgba(239,68,68,0.08)",color:"#EF4444",fontSize:11,fontWeight:600,cursor:"pointer"}}>Déconnexion</button>
               </>
@@ -865,8 +1030,8 @@ export default function HandballConnection(){
         {tab==="home"&&(
           <div style={{animation:"fadeUp .4s ease"}}>
             <div style={{textAlign:"center",marginBottom:36,paddingTop:20}}>
-              <img src="/logo.png" alt="Handball Connection" style={{width:80,height:80,borderRadius:16,objectFit:"cover",marginBottom:16,boxShadow:"0 12px 40px rgba(255,107,53,0.15)"}}/>
-              <h2 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:32,letterSpacing:4,color:C.text,margin:"0 0 8px"}}>HANDBALL <span style={{color:C.primary}}>CONNECTION</span></h2>
+              <img src="/logo.png" alt="Handball Connect" style={{width:80,height:80,borderRadius:16,objectFit:"cover",marginBottom:16,boxShadow:"0 12px 40px rgba(255,107,53,0.15)"}}/>
+              <h2 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:32,letterSpacing:4,color:C.text,margin:"0 0 8px"}}>HANDBALL <span style={{color:C.primary}}>CONNECT</span></h2>
               <p style={{fontSize:13,color:C.muted,maxWidth:400,margin:"0 auto",lineHeight:1.6}}>Connectons le handball amateur avec le monde professionnel</p>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(2, 1fr)",gap:16,maxWidth:700,margin:"0 auto"}}>
@@ -909,6 +1074,7 @@ export default function HandballConnection(){
               {tab==="emploi"&&profile?.user_type==="club"&&<Link href="/publier-emploi" style={{padding:"11px 18px",borderRadius:10,background:`linear-gradient(135deg,${C.green},#047857)`,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",textDecoration:"none",boxShadow:`0 4px 14px ${C.green}35`,whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6,border:"none"}}>Publier une offre d&apos;emploi</Link>}
             </div>
             {tab==="annonces"&&<div style={{display:"flex",gap:6,marginTop:10}}>{[["all","Toutes"],["player","Joueurs"],["trainer","Coachs"]].map(([k,l])=><button key={k} onClick={()=>setAType(k)} style={{padding:"6px 12px",border:`1px solid ${aType===k?`${C.primary}40`:C.border}`,borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",background:aType===k?`${C.primary}15`:"transparent",color:aType===k?C.primaryLight:C.dim}}>{l}</button>)}</div>}
+            {tab==="joueurs"&&<div style={{display:"flex",gap:6,marginTop:10}}>{[["profils","Profils joueurs"],["recherches","Recherches de club"]].map(([k,l])=><button key={k} onClick={()=>setJoueursView(k)} style={{padding:"6px 12px",border:`1px solid ${joueursView===k?`${C.primary}40`:C.border}`,borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",background:joueursView===k?`${C.primary}15`:"transparent",color:joueursView===k?C.primaryLight:C.dim}}>{l}{k==="recherches"&&playerSections.searching.length>0&&<span style={{marginLeft:6,padding:"1px 6px",borderRadius:10,background:`${C.accent}20`,color:C.accent,fontSize:10,fontWeight:700}}>{playerSections.searching.length}</span>}</button>)}</div>}
           </div>
         )}
 
@@ -922,30 +1088,60 @@ export default function HandballConnection(){
           </div>
         )}
 
-        {/* Joueurs — 3 sections : Centres / -18 / Tous */}
-        {tab==="joueurs"&&!dataLoading&&(()=>{
-          const sectionHeader=(icon,title,subtitle,color,count)=><div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:14,padding:"0 4px"}}>
-            <h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:24,letterSpacing:3,color:C.text}}>{icon} <span style={{color}}>{title}</span></h2>
+        {/* Joueurs */}
+        {tab==="joueurs"&&!dataLoading&&joueursView==="profils"&&(()=>{
+          const sectionHeader=(title,subtitle,color,count)=><div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:14,padding:"0 4px"}}>
+            <h2 style={{margin:0,fontFamily:"'Bebas Neue',sans-serif",fontSize:24,letterSpacing:3,color:C.text}}><span style={{color}}>{title}</span></h2>
             <span style={{fontSize:11,color:C.dim,fontWeight:600}}>· {count} {count>1?"joueurs":"joueur"}</span>
             <span style={{fontSize:11,color:C.muted,fontStyle:"italic",marginLeft:"auto"}}>{subtitle}</span>
           </div>;
-          const emptyAll=playerSections.center.length===0&&playerSections.young.length===0&&playerSections.senior.length===0;
-          if(emptyAll) return <div style={{textAlign:"center",padding:50,color:C.dim}}><p>Aucun joueur inscrit pour le moment</p>{!user&&<p style={{fontSize:12,color:C.primary,marginTop:8}}><Link href="/register" style={{color:C.primaryLight,textDecoration:"underline"}}>Inscrivez-vous</Link> pour être le premier !</p>}</div>;
+          const emptyAll=playerSections.formation.length===0&&playerSections.center.length===0&&playerSections.young.length===0&&playerSections.senior.length===0;
+          if(emptyAll) return <div style={{textAlign:"center",padding:50,color:C.dim}}><p>Aucun joueur inscrit pour le moment</p>{!user&&<p style={{fontSize:12,color:C.primary,marginTop:8}}><Link href="/register" style={{color:C.primaryLight,textDecoration:"underline"}}>Inscrivez-vous</Link> pour etre le premier !</p>}</div>;
           return <div style={{display:"flex",flexDirection:"column",gap:36}}>
+            {playerSections.formation.length>0&&<section>
+              {sectionHeader("SORTIE CENTRE / POLE","Pole Espoirs · Centre de formation pro",C.gold,playerSections.formation.length)}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.formation.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
+            </section>}
             {playerSections.center.length>0&&<section>
-              {sectionHeader("","CENTRES DE FORMATION","Pôles Espoirs · Centres pro · Sections sportives",C.gold,playerSections.center.length)}
+              {sectionHeader("SECTIONS SPORTIVES","Sections scolaires et sportives",C.primaryLight,playerSections.center.length)}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.center.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
             </section>}
             {playerSections.young.length>0&&<section>
-              {sectionHeader("","-18 ANS","Cadets · Juniors · Espoirs",C.accent,playerSections.young.length)}
+              {sectionHeader("-18 ANS","Cadets · Juniors · Espoirs",C.accent,playerSections.young.length)}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.young.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
             </section>}
             {playerSections.senior.length>0&&<section>
-              {sectionHeader("","JOUEURS","Tous les profils séniors",C.primary,playerSections.senior.length)}
+              {sectionHeader("JOUEURS","Tous les profils seniors",C.primary,playerSections.senior.length)}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}}>{playerSections.senior.map((p,i)=><PlayerCard key={p.id} p={p} i={i} onClick={setSelPlayer}/>)}</div>
             </section>}
           </div>;
         })()}
+
+        {/* Joueurs — Recherches de club */}
+        {tab==="joueurs"&&!dataLoading&&joueursView==="recherches"&&(
+          <div>
+            {playerSections.searching.length>0?<div style={{display:"flex",flexDirection:"column",gap:12}}>
+              {playerSections.searching.map((p,i)=><div key={p.id} onClick={()=>setSelPlayer(p)} style={{background:C.bgCard,borderRadius:16,padding:20,border:`1px solid ${C.border}`,borderLeft:`3px solid ${C.green}`,cursor:"pointer",transition:"all .25s ease",animation:`fadeUp .5s ease ${i*.05}s both`}} onMouseEnter={e=>{e.currentTarget.style.background=C.bgHover;e.currentTarget.style.transform="translateX(4px)"}} onMouseLeave={e=>{e.currentTarget.style.background=C.bgCard;e.currentTarget.style.transform=""}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:6}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,flexWrap:"wrap"}}>
+                      <Bdg color={C.green}>Recherche club</Bdg>
+                      {p.position&&<Bdg color={C.primary}>{POS[p.position]||p.position}</Bdg>}
+                      {p.current_level&&<Bdg color={C.muted}>{LEVELS.find(l=>l.v===p.current_level)?.l||p.current_level}</Bdg>}
+                      {p.formation_origin&&<Bdg color={C.gold}>{p.formation_origin==="pole_espoirs"?"Pole Espoirs":"Centre de formation"}</Bdg>}
+                    </div>
+                    <p style={{margin:0,fontSize:12,color:C.primaryLight,fontWeight:600}}>{p.city||"Non precise"}{p.region?` · ${getRegionLabel(p.region)}`:""}</p>
+                  </div>
+                </div>
+                {p.search_description&&<p style={{fontSize:13,color:C.muted,margin:"8px 0 0",lineHeight:1.6}}>{p.search_description}</p>}
+                {p.search_region&&<p style={{fontSize:11,color:C.green,margin:"6px 0 0",fontWeight:600}}>Recherche en : {getRegionLabel(p.search_region)}</p>}
+              </div>)}
+            </div>:<div style={{textAlign:"center",padding:50,color:C.dim}}>
+              <p>Aucune recherche de club pour le moment</p>
+              {profile?.user_type==="joueur"&&<p style={{fontSize:12,color:C.green,marginTop:8}}>Activez la recherche de club dans votre profil pour apparaitre ici.</p>}
+            </div>}
+          </div>
+        )}
 
         {/* Emploi */}
         {tab==="emploi"&&!dataLoading&&(
@@ -967,12 +1163,11 @@ export default function HandballConnection(){
             <h3 style={{fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,color:C.primary,margin:"0 0 20px"}}>MON PROFIL</h3>
             <ProfileEditor profile={profile} user={user} onSave={(p)=>{setProfile(p);setPlayers(prev=>prev.map(pl=>pl.id===p.id?{...pl,...p}:pl))}} onToast={flash}/>
 
-            {/* Soutenir Handball Connection */}
+            {/* Soutenir Handball Connect */}
             <div style={{marginTop:28,padding:"24px 20px",background:"linear-gradient(135deg,rgba(255,107,53,0.06),rgba(29,78,216,0.06))",border:`1px solid rgba(255,107,53,0.15)`,borderRadius:16,textAlign:"center"}}>
-              <div style={{fontSize:32,marginBottom:8}}></div>
-              <h4 style={{margin:"0 0 6px",fontSize:16,fontWeight:700,color:C.text,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>SOUTENIR HANDBALL CONNECTION</h4>
-              <p style={{fontSize:12,color:C.muted,lineHeight:1.6,margin:"0 0 16px",maxWidth:400,marginLeft:"auto",marginRight:"auto"}}>Handball Connection est 100% gratuit. Si la plateforme vous a aidé à trouver un joueur, un club ou un emploi, vous pouvez nous soutenir avec un don libre.</p>
-              <a href="/soutenir" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"12px 28px",borderRadius:12,background:"linear-gradient(135deg,#FF6B35,#C13C00)",color:"#fff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 6px 20px rgba(255,107,53,0.3)",transition:"transform .2s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}> Faire un don</a>
+              <h4 style={{margin:"0 0 6px",fontSize:16,fontWeight:700,color:C.text,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>SOUTENIR LE PROJET</h4>
+              <p style={{fontSize:12,color:C.muted,lineHeight:1.6,margin:"0 0 16px",maxWidth:400,marginLeft:"auto",marginRight:"auto"}}>Handball Connect est 100% gratuit. Si la plateforme vous a ete utile, vous pouvez contribuer librement au developpement du projet.</p>
+              <a href="/soutenir" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"12px 28px",borderRadius:12,background:"linear-gradient(135deg,#FF6B35,#C13C00)",color:"#fff",fontSize:13,fontWeight:700,textDecoration:"none",boxShadow:"0 6px 20px rgba(255,107,53,0.3)",transition:"transform .2s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}>Soutenir le projet</a>
             </div>
           </div>
         )}

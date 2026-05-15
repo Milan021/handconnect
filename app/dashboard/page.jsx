@@ -798,10 +798,12 @@ export default function HandballConnect(){
   const [coaches,setCoaches]=useState([]);
   const [clubs,setClubs]=useState([]);
   const [jobs,setJobs]=useState([]);
+  const [blogPosts,setBlogPosts]=useState([]);
   const [annonces,setAnnonces]=useState([]);
   const [dataLoading,setDataLoading]=useState(true);
   const [notifs,setNotifs]=useState([]);
   const [showNotifs,setShowNotifs]=useState(false);
+  const [selApplication,setSelApplication]=useState(null);
 
   const flash=(m)=>{setToast(m);setTimeout(()=>setToast(""),3500)};
 
@@ -841,11 +843,18 @@ export default function HandballConnect(){
       const{data:myAnnonces}=await supabase.from("annonces").select("id,title").eq("author_id",uid);
       if(myAnnonces&&myAnnonces.length>0){
         const annonceIds=myAnnonces.map(a=>a.id);
-        const{data:apps}=await supabase.from("applications").select("id,annonce_id,created_at").in("annonce_id",annonceIds).order("created_at",{ascending:false}).limit(10);
+        const{data:apps}=await supabase.from("applications").select("id,annonce_id,applicant_id,message,cv_url,cv_filename,created_at").in("annonce_id",annonceIds).order("created_at",{ascending:false}).limit(10);
         if(apps){
           const titleMap={};myAnnonces.forEach(a=>{titleMap[a.id]=a.title});
+          const applicantIds=[...new Set(apps.map(a=>a.applicant_id))];
+          let applicantMap={};
+          if(applicantIds.length>0){
+            const{data:applicants}=await supabase.from("profiles").select("id,first_name,last_name,position,current_level,city,height_cm").in("id",applicantIds);
+            if(applicants) applicants.forEach(p=>{applicantMap[p.id]=p});
+          }
           apps.forEach(a=>{
-            items.push({type:"application",id:a.id,annonceTitle:titleMap[a.annonce_id]||"Annonce",created:a.created_at});
+            const applicant=applicantMap[a.applicant_id]||{};
+            items.push({type:"application",id:a.id,annonceTitle:titleMap[a.annonce_id]||"Annonce",message:a.message,cvUrl:a.cv_url,cvFilename:a.cv_filename,applicantId:a.applicant_id,applicant,created:a.created_at});
           });
         }
       }
@@ -881,17 +890,19 @@ export default function HandballConnect(){
   // Fetch data
   useEffect(()=>{
     const fetchAll=async()=>{
-      const[{data:pl},{data:co},{data:cl},{data:an},{data:jo}]=await Promise.all([
+      const[{data:pl},{data:co},{data:cl},{data:an},{data:jo},{data:bp}]=await Promise.all([
         supabase.from("profiles").select("*").eq("user_type","joueur"),
         supabase.from("profiles").select("*").eq("user_type","entraineur"),
         supabase.from("clubs").select("*"),
         supabase.from("annonces").select("*").order("created_at",{ascending:false}),
         supabase.from("jobs").select("*").order("created_at",{ascending:false}),
+        supabase.from("blog_posts").select("*").eq("is_published",true).order("created_at",{ascending:false}),
       ]);
       setPlayers(pl||[]);
       setCoaches(co||[]);
       setClubs(cl||[]);
       setJobs(jo||[]);
+      setBlogPosts(bp||[]);
       setAnnonces(an||[]);
       setDataLoading(false);
     };
@@ -946,6 +957,7 @@ export default function HandballConnect(){
     {k:"joueurs",l:"Joueurs",i:""},
     {k:"coachs",l:"Coachs",i:""},
     {k:"emploi",l:"Emploi",i:""},
+    {k:"blog",l:"Blog",i:""},
   ];
 
   const inpS={padding:"11px 14px",background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,borderRadius:10,color:C.text,fontSize:13,outline:"none",transition:"all .2s",width:"100%",boxSizing:"border-box"};
@@ -984,10 +996,13 @@ export default function HandballConnect(){
                     </div>
                     {notifs.length===0&&<div style={{padding:"30px 18px",textAlign:"center",color:C.dim,fontSize:12}}>Aucune notification</div>}
                     {notifs.map(n=>(
-                      <div key={`${n.type}-${n.id}`} style={{padding:"12px 18px",borderBottom:`1px solid ${C.border}`,transition:"background .15s",cursor:n.type==="message"?"pointer":"default"}}
+                      <div key={`${n.type}-${n.id}`} style={{padding:"12px 18px",borderBottom:`1px solid ${C.border}`,transition:"background .15s",cursor:n.type==="message"||n.type==="application"?"pointer":"default"}}
                         onMouseEnter={e=>{e.currentTarget.style.background=C.bgHover}}
                         onMouseLeave={e=>{e.currentTarget.style.background="transparent"}}
-                        onClick={()=>{if(n.type==="message"){window.dispatchEvent(new CustomEvent("hc-open-chat",{detail:{otherUserId:n.otherId}}));setShowNotifs(false)}}}
+                        onClick={()=>{
+                          if(n.type==="message"){window.dispatchEvent(new CustomEvent("hc-open-chat",{detail:{otherUserId:n.otherId}}));setShowNotifs(false)}
+                          if(n.type==="application"){setSelApplication(n);setShowNotifs(false)}
+                        }}
                       >
                         {n.type==="connection"&&<div>
                           <div style={{fontSize:12,color:C.text,fontWeight:600,marginBottom:4}}>{n.name} souhaite se connecter</div>
@@ -1004,7 +1019,7 @@ export default function HandballConnect(){
                         {n.type==="application"&&<div>
                           <div style={{fontSize:12,color:C.text,fontWeight:600,marginBottom:2}}>Nouvelle candidature</div>
                           <div style={{fontSize:11,color:C.muted}}>Pour : {n.annonceTitle}</div>
-                          <div style={{fontSize:10,color:C.dim,marginTop:2}}>{new Date(n.created).toLocaleDateString("fr-FR")}</div>
+                          <div style={{fontSize:10,color:C.primary,marginTop:4,fontWeight:600}}>Voir le detail →</div>
                         </div>}
                       </div>
                     ))}
@@ -1040,6 +1055,7 @@ export default function HandballConnect(){
                 {k:"joueurs",title:"Joueurs",desc:"Parcourez les profils de joueurs disponibles pour un transfert.",color:C.primaryLight,count:players.length,label:"joueurs inscrits"},
                 {k:"coachs",title:"Coachs",desc:"Trouvez un entraineur qualifie ou proposez vos services.",color:C.accent,count:coaches.length,label:"entraineurs inscrits"},
                 {k:"emploi",title:"Emploi",desc:"Decouvrez les offres d'emploi partenaires proposees par les clubs.",color:C.green,count:jobs.length,label:"offres disponibles"},
+                {k:"blog",title:"Blog",desc:"Suivez toute l'actualite du handball amateur francais.",color:"#8B5CF6",count:blogPosts.length,label:"articles"},
               ].map((item,i)=>(
                 <div key={item.k} onClick={()=>{setTab(item.k);setSearch("")}} style={{
                   background:C.bgCard,borderRadius:18,padding:"28px 24px",border:`1px solid ${C.border}`,
@@ -1157,6 +1173,35 @@ export default function HandballConnect(){
           </div>
         )}
 
+        {/* Blog */}
+        {tab==="blog"&&!dataLoading&&(
+          <div>
+            {profile?.role==="admin"&&<div style={{marginBottom:20,textAlign:"right"}}><Link href="/blog/publier" style={{padding:"11px 18px",borderRadius:10,background:`linear-gradient(135deg,${C.green},#047857)`,color:"#fff",fontSize:12,fontWeight:700,textDecoration:"none",boxShadow:`0 4px 14px ${C.green}35`}}>Publier un article</Link></div>}
+            {blogPosts.length>0?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:16}}>
+              {blogPosts.map((post,i)=><div key={post.id} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",border:`1px solid ${C.border}`,transition:"all .3s",cursor:"pointer",animation:`fadeUp .5s ease ${i*.06}s both`}}
+                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.borderColor=`${C.primary}40`;e.currentTarget.style.boxShadow=`0 12px 40px ${C.primary}10`}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow=""}}
+                onClick={()=>{/* TODO: open article modal or page */}}
+              >
+                {post.cover_image_url&&<div style={{height:160,background:`url(${post.cover_image_url}) center/cover no-repeat`,borderBottom:`1px solid ${C.border}`}}/>}
+                {!post.cover_image_url&&<div style={{height:80,background:`linear-gradient(135deg,${C.primary}15,${C.accent}10)`,borderBottom:`1px solid ${C.border}`}}/>}
+                <div style={{padding:20}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+                    {post.category&&<Bdg color={C.primary}>{post.category}</Bdg>}
+                    {post.tags&&post.tags.map(t=><Bdg key={t} color={C.muted}>{t}</Bdg>)}
+                  </div>
+                  <h3 style={{margin:"0 0 8px",fontSize:16,fontWeight:700,color:C.text,lineHeight:1.4}}>{post.title}</h3>
+                  <p style={{margin:"0 0 12px",fontSize:12,color:C.muted,lineHeight:1.6,display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{post.content}</p>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontSize:10,color:C.dim}}>{new Date(post.created_at).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
+                    <span style={{fontSize:11,color:C.primary,fontWeight:600}}>Lire →</span>
+                  </div>
+                </div>
+              </div>)}
+            </div>:<div style={{textAlign:"center",padding:50,color:C.dim}}><p>Aucun article pour le moment</p><p style={{fontSize:12,color:C.muted,marginTop:8}}>Les actualites du handball amateur arrivent bientot.</p></div>}
+          </div>
+        )}
+
         {/* Profil */}
         {tab==="profil"&&user&&(
           <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:18,padding:28}}>
@@ -1192,6 +1237,55 @@ export default function HandballConnect(){
       <ClubModal club={selClub} onClose={()=>setSelClub(null)} user={user}/>
       <CoachModal coach={selCoach} onClose={()=>setSelCoach(null)} user={user}/>
       <JobModal job={selJob} onClose={()=>setSelJob(null)} user={user} onUpdate={updated=>{ setJobs(prev=>prev.map(x=>x.id===updated.id?{...x,...updated}:x)); setSelJob({...selJob,...updated}); }} onDelete={id=>{ setJobs(prev=>prev.filter(x=>x.id!==id)); }}/>
+
+      {/* Application Detail Modal */}
+      {selApplication&&<div onClick={()=>setSelApplication(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",backdropFilter:"blur(12px)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s ease"}}><div onClick={e=>e.stopPropagation()} style={{background:`linear-gradient(180deg,${C.surface},${C.bg})`,borderRadius:24,maxWidth:500,width:"100%",maxHeight:"90vh",overflowY:"auto",border:`1px solid ${C.border}`,animation:"modalUp .4s cubic-bezier(0.16,1,0.3,1)"}}>
+        <div style={{padding:"24px 28px",background:`${C.primary}10`,borderBottom:`1px solid ${C.primary}20`,position:"relative"}}>
+          <button onClick={()=>setSelApplication(null)} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.06)",border:"none",color:C.dim,width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
+          <Bdg color={C.green}>Candidature</Bdg>
+          <h2 style={{margin:"8px 0 4px",fontSize:20,fontWeight:700,color:C.text}}>Candidature recue</h2>
+          <p style={{margin:0,fontSize:13,color:C.primaryLight,fontWeight:600}}>Pour : {selApplication.annonceTitle}</p>
+          <p style={{margin:"4px 0 0",fontSize:11,color:C.dim}}>{new Date(selApplication.created).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
+        </div>
+        <div style={{padding:28}}>
+          {/* Applicant profile */}
+          <div style={{marginBottom:20}}>
+            <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:10}}>Profil du candidat</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:12}}>
+              {selApplication.applicant?.position&&<div style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",borderRadius:10,border:`1px solid ${C.border}`,textAlign:"center"}}><div style={{fontSize:14,fontWeight:800,color:C.primary,fontFamily:"'Bebas Neue',sans-serif"}}>{POS[selApplication.applicant.position]||selApplication.applicant.position}</div><div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginTop:2}}>Poste</div></div>}
+              {selApplication.applicant?.current_level&&<div style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",borderRadius:10,border:`1px solid ${C.border}`,textAlign:"center"}}><div style={{fontSize:14,fontWeight:800,color:C.primary,fontFamily:"'Bebas Neue',sans-serif"}}>{LEVELS.find(l=>l.v===selApplication.applicant.current_level)?.l||selApplication.applicant.current_level}</div><div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginTop:2}}>Niveau</div></div>}
+              {selApplication.applicant?.height_cm&&<div style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",borderRadius:10,border:`1px solid ${C.border}`,textAlign:"center"}}><div style={{fontSize:14,fontWeight:800,color:C.primary,fontFamily:"'Bebas Neue',sans-serif"}}>{selApplication.applicant.height_cm}cm</div><div style={{fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginTop:2}}>Taille</div></div>}
+            </div>
+            {selApplication.applicant?.city&&<p style={{fontSize:12,color:C.muted,margin:0}}>Ville : {selApplication.applicant.city}</p>}
+          </div>
+
+          {/* Message */}
+          {selApplication.message&&<div style={{marginBottom:20}}>
+            <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:8}}>Message du candidat</div>
+            <div style={{padding:"16px 18px",background:"rgba(255,255,255,0.03)",borderRadius:12,border:`1px solid ${C.border}`}}>
+              <p style={{fontSize:13,color:C.text,lineHeight:1.7,margin:0,whiteSpace:"pre-wrap"}}>{selApplication.message}</p>
+            </div>
+          </div>}
+          {!selApplication.message&&<div style={{marginBottom:20,padding:"14px 16px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`,textAlign:"center"}}><p style={{fontSize:12,color:C.dim,margin:0}}>Aucun message joint a la candidature</p></div>}
+
+          {/* CV */}
+          {selApplication.cvUrl&&<div style={{marginBottom:20}}>
+            <div style={{fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:8}}>CV joint</div>
+            <a href={selApplication.cvUrl} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px",background:`${C.primary}08`,borderRadius:12,border:`1px solid ${C.primary}20`,textDecoration:"none",transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.background=`${C.primary}15`}} onMouseLeave={e=>{e.currentTarget.style.background=`${C.primary}08`}}>
+              <div style={{width:40,height:40,borderRadius:10,background:`${C.primary}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:C.primary}}>PDF</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,color:C.text,fontWeight:600}}>{selApplication.cvFilename||"CV.pdf"}</div>
+                <div style={{fontSize:11,color:C.primary,marginTop:2}}>Telecharger</div>
+              </div>
+            </a>
+          </div>}
+          {!selApplication.cvUrl&&<div style={{marginBottom:20,padding:"14px 16px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`,textAlign:"center"}}><p style={{fontSize:12,color:C.dim,margin:0}}>Aucun CV joint</p></div>}
+
+          {/* Contact button */}
+          <ConnectButton otherId={selApplication.applicantId} user={user} labelConnect="Contacter ce joueur" labelChat="Discuter avec ce joueur"/>
+        </div>
+      </div></div>}
+
       {user&&<ChatWidget user={user}/>}
     </div>
   </>

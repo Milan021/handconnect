@@ -799,6 +799,7 @@ export default function HandballConnect(){
   const [clubs,setClubs]=useState([]);
   const [jobs,setJobs]=useState([]);
   const [blogPosts,setBlogPosts]=useState([]);
+  const [blogVotes,setBlogVotes]=useState({});
   const [annonces,setAnnonces]=useState([]);
   const [dataLoading,setDataLoading]=useState(true);
   const [notifs,setNotifs]=useState([]);
@@ -806,6 +807,32 @@ export default function HandballConnect(){
   const [selApplication,setSelApplication]=useState(null);
 
   const flash=(m)=>{setToast(m);setTimeout(()=>setToast(""),3500)};
+
+  // Blog votes
+  const loadBlogVotes=useCallback(async(posts)=>{
+    if(!posts||posts.length===0)return;
+    const postIds=posts.map(p=>p.id);
+    const{data:allVotes}=await supabase.from("blog_votes").select("post_id,vote").in("post_id",postIds);
+    const{data:myVotes}=user?await supabase.from("blog_votes").select("post_id,vote").in("post_id",postIds).eq("user_id",user.id):{data:[]};
+    const voteMap={};
+    postIds.forEach(id=>{voteMap[id]={up:0,down:0,mine:null}});
+    if(allVotes) allVotes.forEach(v=>{if(voteMap[v.post_id]) voteMap[v.post_id][v.vote]++});
+    if(myVotes) myVotes.forEach(v=>{if(voteMap[v.post_id]) voteMap[v.post_id].mine=v.vote});
+    setBlogVotes(voteMap);
+  },[user]);
+
+  const handleBlogVote=async(postId,vote)=>{
+    if(!user){flash("Connectez-vous pour voter");return}
+    const current=blogVotes[postId]?.mine;
+    if(current===vote){
+      await supabase.from("blog_votes").delete().eq("post_id",postId).eq("user_id",user.id);
+    } else if(current){
+      await supabase.from("blog_votes").update({vote}).eq("post_id",postId).eq("user_id",user.id);
+    } else {
+      await supabase.from("blog_votes").insert({post_id:postId,user_id:user.id,vote});
+    }
+    loadBlogVotes(blogPosts);
+  };
 
   // Fetch notifications (pending connections + unread messages)
   const loadNotifs=useCallback(async(uid)=>{
@@ -905,6 +932,7 @@ export default function HandballConnect(){
       setBlogPosts(bp||[]);
       setAnnonces(an||[]);
       setDataLoading(false);
+      if(bp&&bp.length>0) loadBlogVotes(bp);
     };
     fetchAll();
   },[]);
@@ -1178,26 +1206,35 @@ export default function HandballConnect(){
           <div>
             {profile?.role==="admin"&&<div style={{marginBottom:20,textAlign:"right"}}><Link href="/blog/publier" style={{padding:"11px 18px",borderRadius:10,background:`linear-gradient(135deg,${C.green},#047857)`,color:"#fff",fontSize:12,fontWeight:700,textDecoration:"none",boxShadow:`0 4px 14px ${C.green}35`}}>Publier un article</Link></div>}
             {blogPosts.length>0?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:16}}>
-              {blogPosts.map((post,i)=><div key={post.id} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",border:`1px solid ${C.border}`,transition:"all .3s",cursor:"pointer",animation:`fadeUp .5s ease ${i*.06}s both`}}
-                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.borderColor=`${C.primary}40`;e.currentTarget.style.boxShadow=`0 12px 40px ${C.primary}10`}}
-                onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow=""}}
-                onClick={()=>{/* TODO: open article modal or page */}}
-              >
-                {post.cover_image_url&&<div style={{height:160,background:`url(${post.cover_image_url}) center/cover no-repeat`,borderBottom:`1px solid ${C.border}`}}/>}
-                {!post.cover_image_url&&<div style={{height:80,background:`linear-gradient(135deg,${C.primary}15,${C.accent}10)`,borderBottom:`1px solid ${C.border}`}}/>}
-                <div style={{padding:20}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,flexWrap:"wrap"}}>
-                    {post.category&&<Bdg color={C.primary}>{post.category}</Bdg>}
-                    {post.tags&&post.tags.map(t=><Bdg key={t} color={C.muted}>{t}</Bdg>)}
-                  </div>
-                  <h3 style={{margin:"0 0 8px",fontSize:16,fontWeight:700,color:C.text,lineHeight:1.4}}>{post.title}</h3>
-                  <p style={{margin:"0 0 12px",fontSize:12,color:C.muted,lineHeight:1.6,display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{post.content}</p>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <span style={{fontSize:10,color:C.dim}}>{new Date(post.created_at).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
-                    <span style={{fontSize:11,color:C.primary,fontWeight:600}}>Lire →</span>
+              {blogPosts.map((post,i)=>{
+                const v=blogVotes[post.id]||{up:0,down:0,mine:null};
+                return <div key={post.id} style={{background:C.bgCard,borderRadius:18,overflow:"hidden",border:`1px solid ${C.border}`,transition:"all .3s",animation:`fadeUp .5s ease ${i*.06}s both`}}
+                  onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.borderColor=`${C.primary}40`;e.currentTarget.style.boxShadow=`0 12px 40px ${C.primary}10`}}
+                  onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow=""}}
+                >
+                  {post.cover_image_url&&<div style={{height:160,background:`url(${post.cover_image_url}) center/cover no-repeat`,borderBottom:`1px solid ${C.border}`}}/>}
+                  {!post.cover_image_url&&<div style={{height:80,background:`linear-gradient(135deg,${C.primary}15,${C.accent}10)`,borderBottom:`1px solid ${C.border}`}}/>}
+                  <div style={{padding:20}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+                      {post.category&&<Bdg color={C.primary}>{post.category}</Bdg>}
+                      {post.tags&&post.tags.map(t=><Bdg key={t} color={C.muted}>{t}</Bdg>)}
+                    </div>
+                    <h3 style={{margin:"0 0 8px",fontSize:16,fontWeight:700,color:C.text,lineHeight:1.4}}>{post.title}</h3>
+                    <p style={{margin:"0 0 12px",fontSize:12,color:C.muted,lineHeight:1.6,display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{post.content}</p>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:12,borderTop:`1px solid ${C.border}`}}>
+                      <span style={{fontSize:10,color:C.dim}}>{new Date(post.created_at).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
+                      <div style={{display:"flex",alignItems:"center",gap:4}}>
+                        <button onClick={(e)=>{e.stopPropagation();handleBlogVote(post.id,"up")}} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",border:`1px solid ${v.mine==="up"?`${C.green}50`:C.border}`,borderRadius:8,background:v.mine==="up"?C.greenBg:"transparent",color:v.mine==="up"?C.green:C.dim,fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .2s"}}>
+                          <span style={{fontSize:14}}>&#9650;</span>{v.up>0&&v.up}
+                        </button>
+                        <button onClick={(e)=>{e.stopPropagation();handleBlogVote(post.id,"down")}} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",border:`1px solid ${v.mine==="down"?`${C.accent}50`:C.border}`,borderRadius:8,background:v.mine==="down"?`${C.accent}10`:"transparent",color:v.mine==="down"?C.accent:C.dim,fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .2s"}}>
+                          <span style={{fontSize:14}}>&#9660;</span>{v.down>0&&v.down}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>)}
+              })}
             </div>:<div style={{textAlign:"center",padding:50,color:C.dim}}><p>Aucun article pour le moment</p><p style={{fontSize:12,color:C.muted,marginTop:8}}>Les actualites du handball amateur arrivent bientot.</p></div>}
           </div>
         )}

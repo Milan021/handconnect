@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 
@@ -11,6 +11,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) { window.location.href = "/dashboard"; }
+      else { setChecking(false); }
+    });
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -26,6 +34,8 @@ export default function LoginPage() {
     if (profile?.role === "admin") { window.location.href = "/agents"; }
     else { window.location.href = "/dashboard"; }
   };
+
+  if (checking) return <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif" }}><link href={FONT_LINK} rel="stylesheet" />Chargement...</div>;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden" }}>

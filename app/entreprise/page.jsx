@@ -214,6 +214,8 @@ export default function EntrepriseDashboard() {
                         <div style={{ flex: 1 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                             <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${C.accent}15`, color: C.accent, fontWeight: 700, border: `1px solid ${C.accent}30` }}>{job.contract_type}</span>
+                            {job.reconversion_package === "basic" && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${C.primary}15`, color: C.primaryLight, fontWeight: 700, border: `1px solid ${C.primary}30` }}>🤝 Accompagnement base</span>}
+                            {job.reconversion_package === "complete" && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${C.gold}15`, color: C.gold, fontWeight: 700, border: `1px solid ${C.gold}30` }}>⭐ Accompagnement complet</span>}
                             {!job.is_active && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: C.dim, color: "#fff", fontWeight: 700 }}>Clôturée</span>}
                           </div>
                           <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.text }}>{job.title}</h4>
@@ -448,6 +450,7 @@ function JobOfferForm({ user, company, onPublished }) {
     city: company?.city || "", salary_range: "", job_type: "reconversion",
     athlete_profile: "", experience_level: "debutant", remote_policy: "non",
     benefits: [], handball_compatible: false, schedule_info: "",
+    reconversion_package: "none",
   });
   const [saving, setSaving] = useState(false);
 
@@ -515,6 +518,27 @@ function JobOfferForm({ user, company, onPublished }) {
       </div>
 
       {form.handball_compatible && <div style={{ marginBottom: 14 }}><label style={lblS}>Précisions horaires</label><input value={form.schedule_info} onChange={e => upd("schedule_info", e.target.value)} placeholder="Ex: Mi-temps possible, horaires décalés" style={inpS} /></div>}
+
+      <div style={{ marginBottom: 14 }}>
+        <label style={lblS}>Accompagnement reconversion offert au joueur</label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            { key: "none", label: "Aucun accompagnement", desc: "L'entreprise gère la reconversion en interne.", color: C.dim },
+            { key: "basic", label: "Accompagnement de base", desc: "Bilan de compétences + 2 séances coaching (valeur ~800€).", color: C.primaryLight },
+            { key: "complete", label: "Accompagnement complet", desc: "Bilan + 6 mois coaching + formation soft skills (valeur ~2 500€).", color: C.gold },
+          ].map(pkg => (
+            <div key={pkg.key} onClick={() => upd("reconversion_package", pkg.key)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 12, border: `1px solid ${form.reconversion_package === pkg.key ? `${pkg.color}50` : C.border}`, background: form.reconversion_package === pkg.key ? `${pkg.color}08` : "rgba(255,255,255,0.02)", cursor: "pointer" }}>
+              <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${form.reconversion_package === pkg.key ? pkg.color : C.dim}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {form.reconversion_package === pkg.key && <div style={{ width: 10, height: 10, borderRadius: "50%", background: pkg.color }} />}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: form.reconversion_package === pkg.key ? pkg.color : C.text }}>{pkg.label}</div>
+                <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>{pkg.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
         <button onClick={save} disabled={saving || !form.title || !form.description || !form.city} style={{ padding: "12px 32px", border: "none", borderRadius: 12, background: saving || !form.title || !form.description || !form.city ? "rgba(255,255,255,0.06)" : `linear-gradient(135deg, ${C.accent}, #991B1B)`, color: saving ? C.dim : "#fff", fontSize: 13, fontWeight: 700, cursor: saving ? "wait" : "pointer" }}>

@@ -216,6 +216,8 @@ export default function ProDashboard() {
                             <Bdg color={ctColor}>{job.contract_type}</Bdg>
                             {job.sector && <Bdg color={getSectorColor(job.sector)}>{getSectorLabel(job.sector)}</Bdg>}
                             {job.handball_compatible && <Bdg color={C.green} filled>Compatible handball</Bdg>}
+                            {job.reconversion_package === "basic" && <Bdg color={C.primaryLight}>🤝 Accompagnement base</Bdg>}
+                            {job.reconversion_package === "complete" && <Bdg color={C.gold}>⭐ Accompagnement complet</Bdg>}
                             {score >= 70 && <Bdg color={C.green}>🔥 Match {score}%</Bdg>}
                           </div>
                           <h3 style={{ margin: "0 0 3px", fontSize: 15, fontWeight: 700, color: C.text }}>{job.title}</h3>
@@ -504,6 +506,8 @@ function JobApplyModal({ job, user, profile, onClose, onApplied }) {
             <Bdg color={ctColor}>{job.contract_type}</Bdg>
             {job.sector && <Bdg color={getSectorColor(job.sector)}>{getSectorLabel(job.sector)}</Bdg>}
             {job.handball_compatible && <Bdg color={C.green} filled>Compatible handball</Bdg>}
+            {job.reconversion_package === "basic" && <Bdg color={C.primaryLight}>🤝 Accompagnement base</Bdg>}
+            {job.reconversion_package === "complete" && <Bdg color={C.gold}>⭐ Accompagnement complet</Bdg>}
           </div>
           <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, color: C.text }}>{job.title}</h2>
           <p style={{ margin: 0, fontSize: 13, color: ctColor, fontWeight: 600 }}>{job.companies?.name || job.company} · {job.city}</p>
@@ -512,6 +516,27 @@ function JobApplyModal({ job, user, profile, onClose, onApplied }) {
           <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.7, margin: "0 0 16px" }}>{job.description}</p>
           {job.salary_range && <div style={{ background: `${ctColor}08`, borderRadius: 12, padding: 14, border: `1px solid ${ctColor}15`, marginBottom: 16, textAlign: "center" }}><span style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5 }}>Rémunération</span><div style={{ fontSize: 20, color: ctColor, fontWeight: 800, fontFamily: "'Bebas Neue',sans-serif", marginTop: 4 }}>{job.salary_range}</div></div>}
           {job.athlete_profile && <div style={{ padding: "12px 16px", background: `${C.gold}08`, borderRadius: 10, border: `1px solid ${C.gold}20`, marginBottom: 16 }}><div style={{ fontSize: 10, color: C.gold, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 4 }}>Profil recherché</div><p style={{ fontSize: 13, color: C.text, margin: 0 }}>{job.athlete_profile}</p></div>}
+
+          {job.reconversion_package !== "none" && (
+            <div style={{ padding: "14px 16px", borderRadius: 10, marginBottom: 16, border: `1px solid ${job.reconversion_package === "complete" ? `${C.gold}30` : `${C.primary}30`}`, background: job.reconversion_package === "complete" ? `${C.gold}08` : `${C.primary}08` }}>
+              <div style={{ fontSize: 10, color: job.reconversion_package === "complete" ? C.gold : C.primaryLight, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 6 }}>Accompagnement reconversion inclus</div>
+              {job.reconversion_package === "basic" && (
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: C.text, lineHeight: 1.8 }}>
+                  <li>Bilan de compétences transférables</li>
+                  <li>2 séances de coaching individuel</li>
+                  <li>Valorisation du profil athlète</li>
+                </ul>
+              )}
+              {job.reconversion_package === "complete" && (
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: C.text, lineHeight: 1.8 }}>
+                  <li>Bilan de compétences transférables</li>
+                  <li>6 mois d'accompagnement coaching</li>
+                  <li>Formation soft skills (leadership, communication)</li>
+                  <li>Suivi personnalisé post-recrutement</li>
+                </ul>
+              )}
+            </div>
+          )}
 
           <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 10 }}>Votre candidature</h4>
           <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Présentez-vous et expliquez pourquoi vous correspondez au poste..." rows={4} style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.6, boxSizing: "border-box", marginBottom: 14 }} />

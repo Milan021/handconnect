@@ -1,8 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 🇫🇷 Bleu Blanc Rouge — HandballConnect */
+  --background: #fafbfe;
+  --foreground: #0f1729;
+
+  /* Bleu */
+  --hc-blue-50: #eef3ff;
+  --hc-blue-100: #d9e4ff;
+  --hc-blue-200: #b3c9ff;
+  --hc-blue-400: #4d7cff;
+  --hc-blue-500: #1e40af;
+  --hc-blue-600: #1a3691;
+  --hc-blue-700: #152c73;
+  --hc-blue-800: #0f1f54;
+  --hc-blue-900: #0a1536;
+
+  /* Rouge */
+  --hc-red-50: #fff1f0;
+  --hc-red-100: #ffe0de;
+  --hc-red-200: #ffb8b3;
+  --hc-red-400: #ef4444;
+  --hc-red-500: #dc2626;
+  --hc-red-600: #b91c1c;
+  --hc-red-700: #991b1b;
+
+  /* Blanc / Neutre */
+  --hc-white: #ffffff;
+  --hc-gray-50: #f8f9fc;
+  --hc-gray-100: #f0f2f7;
+  --hc-gray-200: #e2e5ee;
+  --hc-gray-300: #c8cdd9;
+  --hc-gray-400: #8b93a6;
+  --hc-gray-500: #5f6778;
+  --hc-gray-600: #3d4455;
+
+  /* Accent */
+  --hc-gold: #c9a84c;
 }
 
 @theme inline {
@@ -10,17 +44,47 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Tailwind custom colors */
+  --color-hc-blue-50: var(--hc-blue-50);
+  --color-hc-blue-100: var(--hc-blue-100);
+  --color-hc-blue-200: var(--hc-blue-200);
+  --color-hc-blue-400: var(--hc-blue-400);
+  --color-hc-blue-500: var(--hc-blue-500);
+  --color-hc-blue-600: var(--hc-blue-600);
+  --color-hc-blue-700: var(--hc-blue-700);
+  --color-hc-blue-800: var(--hc-blue-800);
+  --color-hc-blue-900: var(--hc-blue-900);
+
+  --color-hc-red-50: var(--hc-red-50);
+  --color-hc-red-100: var(--hc-red-100);
+  --color-hc-red-200: var(--hc-red-200);
+  --color-hc-red-400: var(--hc-red-400);
+  --color-hc-red-500: var(--hc-red-500);
+  --color-hc-red-600: var(--hc-red-600);
+  --color-hc-red-700: var(--hc-red-700);
+
+  --color-hc-white: var(--hc-white);
+  --color-hc-gray-50: var(--hc-gray-50);
+  --color-hc-gray-100: var(--hc-gray-100);
+  --color-hc-gray-200: var(--hc-gray-200);
+  --color-hc-gray-300: var(--hc-gray-300);
+  --color-hc-gray-400: var(--hc-gray-400);
+  --color-hc-gray-500: var(--hc-gray-500);
+  --color-hc-gray-600: var(--hc-gray-600);
+
+  --color-hc-gold: var(--hc-gold);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--hc-blue-900);
+    --foreground: #f0f2f7;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }

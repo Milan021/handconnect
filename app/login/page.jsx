@@ -14,9 +14,16 @@ export default function LoginPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) { window.location.href = "/dashboard"; }
-      else { setChecking(false); }
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("role, user_type").eq("id", user.id).single();
+        if (profile?.role === "admin") window.location.href = "/agents";
+        else if (profile?.user_type === "joueur_pro") window.location.href = "/pro";
+        else if (profile?.user_type === "entreprise") window.location.href = "/entreprise";
+        else window.location.href = "/dashboard";
+      } else {
+        setChecking(false);
+      }
     });
   }, []);
 
@@ -32,7 +39,8 @@ export default function LoginPage() {
     }
     const { data: profile } = await supabase.from("profiles").select("role, user_type").eq("id", data.user.id).single();
     if (profile?.role === "admin") { window.location.href = "/agents"; }
-    else if (profile?.user_type === "joueur") { window.location.href = "/annonces"; }
+    else if (profile?.user_type === "joueur_pro") { window.location.href = "/pro"; }
+    else if (profile?.user_type === "entreprise") { window.location.href = "/entreprise"; }
     else { window.location.href = "/dashboard"; }
   };
 

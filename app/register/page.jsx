@@ -1,176 +1,237 @@
 "use client";
-import { useState, Suspense } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
+import { SECTORS } from "../../lib/sectors";
 
-const VALID_PLANS = ["free", "standard", "premium"];
-const PLAN_LABELS = { free: "Club Free (25€/an)", standard: "Club Standard (100€/an)", premium: "Club Premium (250€/an)" };
+const C = {
+  primary: "#1D4ED8", primaryLight: "#3B82F6", primaryDark: "#1E3A8A",
+  accent: "#DC2626", accentLight: "#F87171",
+  bg: "#0A0E1A", bgCard: "rgba(255,255,255,0.03)",
+  border: "rgba(255,255,255,0.08)",
+  text: "#F1F5F9", muted: "rgba(255,255,255,0.5)", dim: "rgba(255,255,255,0.3)",
+  green: "#10B981", gold: "#FBBF24", orange: "#FF6B35",
+};
 
-const FONT_LINK = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap";
-
-const USER_TYPES = [
-  { key: "joueur", label: "Joueur", icon: "", color: "#FF6B35", description: "Créez votre profil, montrez vos stats et trouvez votre prochain club." },
-  { key: "club", label: "Club", icon: "", color: "#3B82F6", description: "Publiez vos annonces, des offres d'emploi et recrutez les meilleurs talents." },
-  { key: "entraineur", label: "Entraîneur", icon: "", color: "#8B5CF6", description: "Valorisez votre parcours et trouvez votre prochain poste d'entraîneur." },
-];
-
-function RegisterContent() {
+export default function RegisterPage() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [userType, setUserType] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [clubName, setClubName] = useState("");
-  const [clubWebsite, setClubWebsite] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
-  const selectedType = USER_TYPES.find((t) => t.key === userType);
-
-  // Persiste le plan choisi pour que le dashboard l'applique à la création du club
   useEffect(() => {
-    if (initialPlan && typeof window !== "undefined") {
-      window.localStorage.setItem("hc_pending_plan", initialPlan);
+    const type = searchParams.get("type");
+    if (type === "entreprise" || type === "joueur_pro") {
+      setUserType(type);
+      setStep(2);
     }
-  }, [initialPlan]);
+  }, [searchParams]);
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setError("");
-    if (userType === "club" && !clubName.trim()) { setError("Le nom du club est requis"); return; }
-    if (password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caractères"); return; }
-    if (password !== confirmPassword) { setError("Les mots de passe ne correspondent pas"); return; }
-    setLoading(true);
-    const metadata = { first_name: firstName, last_name: lastName, user_type: userType };
-    if (userType === "club") {
-      metadata.club_name = clubName.trim();
-      metadata.club_website = clubWebsite.trim() || null;
-    }
-    const { data, error: authError } = await supabase.auth.signUp({
-      email, password,
-      options: { data: metadata },
-    });
-    if (authError) {
-      setError(authError.message.includes("already registered") ? "Cet email est déjà utilisé." : authError.message);
-      setLoading(false);
-      return;
-    }
-    if (selectedPlan && typeof window !== "undefined") {
-      window.localStorage.setItem("hc_pending_plan", selectedPlan);
-    }
-    window.location.href = "/dashboard";
+  const selectType = (type) => {
+    setUserType(type);
+    setStep(2);
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden", padding: 20 }}>
-      <link href={FONT_LINK} rel="stylesheet" />
-      <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,107,53,0.08) 0%, transparent 70%)", top: -150, right: -100, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)", bottom: -100, left: -100, pointerEvents: "none" }} />
-      <div style={{ width: "100%", maxWidth: step === 1 ? 520 : 420, padding: "clamp(20px, 5vw, 36px) clamp(18px, 5vw, 32px)", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, backdropFilter: "blur(20px)", position: "relative", zIndex: 1, transition: "max-width 0.3s ease", margin: "16px", boxSizing: "border-box" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", padding: 20 }}>
+      <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      <div style={{ width: "100%", maxWidth: step === 1 ? 540 : 460, padding: "32px", background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 24, backdropFilter: "blur(20px)" }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <img src="/logo.png" alt="Handball Connect" style={{ width: 56, height: 56, borderRadius: 14, objectFit: "cover", boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: 14 }}/>
-          <h1 style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>HANDBALL <span style={{ color: "#FF6B35" }}>CONNECT</span></h1>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", margin: 0 }}>{step === 1 ? "Choisissez votre profil pour commencer" : `Inscription ${selectedType?.label}`}</p>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, padding: "4px 12px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#10B981" }}>100% gratuit</span>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 24 }}>
-          {[1, 2].map((s) => (<div key={s} style={{ width: s === step ? 32 : 10, height: 4, borderRadius: 4, background: s === step ? "#FF6B35" : s < step ? "#10B981" : "rgba(255,255,255,0.1)", transition: "all 0.3s ease" }} />))}
+          <div style={{ width: 48, height: 48, borderRadius: 14, background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, margin: "0 auto 12px" }}>🤾</div>
+          <h1 style={{ fontSize: 26, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", margin: "0 0 6px" }}>HANDBALL <span style={{ color: C.primary }}>CONNECT</span></h1>
+          <p style={{ fontSize: 12, color: C.dim, margin: 0 }}>{step === 1 ? "Je suis..." : `Inscription ${userType === "joueur_pro" ? "handballeur pro" : "entreprise"}`}</p>
         </div>
 
         {step === 1 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {USER_TYPES.map((type) => (
-              <button key={type.key} onClick={() => { setUserType(type.key); setStep(2); }}
-                style={{ display: "flex", alignItems: "center", gap: 16, padding: "18px 20px", borderRadius: 16, border: `1px solid ${type.color}25`, background: "rgba(255,255,255,0.02)", cursor: "pointer", textAlign: "left", transition: "all 0.3s ease" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = `${type.color}10`; e.currentTarget.style.borderColor = `${type.color}50`; e.currentTarget.style.transform = "translateX(6px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = `${type.color}25`; e.currentTarget.style.transform = ""; }}>
-                <div style={{ width: 52, height: 52, borderRadius: 14, background: `${type.color}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, border: `1px solid ${type.color}25` }}>{type.icon}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 3 }}>{type.label}</div>
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>{type.description}</div>
-                </div>
-                <span style={{ fontSize: 18, color: type.color, opacity: 0.5 }}>→</span>
-              </button>
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <button onClick={() => selectType("joueur_pro")} style={{ display: "flex", alignItems: "center", gap: 16, padding: "20px 22px", borderRadius: 16, border: `1px solid ${C.primary}25`, background: "rgba(255,255,255,0.02)", cursor: "pointer", textAlign: "left", transition: "all 0.3s ease" }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${C.primary}10`; e.currentTarget.style.borderColor = `${C.primary}50`; e.currentTarget.style.transform = "translateX(4px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = `${C.primary}25`; e.currentTarget.style.transform = ""; }}>
+              <div style={{ width: 52, height: 52, borderRadius: 14, background: `${C.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0, border: `1px solid ${C.primary}25` }}>🤾</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 3 }}>Handballeur professionnel</div>
+                <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>Je prépare ma reconversion et je cherche un emploi</div>
+              </div>
+              <span style={{ fontSize: 18, color: C.primary, opacity: 0.5 }}>→</span>
+            </button>
+
+            <button onClick={() => selectType("entreprise")} style={{ display: "flex", alignItems: "center", gap: 16, padding: "20px 22px", borderRadius: 16, border: `1px solid ${C.accent}25`, background: "rgba(255,255,255,0.02)", cursor: "pointer", textAlign: "left", transition: "all 0.3s ease" }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${C.accent}10`; e.currentTarget.style.borderColor = `${C.accent}50`; e.currentTarget.style.transform = "translateX(4px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = `${C.accent}25`; e.currentTarget.style.transform = ""; }}>
+              <div style={{ width: 52, height: 52, borderRadius: 14, background: `${C.accent}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0, border: `1px solid ${C.accent}25` }}>🏢</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 3 }}>Entreprise</div>
+                <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>Je recrute des anciens handballeurs pros</div>
+              </div>
+              <span style={{ fontSize: 18, color: C.accent, opacity: 0.5 }}>→</span>
+            </button>
           </div>
         )}
 
-        {step === 2 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 12, background: `${selectedType.color}10`, border: `1px solid ${selectedType.color}25`, marginBottom: 4 }}>
-              <span style={{ fontSize: 18 }}>{selectedType.icon}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: selectedType.color }}>{selectedType.label}</span>
-              <button onClick={() => { setStep(1); setUserType(""); setError(""); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Changer</button>
-            </div>
-            {userType === "club" && selectedPlan && (
-              <div style={{ padding: "12px 14px", borderRadius: 12, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 20 }}>🎁</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#10B981", marginBottom: 2 }}>Essai gratuit 7 jours</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{PLAN_LABELS[selectedPlan]} · Sans carte bancaire</div>
-                </div>
-              </div>
-            )}
-            <div style={{ display: "flex", gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>PRÉNOM</label>
-                <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Prénom" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>NOM</label>
-                <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nom" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
-              </div>
-            </div>
-            {userType === "club" && (
-              <>
-                <div>
-                  <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>NOM DU CLUB *</label>
-                  <input type="text" value={clubName} onChange={(e) => setClubName(e.target.value)} placeholder="Ex: Handball Club de Lyon" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>SITE WEB DU CLUB</label>
-                  <input type="url" value={clubWebsite} onChange={(e) => setClubWebsite(e.target.value)} placeholder="https://www.monclub.fr" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
-                </div>
-              </>
-            )}
-            <div>
-              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>EMAIL</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="votre@email.com" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
-            </div>
-            <div>
-              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>MOT DE PASSE</label>
-              <div style={{ position: "relative" }}>
-                <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimum 6 caractères" style={{ width: "100%", padding: "12px 44px 12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 14, padding: 0 }}>{showPassword ? "Masquer" : "Voir"}</button>
-              </div>
-            </div>
-            <div>
-              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>CONFIRMER LE MOT DE PASSE</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Retapez votre mot de passe" onKeyDown={(e) => { if (e.key === "Enter") handleRegister(e); }} style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }} />
-            </div>
-            {error && (<div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#EF4444", fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}><span></span> {error}</div>)}
-            <button onClick={handleRegister} disabled={loading || !email || !password || !firstName || !lastName || (userType === "club" && !clubName)} style={{ padding: "14px 20px", borderRadius: 12, border: "none", background: loading || !email || !password ? "rgba(255,107,53,0.2)" : "linear-gradient(135deg, #FF6B35, #C13C00)", color: loading || !email || !password ? "rgba(255,255,255,0.3)" : "#fff", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.3s", boxShadow: loading || !email || !password ? "none" : "0 4px 20px rgba(255,107,53,0.3)", marginTop: 4 }}>{loading ? "Création du compte..." : "CRÉER MON COMPTE"}</button>
-          </div>
+        {step === 2 && userType === "joueur_pro" && (
+          <JoueurProForm onBack={() => setStep(1)} />
         )}
 
-        <div style={{ textAlign: "center", marginTop: 24 }}>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Déjà un compte ? <Link href="/login" style={{ color: "#FF6B35", fontWeight: 600, textDecoration: "none" }}>Se connecter</Link></p>
+        {step === 2 && userType === "entreprise" && (
+          <EntrepriseForm onBack={() => setStep(1)} />
+        )}
+
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <p style={{ fontSize: 12, color: C.dim }}>Déjà un compte ? <Link href="/login" style={{ color: C.primaryLight, fontWeight: 600, textDecoration: "none" }}>Se connecter</Link></p>
         </div>
-        <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.15)", marginTop: 16, marginBottom: 0 }}>Handball Connect © {new Date().getFullYear()}</p>
       </div>
     </div>
   );
 }
 
-export default function RegisterPage() {
+/* ═══════ FORMULAIRE JOUEUR PRO ═══════ */
+function JoueurProForm({ onBack }) {
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "", confirmPassword: "", current_league: "", contract_end_date: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const upd = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (form.password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caractères"); return; }
+    if (form.password !== form.confirmPassword) { setError("Les mots de passe ne correspondent pas"); return; }
+    setLoading(true);
+
+    const { data, error: authError } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: { data: { first_name: form.firstName, last_name: form.lastName, user_type: "joueur_pro" } },
+    });
+
+    if (authError) { setError(authError.message); setLoading(false); return; }
+
+    if (data.user) {
+      await supabase.from("profiles").update({
+        first_name: form.firstName,
+        last_name: form.lastName,
+        user_type: "joueur_pro",
+        is_pro: true,
+        current_league: form.current_league || null,
+        contract_end_date: form.contract_end_date || null,
+        searching_job: true,
+      }).eq("id", data.user.id);
+    }
+
+    setLoading(false);
+    window.location.href = "/pro";
+  };
+
+  const inp = { width: "100%", padding: "12px 14px", borderRadius: 12, border: `1px solid ${C.border}`, background: "rgba(255,255,255,0.04)", color: C.text, fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box" };
+  const lbl = { fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 6, display: "block" };
+
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontFamily: "sans-serif" }}>Chargement...</div>}>
-      <RegisterContent />
-    </Suspense>
+    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <button type="button" onClick={onBack} style={{ alignSelf: "flex-start", background: "none", border: "none", color: C.dim, fontSize: 12, cursor: "pointer", marginBottom: 4 }}>← Retour</button>
+      <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ flex: 1 }}><label style={lbl}>Prénom</label><input value={form.firstName} onChange={e => upd("firstName", e.target.value)} required style={inp} /></div>
+        <div style={{ flex: 1 }}><label style={lbl}>Nom</label><input value={form.lastName} onChange={e => upd("lastName", e.target.value)} required style={inp} /></div>
+      </div>
+      <div><label style={lbl}>Email</label><input type="email" value={form.email} onChange={e => upd("email", e.target.value)} required style={inp} /></div>
+      <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ flex: 1 }}><label style={lbl}>Ligue actuelle</label>
+          <select value={form.current_league} onChange={e => upd("current_league", e.target.value)} style={{ ...inp, cursor: "pointer" }}>
+            <option value="">—</option><option value="lnh">LNH</option><option value="proligue">Proligue</option><option value="starligue">Starligue</option><option value="d1f">D1 Féminine</option><option value="d2f">D2 Féminine</option><option value="d2m">D2 Masculine</option>
+          </select>
+        </div>
+        <div style={{ flex: 1 }}><label style={lbl}>Fin de contrat</label><input type="date" value={form.contract_end_date} onChange={e => upd("contract_end_date", e.target.value)} style={inp} /></div>
+      </div>
+      <div>
+        <label style={lbl}>Mot de passe</label>
+        <div style={{ position: "relative" }}>
+          <input type={showPassword ? "text" : "password"} value={form.password} onChange={e => upd("password", e.target.value)} required placeholder="Minimum 6 caractères" style={{ ...inp, paddingRight: 60 }} />
+          <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.dim, fontSize: 11, cursor: "pointer" }}>{showPassword ? "Masquer" : "Voir"}</button>
+        </div>
+      </div>
+      <div><label style={lbl}>Confirmer le mot de passe</label><input type="password" value={form.confirmPassword} onChange={e => upd("confirmPassword", e.target.value)} required style={inp} /></div>
+      {error && <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", fontSize: 12 }}>{error}</div>}
+      <button type="submit" disabled={loading} style={{ padding: "14px", borderRadius: 12, border: "none", background: loading ? "rgba(255,255,255,0.06)" : `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})`, color: loading ? C.dim : "#fff", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", marginTop: 4 }}>{loading ? "Création..." : "Créer mon compte"}</button>
+    </form>
+  );
+}
+
+/* ═══════ FORMULAIRE ENTREPRISE ═══════ */
+function EntrepriseForm({ onBack }) {
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "", confirmPassword: "", companyName: "", companySector: "", companyCity: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const upd = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (form.password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caractères"); return; }
+    if (form.password !== form.confirmPassword) { setError("Les mots de passe ne correspondent pas"); return; }
+    setLoading(true);
+
+    const { data, error: authError } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: { data: { first_name: form.firstName, last_name: form.lastName, user_type: "entreprise" } },
+    });
+
+    if (authError) { setError(authError.message); setLoading(false); return; }
+
+    if (data.user) {
+      await supabase.from("profiles").update({
+        first_name: form.firstName,
+        last_name: form.lastName,
+        user_type: "entreprise",
+      }).eq("id", data.user.id);
+
+      await supabase.from("companies").insert({
+        owner_id: data.user.id,
+        name: form.companyName,
+        sector: form.companySector,
+        city: form.companyCity,
+      });
+    }
+
+    setLoading(false);
+    window.location.href = "/entreprise";
+  };
+
+  const inp = { width: "100%", padding: "12px 14px", borderRadius: 12, border: `1px solid ${C.border}`, background: "rgba(255,255,255,0.04)", color: C.text, fontSize: 13, outline: "none", fontFamily: "inherit", boxSizing: "border-box" };
+  const lbl = { fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 6, display: "block" };
+
+  return (
+    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <button type="button" onClick={onBack} style={{ alignSelf: "flex-start", background: "none", border: "none", color: C.dim, fontSize: 12, cursor: "pointer", marginBottom: 4 }}>← Retour</button>
+      <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ flex: 1 }}><label style={lbl}>Prénom</label><input value={form.firstName} onChange={e => upd("firstName", e.target.value)} required style={inp} /></div>
+        <div style={{ flex: 1 }}><label style={lbl}>Nom</label><input value={form.lastName} onChange={e => upd("lastName", e.target.value)} required style={inp} /></div>
+      </div>
+      <div><label style={lbl}>Email</label><input type="email" value={form.email} onChange={e => upd("email", e.target.value)} required style={inp} /></div>
+      <div><label style={lbl}>Nom de l'entreprise</label><input value={form.companyName} onChange={e => upd("companyName", e.target.value)} required style={inp} /></div>
+      <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ flex: 1 }}>
+          <label style={lbl}>Secteur</label>
+          <select value={form.companySector} onChange={e => upd("companySector", e.target.value)} required style={{ ...inp, cursor: "pointer" }}>
+            <option value="">—</option>
+            {SECTORS.filter(s => s.id !== "autre").map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+        </div>
+        <div style={{ flex: 1 }}><label style={lbl}>Ville</label><input value={form.companyCity} onChange={e => upd("companyCity", e.target.value)} required style={inp} /></div>
+      </div>
+      <div>
+        <label style={lbl}>Mot de passe</label>
+        <div style={{ position: "relative" }}>
+          <input type={showPassword ? "text" : "password"} value={form.password} onChange={e => upd("password", e.target.value)} required placeholder="Minimum 6 caractères" style={{ ...inp, paddingRight: 60 }} />
+          <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.dim, fontSize: 11, cursor: "pointer" }}>{showPassword ? "Masquer" : "Voir"}</button>
+        </div>
+      </div>
+      <div><label style={lbl}>Confirmer le mot de passe</label><input type="password" value={form.confirmPassword} onChange={e => upd("confirmPassword", e.target.value)} required style={inp} /></div>
+      {error && <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", fontSize: 12 }}>{error}</div>}
+      <button type="submit" disabled={loading} style={{ padding: "14px", borderRadius: 12, border: "none", background: loading ? "rgba(255,255,255,0.06)" : `linear-gradient(135deg, ${C.accent}, #991B1B)`, color: loading ? C.dim : "#fff", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", marginTop: 4 }}>{loading ? "Création..." : "Créer le compte entreprise"}</button>
+    </form>
   );
 }

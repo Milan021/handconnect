@@ -200,12 +200,32 @@ function EntrepriseForm({ onBack }) {
         user_type: "entreprise",
       }).eq("id", data.user.id);
 
-      await supabase.from("companies").insert({
+      const { data: companyData } = await supabase.from("companies").insert({
         owner_id: data.user.id,
         name: form.companyName,
         sector: form.companySector,
         city: form.companyCity,
-      });
+      }).select().single();
+
+      // Rediriger vers Stripe Checkout
+      try {
+        const res = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: data.user.id,
+            companyId: companyData?.id,
+            email: form.email,
+          }),
+        });
+        const checkout = await res.json();
+        if (checkout.url) {
+          window.location.href = checkout.url;
+          return;
+        }
+      } catch (err) {
+        console.error("Checkout error:", err);
+      }
     }
 
     setLoading(false);

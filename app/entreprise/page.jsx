@@ -165,8 +165,18 @@ export default function EntrepriseDashboard() {
               </h2>
               <p style={{ fontSize: 13, color: C.muted, margin: "4px 0 0" }}>Recrutez des profils d'exception issus du handball professionnel.</p>
             </div>
+            {company?.subscription_status === "active" ? (
+              <span style={{ fontSize: 10, padding: "4px 12px", borderRadius: 20, background: `${C.green}15`, color: C.green, fontWeight: 700, border: `1px solid ${C.green}30` }}>✓ Abonnement actif</span>
+            ) : (
+              <span style={{ fontSize: 10, padding: "4px 12px", borderRadius: 20, background: `${C.gold}15`, color: C.gold, fontWeight: 700, border: `1px solid ${C.gold}30` }}>⏳ En attente de paiement</span>
+            )}
           </div>
         </div>
+
+        {/* Paywall */}
+        {company && company.subscription_status !== "active" && (
+          <SubscriptionBlock user={user} company={company} onPaid={(c) => setCompany(c)} />
+        )}
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${C.border}`, paddingBottom: 12 }}>
@@ -330,12 +340,16 @@ export default function EntrepriseDashboard() {
 
         {/* Tab: New Offer */}
         {activeTab === "new-offer" && (
-          <JobOfferForm user={user} company={company} onPublished={() => {
-            setActiveTab("offers");
-            showToast("✅ Offre publiée !");
-            // Refresh
-            supabase.from("jobs").select("*").or(`author_id.eq.${user.id},company_id.in.(${company?.id || '00000000-0000-0000-0000-000000000000'})`).order("created_at", { ascending: false }).then(({ data }) => setMyJobs(data || []));
-          }} />
+          company?.subscription_status === "active" ? (
+            <JobOfferForm user={user} company={company} onPublished={() => {
+              setActiveTab("offers");
+              showToast("✅ Offre publiée !");
+              // Refresh
+              supabase.from("jobs").select("*").or(`author_id.eq.${user.id},company_id.in.(${company?.id || '00000000-0000-0000-0000-000000000000'})`).order("created_at", { ascending: false }).then(({ data }) => setMyJobs(data || []));
+            }} />
+          ) : (
+            <SubscriptionBlock user={user} company={company} onPaid={(c) => setCompany(c)} />
+          )
         )}
       </main>
 
@@ -545,6 +559,76 @@ function JobOfferForm({ user, company, onPublished }) {
           {saving ? "Publication..." : "📢 Publier l'offre"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/* ═══════ SUBSCRIPTION BLOCK (PAYWALL) ═══════ */
+function SubscriptionBlock({ user, company, onPaid }) {
+  const [loading, setLoading] = useState(false);
+
+  const startCheckout = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          companyId: company?.id,
+          email: user.email,
+        }),
+      });
+      const checkout = await res.json();
+      if (checkout.url) {
+        window.location.href = checkout.url;
+      } else {
+        alert("Erreur de paiement : " + (checkout.error || "inconnue"));
+        setLoading(false);
+      }
+    } catch (err) {
+      alert("Erreur de connexion");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ background: `linear-gradient(135deg, ${C.gold}08, ${C.primary}05)`, border: `1px solid ${C.gold}25`, borderRadius: 20, padding: "40px 32px", textAlign: "center" }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+      <h3 style={{ fontSize: 24, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, color: "#fff", margin: "0 0 8px" }}>
+        ACTIVEZ VOTRE ABONNEMENT
+      </h3>
+      <p style={{ fontSize: 14, color: C.muted, margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
+        Publiez des offres d'emploi et accédez à tous les profils handballeurs pro en souscrivant à l'abonnement annuel.
+      </p>
+
+      <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap", marginBottom: 28 }}>
+        <div style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 16, padding: "24px 28px", minWidth: 220 }}>
+          <div style={{ fontSize: 36, fontFamily: "'Bebas Neue', sans-serif", color: C.gold, letterSpacing: 1 }}>99€</div>
+          <div style={{ fontSize: 12, color: C.dim, marginBottom: 12 }}>/an</div>
+          <ul style={{ textAlign: "left", fontSize: 12, color: C.text, lineHeight: 2, margin: 0, paddingLeft: 18 }}>
+            <li>Offres d'emploi illimitées</li>
+            <li>Accès profils handballeurs pro</li>
+            <li>Matching intelligent</li>
+            <li>Messagerie intégrée</li>
+          </ul>
+        </div>
+        <div style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 16, padding: "24px 28px", minWidth: 220 }}>
+          <div style={{ fontSize: 36, fontFamily: "'Bebas Neue', sans-serif", color: C.accent, letterSpacing: 1 }}>2 500€</div>
+          <div style={{ fontSize: 12, color: C.dim, marginBottom: 12 }}>par recrutement</div>
+          <ul style={{ textAlign: "left", fontSize: 12, color: C.text, lineHeight: 2, margin: 0, paddingLeft: 18 }}>
+            <li>Payable uniquement si embauche</li>
+            <li>Garantie 3 mois inclus</li>
+            <li>Accompagnement reconversion</li>
+            <li>Suivi post-placement</li>
+          </ul>
+        </div>
+      </div>
+
+      <button onClick={startCheckout} disabled={loading} style={{ padding: "16px 48px", borderRadius: 12, border: "none", background: loading ? "rgba(255,255,255,0.06)" : `linear-gradient(135deg, ${C.gold}, #D97706)`, color: loading ? C.dim : "#0A0E1A", fontSize: 15, fontWeight: 800, cursor: loading ? "wait" : "pointer", boxShadow: `0 8px 32px ${C.gold}20` }}>
+        {loading ? "Redirection..." : "💳 Payer 99€ / an"}
+      </button>
+      <p style={{ fontSize: 11, color: C.dim, marginTop: 12 }}>Paiement sécurisé par Stripe · Annulable à tout moment</p>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { stripe, ANNUAL_PRICE_CENTS } from "../../../../lib/stripe";
+import { getStripe, ANNUAL_PRICE_CENTS } from "../../../../lib/stripe";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -9,6 +9,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Missing userId or companyId" }, { status: 400 });
     }
 
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",

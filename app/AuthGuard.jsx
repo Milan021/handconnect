@@ -1,47 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { usePathname } from "next/navigation";
-
-const PUBLIC_PATHS = ["/", "/login", "/register"];
 
 export default function AuthGuard({ children }) {
-  const [status, setStatus] = useState("loading");
-  const pathname = usePathname();
-
-  // Public pages don't need auth
-  const isPublicPage = PUBLIC_PATHS.includes(pathname);
+  const [ready, setReady] = useState(true);
 
   useEffect(() => {
-    if (isPublicPage) {
-      setStatus("ok");
-      return;
-    }
-
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        window.location.href = "/login";
-        return;
-      }
-
-      setStatus("ok");
-    };
-
-    checkAuth();
-
-    // Listen for auth changes (logout, session expired)
+    // Le middleware serveur gère le blocage des routes : ici on écoute
+    // uniquement la déconnexion pour rediriger immédiatement vers /login.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         window.location.href = "/login";
       }
     });
-
     return () => subscription.unsubscribe();
-  }, [pathname, isPublicPage]);
+  }, []);
 
-  if (status === "loading" && !isPublicPage) {
+  if (!ready) {
     return (
       <div style={{
         minHeight: "100vh",

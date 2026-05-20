@@ -30,8 +30,9 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+    const { data: profile } = await supabase.from("profiles").select("role, user_type").eq("id", data.user.id).single();
     if (profile?.role === "admin") { window.location.href = "/agents"; }
+    else if (profile?.user_type === "joueur") { window.location.href = "/annonces"; }
     else { window.location.href = "/dashboard"; }
   };
 
@@ -62,6 +63,9 @@ export default function LoginPage() {
           </div>
           {error && (<div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#EF4444", fontSize: 12, fontWeight: 500 }}>{error}</div>)}
           <button onClick={handleLogin} disabled={loading || !email || !password} style={{ padding: "14px 20px", borderRadius: 12, border: "none", background: loading || !email || !password ? "rgba(255,107,53,0.2)" : "linear-gradient(135deg, #FF6B35, #C13C00)", color: loading || !email || !password ? "rgba(255,255,255,0.3)" : "#fff", fontSize: 14, fontWeight: 700, cursor: loading || !email || !password ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.3s", boxShadow: loading || !email || !password ? "none" : "0 4px 20px rgba(255,107,53,0.3)", marginTop: 4 }}>{loading ? "Connexion en cours..." : "SE CONNECTER"}</button>
+          <div style={{ textAlign: "center", marginTop: 4 }}>
+            <Link href="/forgot-password" style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", textDecoration: "none", fontWeight: 500 }}>Mot de passe oublié ?</Link>
+          </div>
         </div>
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Pas encore de compte ? <Link href="/register" style={{ color: "#FF6B35", fontWeight: 600, textDecoration: "none" }}>S{"'"}inscrire gratuitement</Link></p>

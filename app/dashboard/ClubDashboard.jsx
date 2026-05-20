@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
+import useIsMobile from "../../lib/useIsMobile";
 
 const C = {
   primary: "#1D4ED8",
@@ -72,6 +73,8 @@ const labelStyle = {
 };
 
 export default function ClubDashboard({ user, profile }) {
+  const isMobile = useIsMobile();
+  const [tab, setTab] = useState("club");
   const [club, setClub] = useState(null);
   const [loadingClub, setLoadingClub] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -126,6 +129,18 @@ export default function ClubDashboard({ user, profile }) {
     };
     fetchClub();
   }, [user, profile]);
+
+  // Lit le plan choisi à l'inscription (depuis register page) pour l'appliquer à la création
+  const [pendingPlan, setPendingPlan] = useState(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const planFromUrl = url.searchParams.get("plan");
+    const planFromStorage = window.localStorage.getItem("hc_pending_plan");
+    const valid = ["free", "standard", "premium"];
+    const plan = valid.includes(planFromUrl) ? planFromUrl : (valid.includes(planFromStorage) ? planFromStorage : null);
+    if (plan) setPendingPlan(plan);
+  }, []);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -216,9 +231,19 @@ export default function ClubDashboard({ user, profile }) {
     if (club?.id) {
       result = await supabase.from("clubs").update(payload).eq("id", club.id).select().single();
     } else {
+      // Création : applique le plan choisi + démarre l'essai 7 jours
+      const now = new Date();
+      const trialEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       result = await supabase
         .from("clubs")
-        .insert({ ...payload, plan: "free" })
+        .insert({
+          ...payload,
+          plan: "free", // ancien champ : conservé pour compat
+          subscription_plan: pendingPlan || "free",
+          subscription_status: "trial",
+          trial_started_at: now.toISOString(),
+          trial_ends_at: trialEnd.toISOString(),
+        })
         .select()
         .single();
     }
@@ -227,9 +252,12 @@ export default function ClubDashboard({ user, profile }) {
       showToast("❌ Erreur : " + result.error.message);
       return;
     }
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("hc_pending_plan");
+    }
     setClub(result.data);
     setEditing(false);
-    showToast("✅ Club mis à jour !");
+    showToast(club?.id ? "✅ Club mis à jour !" : "🎁 Essai 7 jours démarré !");
   };
 
   const cancel = () => {
@@ -263,7 +291,25 @@ export default function ClubDashboard({ user, profile }) {
     return Math.round((filled / fields.length) * 100);
   })();
 
-  const planMeta = PLAN_META[club?.plan] || PLAN_META.free;
+  const currentPlan = club?.subscription_plan || club?.plan || "free";
+  const planMeta = PLAN_META[currentPlan] || PLAN_META.free;
+
+  const pendingCount = myAnnonces.reduce(
+    (sum, a) => sum + (a.applications || []).filter((app) => app.status === "pending").length,
+    0
+  );
+
+  // Essai gratuit : calcul des jours restants
+  const trialInfo = (() => {
+    if (!club?.trial_ends_at) return null;
+    const end = new Date(club.trial_ends_at);
+    const now = new Date();
+    const diffMs = end - now;
+    const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const isActive = club.subscription_status === "trial" && diffMs > 0;
+    const isExpired = club.subscription_status === "trial" && diffMs <= 0;
+    return { daysLeft: Math.max(0, daysLeft), isActive, isExpired, endDate: end };
+  })();
 
   if (loadingClub) {
     return (
@@ -317,7 +363,7 @@ export default function ClubDashboard({ user, profile }) {
         </div>
       )}
 
-      <style>{`input:focus,select:focus,textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px rgba(29,78,216,0.15)!important}`}</style>
+      <style>{`input:focus,select:focus,textarea:focus{border-color:${C.primary}!important;box-shadow:0 0 0 3px rgba(29,78,216,0.15)!important}@keyframes pulse-badge{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,0.5)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(220,38,38,0)}}`}</style>
 
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
         <div
@@ -351,7 +397,7 @@ export default function ClubDashboard({ user, profile }) {
             background: "rgba(10,14,26,0.9)",
             backdropFilter: "blur(20px)",
             borderBottom: `1px solid ${C.border}`,
-            padding: "0 24px",
+            padding: isMobile ? "10px 14px" : "0 24px",
             position: "sticky",
             top: 0,
             zIndex: 100,
@@ -364,7 +410,9 @@ export default function ClubDashboard({ user, profile }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              height: 64,
+              gap: 10,
+              flexWrap: "wrap",
+              minHeight: isMobile ? 56 : 64,
             }}
           >
             <Link
@@ -397,7 +445,7 @@ export default function ClubDashboard({ user, profile }) {
                     margin: 0,
                   }}
                 >
-                  HAND<span style={{ color: C.primary }}>CONNECT</span>
+                  HANDBALL<span style={{ color: C.primary }}>CONNECT</span>
                 </h1>
                 <span style={{ fontSize: 9, color: C.dim, letterSpacing: 2, fontWeight: 600 }}>
                   ESPACE CLUB
@@ -441,7 +489,7 @@ export default function ClubDashboard({ user, profile }) {
           </div>
         </header>
 
-        <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
+        <main style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "20px 14px" : "32px 24px" }}>
           {/* Welcome */}
           <div
             style={{
@@ -495,6 +543,82 @@ export default function ClubDashboard({ user, profile }) {
               </div>
             </div>
           </div>
+
+          {/* Trial banner */}
+          {trialInfo && (trialInfo.isActive || trialInfo.isExpired) && (
+            <div
+              style={{
+                background: trialInfo.isExpired
+                  ? "linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04))"
+                  : `linear-gradient(135deg, ${C.green}15, ${C.green}05)`,
+                border: `1px solid ${trialInfo.isExpired ? "rgba(239,68,68,0.3)" : `${C.green}30`}`,
+                borderRadius: 16,
+                padding: "16px 20px",
+                marginBottom: 20,
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ fontSize: 28 }}>{trialInfo.isExpired ? "⏰" : "🎁"}</div>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: trialInfo.isExpired ? "#EF4444" : C.green,
+                    marginBottom: 2,
+                  }}
+                >
+                  {trialInfo.isExpired
+                    ? "Période d'essai expirée"
+                    : `Essai gratuit · ${trialInfo.daysLeft} jour${trialInfo.daysLeft > 1 ? "s" : ""} restant${trialInfo.daysLeft > 1 ? "s" : ""}`}
+                </div>
+                <div style={{ fontSize: 12, color: C.muted }}>
+                  {trialInfo.isExpired
+                    ? `Souscrivez à ${planMeta.label} pour continuer à utiliser HandballConnect.`
+                    : `Plan ${planMeta.label} actif jusqu'au ${trialInfo.endDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`}
+                </div>
+              </div>
+              <Link
+                href="/?tab=tarifs"
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: 10,
+                  background: trialInfo.isExpired
+                    ? "linear-gradient(135deg,#EF4444,#DC2626)"
+                    : `linear-gradient(135deg,${C.primary},${C.primaryDark})`,
+                  color: "#fff",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  letterSpacing: 0.5,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {trialInfo.isExpired ? "Souscrire maintenant" : "Gérer l'abonnement"}
+              </Link>
+            </div>
+          )}
+
+          {/* Tab bar */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}`, borderRadius: 14, padding: 4 }}>
+            {[
+              ["club", "🏟️ Mon Club", null],
+              ["annonces", "📢 Annonces", pendingCount],
+            ].map(([t, label, badge]) => (
+              <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "10px 16px", borderRadius: 10, border: "none", background: tab === t ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : "transparent", color: tab === t ? "#fff" : C.muted, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all .2s", boxShadow: tab === t ? `0 4px 14px ${C.primary}30` : "none", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <span>{label}</span>
+                {badge > 0 && (
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 22, height: 22, padding: "0 6px", borderRadius: 11, background: tab === t ? "rgba(255,255,255,0.2)" : C.accent, color: "#fff", fontSize: 11, fontWeight: 800, animation: tab !== t ? "pulse-badge 1.6s ease-in-out infinite" : "none" }}>{badge}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* ── ONGLET MON CLUB ── */}
+          {tab === "club" && (<>
 
           {/* Completion bar */}
           <div
@@ -789,7 +913,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     🏷️ Identité
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr", gap: 14 }}>
                     <div>
                       <label style={labelStyle}>Nom du club *</label>
                       <input
@@ -828,7 +952,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     📍 Localisation & niveau
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
                     <div>
                       <label style={labelStyle}>Ville *</label>
                       <input
@@ -858,7 +982,7 @@ export default function ClubDashboard({ user, profile }) {
                 {/* Présentation */}
                 <div style={{ marginBottom: 20 }}>
                   <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12, fontWeight: 600, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>📋 Présentation du club</h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginBottom: 14 }}>
                     <div>
                       <label style={labelStyle}>Année de création</label>
                       <input type="number" value={form.founded_year} onChange={(e) => upd("founded_year", e.target.value)} style={inpStyle} placeholder="Ex : 1985" min="1850" max={new Date().getFullYear()} />
@@ -942,7 +1066,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     ✉️ Contact
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
                     <div>
                       <label style={labelStyle}>Téléphone</label>
                       <input
@@ -1022,7 +1146,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     🏷️ Identité
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr", gap: 10 }}>
                     {[
                       ["Nom du club", club?.name],
                       ["Sigle", club?.short_name],
@@ -1076,7 +1200,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     📍 Localisation & niveau
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
                     {[
                       ["Ville", club?.city],
                       [
@@ -1124,7 +1248,7 @@ export default function ClubDashboard({ user, profile }) {
                   <div style={{ marginBottom: 18 }}>
                     <h4 style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 10, fontWeight: 600 }}>📋 Présentation</h4>
                     {(club?.founded_year || club?.member_count) && (
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 12 }}>
                         {[["Créé en", club?.founded_year || null], ["Licenciés", club?.member_count ? `${club.member_count}` : null]].map(([l, v], i) => (
                           <div key={i} style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: `1px solid ${C.border}` }}>
                             <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, marginBottom: 4 }}>{l}</div>
@@ -1211,7 +1335,7 @@ export default function ClubDashboard({ user, profile }) {
                   >
                     ✉️ Contact
                   </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
                     {[
                       ["Téléphone", club?.phone],
                       ["Email", club?.email],
@@ -1252,7 +1376,7 @@ export default function ClubDashboard({ user, profile }) {
                 </div>
 
                 {/* Plan + created */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginTop: 14 }}>
                   <div
                     style={{
                       padding: "12px 16px",
@@ -1314,16 +1438,14 @@ export default function ClubDashboard({ user, profile }) {
             )}
           </div>
 
-          <div
-            style={{
-              textAlign: "center",
-              padding: "32px 0 16px",
-              fontSize: 10,
-              color: "rgba(255,255,255,0.12)",
-            }}
-          >
-            HAND CONNECT — Espace Club — {new Date().getFullYear()}
+          <div style={{ textAlign: "center", padding: "32px 0 16px", fontSize: 10, color: "rgba(255,255,255,0.12)" }}>
+            HANDBALL CONNECT — Espace Club — {new Date().getFullYear()}
           </div>
+
+          </>)}
+
+          {/* ── ONGLET ANNONCES ── */}
+          {tab === "annonces" && (<>
 
           {/* ═══════ MES ANNONCES & CANDIDATURES ═══════ */}
           <div style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${C.border}`, borderRadius: 18, padding: 28, marginBottom: 24 }}>
@@ -1347,13 +1469,26 @@ export default function ClubDashboard({ user, profile }) {
                   const ac = isTr ? C.accent : C.primary;
                   const isOpen = expanded === a.id;
                   const apps = a.applications || [];
+                  const pending = apps.filter(x => x.status === "pending").length;
                   return (
-                    <div key={a.id} style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}`, borderLeft: `3px solid ${ac}`, borderRadius: 12, overflow: "hidden" }}>
-                      <div onClick={() => setExpanded(isOpen ? null : a.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "14px 18px", cursor: "pointer", transition: "background .2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <div key={a.id} style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${pending > 0 ? C.accent + "40" : C.border}`, borderLeft: `3px solid ${ac}`, borderRadius: 12, overflow: "hidden" }}>
+                      <div onClick={async () => {
+                        const opening = !isOpen;
+                        setExpanded(opening ? a.id : null);
+                        if (opening && pending > 0) {
+                          const pendingIds = apps.filter(x => x.status === "pending").map(x => x.id);
+                          await supabase.from("applications").update({ status: "seen" }).in("id", pendingIds);
+                          setMyAnnonces(prev => prev.map(x => x.id !== a.id ? x : ({
+                            ...x,
+                            applications: x.applications.map(app => app.status === "pending" ? { ...app, status: "seen" } : app),
+                          })));
+                        }
+                      }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "14px 18px", cursor: "pointer", transition: "background .2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                             <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: `${ac}15`, color: ac, fontWeight: 700, border: `1px solid ${ac}30` }}>{isTr ? "🎯 Coach" : "🤾 Joueur"}</span>
                             {a.is_urgent && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: C.accent, color: "#fff", fontWeight: 700 }}>Urgent</span>}
+                            {pending > 0 && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: C.accent, color: "#fff", fontWeight: 700, animation: "pulse-badge 1.6s ease-in-out infinite" }}>🔔 {pending} nouveau{pending > 1 ? "x" : ""}</span>}
                           </div>
                           <h4 style={{ margin: 0, fontSize: 14, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</h4>
                           <p style={{ margin: "2px 0 0", fontSize: 11, color: C.dim }}>{a.city || "—"} · {new Date(a.created_at).toLocaleDateString("fr-FR")}</p>
@@ -1433,6 +1568,9 @@ export default function ClubDashboard({ user, profile }) {
               </div>
             )}
           </div>
+
+          </>)}
+
         </main>
       </div>
     </div>

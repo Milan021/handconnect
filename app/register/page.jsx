@@ -3,6 +3,9 @@ import { useState, Suspense } from "react";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 
+const VALID_PLANS = ["free", "standard", "premium"];
+const PLAN_LABELS = { free: "Club Free (25€/an)", standard: "Club Standard (100€/an)", premium: "Club Premium (250€/an)" };
+
 const FONT_LINK = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap";
 
 const USER_TYPES = [
@@ -27,6 +30,13 @@ function RegisterContent() {
 
   const selectedType = USER_TYPES.find((t) => t.key === userType);
 
+  // Persiste le plan choisi pour que le dashboard l'applique à la création du club
+  useEffect(() => {
+    if (initialPlan && typeof window !== "undefined") {
+      window.localStorage.setItem("hc_pending_plan", initialPlan);
+    }
+  }, [initialPlan]);
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
@@ -48,6 +58,9 @@ function RegisterContent() {
       setLoading(false);
       return;
     }
+    if (selectedPlan && typeof window !== "undefined") {
+      window.localStorage.setItem("hc_pending_plan", selectedPlan);
+    }
     window.location.href = "/dashboard";
   };
 
@@ -56,7 +69,7 @@ function RegisterContent() {
       <link href={FONT_LINK} rel="stylesheet" />
       <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,107,53,0.08) 0%, transparent 70%)", top: -150, right: -100, pointerEvents: "none" }} />
       <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)", bottom: -100, left: -100, pointerEvents: "none" }} />
-      <div style={{ width: step === 1 ? 520 : 420, padding: step === 1 ? "36px 32px" : 40, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, backdropFilter: "blur(20px)", position: "relative", zIndex: 1, transition: "width 0.3s ease" }}>
+      <div style={{ width: "100%", maxWidth: step === 1 ? 520 : 420, padding: "clamp(20px, 5vw, 36px) clamp(18px, 5vw, 32px)", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, backdropFilter: "blur(20px)", position: "relative", zIndex: 1, transition: "max-width 0.3s ease", margin: "16px", boxSizing: "border-box" }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <img src="/logo.png" alt="Handball Connect" style={{ width: 56, height: 56, borderRadius: 14, objectFit: "cover", boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: 14 }}/>
           <h1 style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 4, color: "#fff", margin: "0 0 4px" }}>HANDBALL <span style={{ color: "#FF6B35" }}>CONNECT</span></h1>
@@ -94,6 +107,15 @@ function RegisterContent() {
               <span style={{ fontSize: 13, fontWeight: 600, color: selectedType.color }}>{selectedType.label}</span>
               <button onClick={() => { setStep(1); setUserType(""); setError(""); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Changer</button>
             </div>
+            {userType === "club" && selectedPlan && (
+              <div style={{ padding: "12px 14px", borderRadius: 12, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 20 }}>🎁</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#10B981", marginBottom: 2 }}>Essai gratuit 7 jours</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{PLAN_LABELS[selectedPlan]} · Sans carte bancaire</div>
+                </div>
+              </div>
+            )}
             <div style={{ display: "flex", gap: 10 }}>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, display: "block", marginBottom: 6 }}>PRÉNOM</label>

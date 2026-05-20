@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hand Connect — Plateforme Handball",
+  title: "Handball Connect — Plateforme Handball",
   description: "Plateforme de mise en relation handball : joueurs, clubs, entraîneurs et entreprises.",
 };
 

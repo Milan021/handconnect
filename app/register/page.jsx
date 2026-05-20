@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
@@ -15,6 +15,18 @@ const C = {
 };
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", color: C.dim }}>
+        Chargement...
+      </div>
+    }>
+      <RegisterPageContent />
+    </Suspense>
+  );
+}
+
+function RegisterPageContent() {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [userType, setUserType] = useState("");

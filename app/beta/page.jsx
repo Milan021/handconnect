@@ -60,7 +60,7 @@ export default function BetaPage() {
       <header style={{ padding: "24px 32px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 1000, margin: "0 auto" }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🤾</div>
-          <h1 style={{ fontSize: 24, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", margin: 0 }}>HAND<span style={{ color: C.primary }}>CONNECT</span></h1>
+          <h1 style={{ fontSize: 24, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", margin: 0 }}>HANDBALL<span style={{ color: C.primary }}>CONNECT</span></h1>
         </Link>
       </header>
 
@@ -87,7 +87,7 @@ export default function BetaPage() {
                 DEVENEZ <span style={{ color: C.primary }}>BÊTA TESTEUR</span>
               </h2>
               <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.7, margin: 0 }}>
-                HandConnect ouvre sa plateforme de reconversion en beta. <br />
+                Handball Connect ouvre sa plateforme de reconversion en beta. <br />
                 Inscrivez-vous pour tester en avant-première et nous aider à construire le meilleur outil.
               </p>
             </div>
@@ -144,7 +144,7 @@ export default function BetaPage() {
               </button>
 
               <p style={{ fontSize: 11, color: C.dim, textAlign: "center", marginTop: 14 }}>
-                En vous inscrivant, vous acceptez d'être contacté par l'équipe HandConnect.
+                En vous inscrivant, vous acceptez d'être contacté par l'équipe Handball Connect.
               </p>
             </div>
           </>
@@ -152,7 +152,7 @@ export default function BetaPage() {
       </main>
 
       <footer style={{ padding: "32px 24px", borderTop: `1px solid ${C.border}`, textAlign: "center" }}>
-        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.15)", margin: 0 }}>HandConnect © {new Date().getFullYear()} — Tous droits réservés</p>
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.15)", margin: 0 }}>Handball Connect © {new Date().getFullYear()} — Tous droits réservés</p>
       </footer>
     </div>
   );

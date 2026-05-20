@@ -71,7 +71,7 @@ export default function LandingPage() {
       <header style={{ position: "relative", zIndex: 10, padding: "24px 32px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 1200, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🤾</div>
-          <h1 style={{ fontSize: 24, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", margin: 0 }}>HAND<span style={{ color: C.primary }}>CONNECT</span></h1>
+          <h1 style={{ fontSize: 24, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", margin: 0 }}>HANDBALL<span style={{ color: C.primary }}>CONNECT</span></h1>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
           <Link href="/login" style={{ padding: "10px 20px", borderRadius: 10, border: `1px solid ${C.border}`, color: C.muted, textDecoration: "none", fontSize: 13, fontWeight: 600, transition: "all .2s" }}>Se connecter</Link>
@@ -91,7 +91,7 @@ export default function LandingPage() {
           <span style={{ color: C.primary }}>AU PREMIER JOUR</span>
         </h2>
         <p style={{ fontSize: 16, color: C.muted, maxWidth: 560, margin: "0 auto 40px", lineHeight: 1.7 }}>
-          HandConnect accompagne les handballeurs professionnels dans leur reconversion.
+          Handball Connect accompagne les handballeurs professionnels dans leur reconversion.
           Connectez-vous avec des entreprises qui valorisent votre profil athlète.
         </p>
       </section>
@@ -209,7 +209,7 @@ export default function LandingPage() {
               { step: "01", title: "Créez votre profil", desc: "Renseignez votre parcours sportif, vos compétences transférables et vos secteurs cibles." },
               { step: "02", title: "Découvrez les offres", desc: "Notre algorithme vous suggère les entreprises et postes qui correspondent à votre profil." },
               { step: "03", title: "Postulez en un clic", desc: "Envoyez votre candidature avec votre CV et un message personnalisé aux recruteurs." },
-              { step: "04", title: "Soyez recruté", desc: "Les entreprises vous contactent directement. HandConnect perçoit une commission uniquement si vous êtes embauché." },
+              { step: "04", title: "Soyez recruté", desc: "Les entreprises vous contactent directement. Handball Connect perçoit une commission uniquement si vous êtes embauché." },
             ].map((item, i) => (
               <div key={i} style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28 }}>
                 <div style={{ fontSize: 32, fontFamily: "'Bebas Neue', sans-serif", color: C.primary, marginBottom: 12 }}>{item.step}</div>
@@ -235,9 +235,9 @@ export default function LandingPage() {
       <footer style={{ position: "relative", zIndex: 10, padding: "32px 24px", borderTop: `1px solid ${C.border}`, textAlign: "center" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 16 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🤾</div>
-          <span style={{ fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, color: "#fff" }}>HAND<span style={{ color: C.primary }}>CONNECT</span></span>
+          <span style={{ fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, color: "#fff" }}>HANDBALL<span style={{ color: C.primary }}>CONNECT</span></span>
         </div>
-        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.15)", margin: 0 }}>HandConnect © {new Date().getFullYear()} — Tous droits réservés</p>
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.15)", margin: 0 }}>Handball Connect © {new Date().getFullYear()} — Tous droits réservés</p>
       </footer>
     </div>
   );

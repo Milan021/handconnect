@@ -80,7 +80,7 @@ export default function AdminDashboard() {
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
             <div style={{ width: 38, height: 38, borderRadius: 12, background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🤾</div>
-            <h1 style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1, margin: 0 }}>HAND<span style={{ color: C.primary }}>CONNECT</span></h1>
+            <h1 style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1, margin: 0 }}>HANDBALL<span style={{ color: C.primary }}>CONNECT</span></h1>
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 11, color: C.gold, padding: "4px 10px", borderRadius: 6, background: `${C.gold}12`, border: `1px solid ${C.gold}25`, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Admin</span>
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
       </main>
 
       <div style={{ textAlign: "center", padding: "32px 0 16px", fontSize: 10, color: "rgba(255,255,255,0.12)" }}>
-        HAND CONNECT — Admin — {new Date().getFullYear()}
+        HANDBALL CONNECT — Admin — {new Date().getFullYear()}
       </div>
     </div>
   );

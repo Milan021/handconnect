@@ -43,7 +43,7 @@ export default function BetaFeedback({ user, onClose }) {
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🙏</div>
             <h3 style={{ fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, color: "#fff", margin: "0 0 8px" }}>MERCI !</h3>
-            <p style={{ fontSize: 13, color: C.muted }}>Votre feedback aide à améliorer HandConnect.</p>
+            <p style={{ fontSize: 13, color: C.muted }}>Votre feedback aide à améliorer Handball Connect.</p>
             <button onClick={onClose} style={{ marginTop: 16, padding: "10px 24px", borderRadius: 10, border: "none", background: `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})`, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Fermer</button>
           </div>
         ) : (

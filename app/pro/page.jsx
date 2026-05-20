@@ -126,7 +126,7 @@ export default function ProDashboard() {
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
             <div style={{ width: 38, height: 38, borderRadius: 12, background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: `0 4px 16px ${C.primary}30` }}>🤾</div>
             <div>
-              <h1 style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1, margin: 0 }}>HAND<span style={{ color: C.primary }}>CONNECT</span></h1>
+              <h1 style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, color: "#fff", lineHeight: 1, margin: 0 }}>HANDBALL<span style={{ color: C.primary }}>CONNECT</span></h1>
               <span style={{ fontSize: 9, color: C.dim, letterSpacing: 2, fontWeight: 600 }}>ESPACE PRO</span>
             </div>
           </Link>
@@ -323,7 +323,7 @@ export default function ProDashboard() {
       <ChatWidget user={user} />
 
       <div style={{ textAlign: "center", padding: "32px 0 16px", fontSize: 10, color: "rgba(255,255,255,0.12)" }}>
-        HAND CONNECT — Espace Pro — {new Date().getFullYear()}
+        HANDBALL CONNECT — Espace Pro — {new Date().getFullYear()}
       </div>
     </div>
   );
